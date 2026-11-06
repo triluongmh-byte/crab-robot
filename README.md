@@ -1,45 +1,47 @@
-# Robot Cua A1 V4
+# Crab Robot A1 V4
 
-Đồ chơi bốn chân, 8 SG90, quét QR để cài Wi-Fi và lái bằng web trên điện thoại. Dùng LILYGO T-Display-S3 non-touch + PCA9685 + thanh WS2812 8 bóng, cấp bằng pin dự phòng USB 5 V hai cổng. **BOARD GIẢ KiCad 30×20 mm không đặt, không lắp vào robot.**
+A four-legged toy crab with 8 SG90 servos. Scan a QR code to join Wi-Fi, then drive it from a web page on your phone. Electronics: LILYGO T-Display-S3 (non-touch) + PCA9685 servo driver + 8-LED WS2812 bar, powered by a two-port 5 V USB power bank. Everything is hand-wired; **the 30×20 mm KiCad board is a dummy for the schematic only — it is not ordered or fitted.**
 
-Ngày 06/11/2026: team bridge **candidate_ready, teamReady=true**. Board, firmware, cơ khí và tích hợp đã được tester độc lập duyệt sau sửa. Chưa in, chưa nạp, chưa ráp, chưa chạy motor; chưa chứng minh robot đi được trên sàn.
+Status (6 Nov 2026): **candidate ready, `teamReady=true`.** Board, firmware, case and integration passed independent review after repairs. **Not yet printed, flashed, assembled or run** — walking on a real floor is unproven.
 
-## Bắt đầu
+Tiếng Việt: [README.vi.md](README.vi.md)
 
-1. Xem [BOM](BOM.md), [hình tổng thể](case/images/assembled.png), [hình bung](case/images/exploded.png), [từ trên](case/images/top.png), [từ trước](case/images/front.png).
-2. **Chỉ in thử trước:** [TEST ONLY + MATING_TEST](case/print/TEST-ONLY-coupons.3mf). Coupon không lắp vào robot; hai part MATING_TEST đạt thì giữ làm P05/P09. Làm [checklist](CHECKLIST-RAP.md), báo cả hai bộ thử đạt trước khi chọn plate sản xuất.
-3. [Overview ráp từng bước](case/overview.html): Đủ bộ → Bước 1…9, Trước/Sau; từng bước có thẻ vít/tán, có bước cắm dây. Chi tiết mặc định đóng.
-4. [Đấu dây có hình](firmware/WIRING.md), rồi [tự nạp firmware](firmware/README.md#nạp-firmware--người-dùng-tự-làm). Rút cổng USB nguồn servo khi nạp.
-5. Quét QR Wi-Fi, chọn mạng nhà 2,4 GHz và nhập mật khẩu; sau đó quét QR địa chỉ web. Nếu điện thoại không tự mở trang đầu, mở `http://192.168.4.1/`. Giữ nút thì đi, thả thì dừng; mất heartbeat 600 ms thì ngừng dáng đi và về đứng mượt. Trang Ráp đưa về giữa/chỉnh tâm/lưu. Giữ BOOT 8 giây để xóa Wi-Fi.
+## Getting started
 
-## Bộ hiện tại
+1. Look at the [BOM](BOM.md) and the renders: [assembled](case/images/assembled.png), [exploded](case/images/exploded.png), [top](case/images/top.png), [front](case/images/front.png).
+2. **Print the test pieces first:** [TEST ONLY + MATING_TEST](case/print/TEST-ONLY-coupons.3mf). The coupons are not part of the robot; if the two MATING_TEST parts fit, keep them as P05/P09. Go through the [checklist](CHECKLIST-RAP.md) and confirm both tests pass before printing the production plates.
+3. Follow the [step-by-step assembly overview](case/overview.html): Full kit → Step 1…9, with a screw/nut card and wiring notes per step.
+4. [Wire it](firmware/WIRING.md), then [flash the firmware yourself](firmware/README.md). Unplug the servo power USB while flashing.
+5. Scan the Wi-Fi QR, pick your 2.4 GHz home network and enter the password, then scan the web-address QR. If the page does not open, go to `http://192.168.4.1/`. Hold a button to walk, release to stop; if the 600 ms heartbeat is lost the gait stops and the robot eases back to standing. The Assembly page centers, trims and saves the servos. Hold BOOT for 8 s to clear Wi-Fi.
 
-| Mục | Kết quả |
+## Current build
+
+| Item | Value |
 |---|---|
-| Thân, không tính chân | 126×75×47 mm, gồm đầu vít nắp |
-| Part / M3 | 12 part; 4 M3×12 + 4 M3×20; 8 tán M3; vít SG90 theo túi |
-| In sản xuất | 2 plate PETG, khoảng 4h27 + 2h30 = 6h57; 186,9 g |
-| Robot gồm pin | Khoảng 430–440 g **ước tính**, phải cân khi ráp |
-| Góc khớp | CAD ±30°, mẫu mỗi 5°, khe nhỏ nhất 3,3 mm; bốn chân cùng pha |
-| Đối xứng trên STEP | 0 mm / 0°; chưa kiểm bản in |
-| Firmware | ESP32-S3 build được; host tests Wi-Fi, web, QR, API, Ráp, BOOT, gait và PCA đạt |
+| Body (without legs) | 126×75×47 mm, including lid screw heads |
+| Parts / screws | 12 parts; 4× M3×12 + 4× M3×20; 8× M3 nuts; SG90 screws from the servo bag |
+| Print | 2 PETG plates, ~4h27 + 2h30 = 6h57; 186.9 g |
+| Robot with battery | ~430–440 g **estimated** — weigh it when assembled |
+| Joint range | ±30° in CAD, checked every 5°, min clearance 3.3 mm; all four legs in phase |
+| Symmetry (STEP) | 0 mm / 0°; not checked on a print |
+| Firmware | Builds for ESP32-S3; host tests pass for Wi-Fi, web, QR, API, assembly mode, BOOT, gait and PCA9685 |
 
-[Print all](case/print/production.3mf) chứa đủ P01–P12: plate 1 đáy+nắp, plate 2 chân+thanh đè. Hai plate tên **MỚI∕SỬA — CẦN IN**; ký tự ∕ thay / vì Bambu làm mất tên chứa /. Chưa có part bản này được xác nhận đã in. Sau khi xác nhận MATING_TEST đạt, inventory và plate sẽ được cập nhật, vẫn giữ đủ mọi part trong Print all.
+[Print all](case/print/production.3mf) holds all parts P01–P12: plate 1 = base + lid, plate 2 = legs + clamp bars.
 
-Đúng cấu hình đã cho: Bambu A1, nozzle 0,4, PETG Basic Flow Rate Calibrated, layer 0,20, 2 walls, 7% Grid, tree auto. Hướng in từng part và thao tác ráp ở [hướng dẫn cơ khí](case/README.md), [bản đồ vít](case/fastener_map.csv). CAD nguồn ở `case/`; STEP/STL từng part ở `case/out/`; source firmware ở `firmware/crab/`; binary ở `build/firmware/esp32/crab.ino.bin`.
+Print settings used: Bambu A1, 0.4 nozzle, PETG Basic (flow-rate calibrated), 0.20 mm layers, 2 walls, 7% grid infill, tree supports (auto). Part orientation and assembly notes are in the [case guide](case/README.md) and the [fastener map](case/fastener_map.csv).
 
-## GIẢ ĐỊNH và phần cần kiểm bằng tay
+## Assumptions — check by hand
 
-Kích thước SG90/horn, vỏ LILYGO/chân Dupont, PCA và thanh KK10 lấy theo mẫu tham chiếu, chưa đo đồ của chủ. Pin tối đa 100×65×15 mm, 120 g, mỗi cổng ≥2,4 A. Data WS2812 3,3 V nối thẳng chưa được thử: rút ngắn dây DIN sát GND; vẫn nhấp nháy thì rút thanh đèn ra dùng robot trước, không nối sang 3V.
+- SG90/horn, LILYGO case/Dupont pins, PCA9685 and LED bar sizes come from reference models, not measured from the owner's parts.
+- Power bank: max 100×65×15 mm, 120 g, ≥2.4 A per port.
+- WS2812 data driven directly at 3.3 V is untested: keep the DIN wire short and next to GND; if it flickers, unplug the LED bar and use the robot without it.
+- Still to check on the real robot: servo horn/pocket fit (use the coupon), wire bend under the LILYGO/PCA, QR scanning with the lid closed, real servo direction, leg grip, and whether the power bank auto-shuts off.
+- Sideways walking comes from a simple kinematic model, not a floor-contact simulation. The default gait is slow to limit current spikes.
 
-Theo ghi chú tester, cần kiểm horn/hốc servo bằng coupon; độ cong dây dưới LILYGO/PCA và cạnh trụ đèn; quét QR khi đóng nắp; dấu quay servo thật, chân bám sàn và pin có tự ngắt. Đi ngang hiện là kết quả mô hình tiếp tuyến đơn giản, chưa mô phỏng tiếp xúc sàn. Dáng đi mặc định chậm để giảm dòng giật. Mất Wi-Fi đã lưu sẽ về AP sau 15 giây; muốn thử lại mạng đó thì khởi động lại hoặc nhập lại. Rời trang Ráp phải bấm **Xong Ráp** để mở khóa đi. Các việc này có cách đạt/không đạt trong [CHECKLIST-RAP](CHECKLIST-RAP.md), không cần đo điện.
+Pass/fail steps for all of these are in [CHECKLIST-RAP](CHECKLIST-RAP.md) — no electrical measuring needed.
 
-Ghi chú chữ tiêu đề schematic có thể hiển thị mã Unicode thay tiếng Việt; silk cảnh báo PCB đúng. Báo cáo tiết diện có một số kích thước từ tham số CAD; tester đã đo lại các điểm gá nắp, đường vào tán và rãnh dây trên STEP. Chưa thử độ bền bản in. Không có `lead-document-findings.json` trong run; các ghi chú tester đã được đọc và các blocker đã được sửa, duyệt lại.
+## Build from source
 
-Print team tự động đã đọc file in và đề xuất chờ hai bộ thử, nhưng ghi đề xuất gặp lỗi `Print request needs verified plate and parts` hai lần. Lỗi handoff này không đổi `teamReady=true`; không có xác nhận in nào và không gửi lệnh in. Handoff hiện tại là in thử trước theo checklist. Pane Case → Overview không mở được trong môi trường không có cửa sổ; builder đã kiểm overview bằng Chrome headless ở desktop và phone 390 px.
+Run `./build.sh` in a KiCad Harness environment with KiCad, CadQuery, Bambu Studio and Arduino CLI installed. The script reports missing tools; it never downloads, installs, flashes, prints or orders anything. Order: board export/checks → STEP → CAD → slice/3MF → overview and images → firmware and tests. Clean-clone validation is in [BUILD-VALIDATION.md](BUILD-VALIDATION.md).
 
-## Tái tạo từ source
-
-Chạy `./build.sh` trong môi trường KiCad Harness đã có KiCad, CadQuery, Bambu Studio, Arduino CLI/core/thư viện dùng chung. Script báo công cụ thiếu, không tải/cài qua mạng, không tự nạp/in/đặt hàng. Thứ tự: xuất/kiểm board → STEP → CAD → slice/3MF → overview và ảnh → firmware/tests. Các bước cache theo nguồn không đổi; kiểm clone sạch trước push được ghi ở [BUILD-VALIDATION.md](BUILD-VALIDATION.md).
-
-Git chứa source, input và tài liệu; output/cache được ignore. Sau clone, các link output chỉ có file sau khi chạy build. Đổi máy cần cài các công cụ nêu trong [firmware README](firmware/README.md) và sửa đường thư viện tuyệt đối trong `firmware/flash.json` trước khi tự nạp; build script dùng cache ở `$CIRCUIT_FIRMWARE_CACHE`. [Yêu cầu gốc](prompts/original.md), [ảnh tham khảo thu nhỏ](references/IMAGES.md), [inventory](case/PRINTED-INVENTORY.md).
+Git holds source, inputs and docs; outputs and caches are ignored, so the render/3MF links above only work after a build. On a new machine, fix the absolute library paths in `firmware/flash.json` before flashing. Source layout: CAD in `case/`, firmware in `firmware/crab/`, board in `engineering/`. See also the [original request](prompts/original.md) and [reference images](references/IMAGES.md).
