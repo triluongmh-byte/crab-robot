@@ -1,0 +1,2 @@
+# Protection
+An unpowered dummy PCB only: two independent passive copper links, no loads or external energy source. No mains, battery cell, charging circuit, radio, motor supply or robot module is present. No custom protection circuit is needed or fitted. Front silk explicitly says BOARD GIẢ - KHÔNG ĐẶT - KHÔNG ĐẶT VÀO ROBOT. It must stay outside the robot. No behavior of the separate robot electronics is certified by this board's check.

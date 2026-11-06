@@ -1,0 +1,44 @@
+# Firmware handoff — 2026-11-06 (knee-sign integration repair complete; independent review pending)
+- Contract SHA256: 65b9793b07d82edc0defd9900ba1cfbee13dc730266cc0b675d897c87a75d9ea; unchanged. No hardware access/flash.
+- Local result: target binary built/current; full host suite9/9 passed. See VALIDATION.md for hashes/evidence.
+- Complete handwired firmware; dummy KiCad PCB is never installed and has no firmware signals.
+- `README.md`: Vietnamese use/build/Flash instructions, pin table, honest physical-test limits.
+- `WIRING.md` + `wiring.svg`: physical label-to-label wiring, two USB ports, channel map, startup.
+- `CHECKLIST-RAP.md`: merge into lead's root checklist; no measurements required of owner.
+- `DEVIATIONS.md`: case-derived knee lift signs replace sealed defaults; WS2812 stays5V/short DIN, omit if flicker persists.
+- `SOURCES.md` + `LICENSE`: pinned LILYGO/Kame32 sources, GPLv3 text, dependency provenance.
+- `integration.json`: GPIO, rail/channel/sign/range data + case/lead reconciliation tasks.
+- `flash.json`: ESP32-S3/16MB/OPI PSRAM recipe -> ../build/firmware/esp32/crab.ino.bin; no auto-flash.
+- `crab/Config.h` L1–40: ONLY GPIO authority, motion limits, startup/channel signs (L29–31).
+- Knee lift now FL−1/FR+1/RL+1/RR−1; hips all+1. Positive gait knee means UP; mechanical.json larger-pulse FL/RR is DOWN.
+- `crab/TftSetup.h` L1–27: forced-include TFT_eSPI Setup206-equivalent using Config.h pins.
+- `crab/Robot.h` L1–93: portable storage/radio interfaces, Wi-Fi/control/API state.
+- `crab/Robot.cpp` L23–64: Wifi::{begin,submit,tick,reset,qr}, atomic saved credential record.
+- `crab/Robot.cpp` L65–91: directionVector/gait; oscillator-derived sequential crawl, 8 vectors.
+- `crab/Robot.cpp` L92–148: Robot::{begin,move,stop,tick}, sequence barrier, startup, ramps, trims.
+- `crab/Robot.cpp` L149–190: BootHold and production Api::handle.
+- `crab/crab.ino` L14–32: NVS/EspRadio adapters; L46–77 actuatorTask (100Hz independent of web).
+- `crab/crab.ino` L78–133: request/handleApi/handleScan/servePage/setup/loop, DNS captive probes.
+- `crab/Hardware.h` L5–26: Pca begin/full-off/servo; warm-reset outputs stay off until enabled.
+- `crab/Display.h` L6–31: portrait170x320, 148px QR + 4-module quiet border, Vietnamese bitmap text.
+- `crab/Font.h`: generated Vietnamese glyph cells; `tools/firmware/make_font.py` optional regeneration.
+- `crab/Web.h/.cpp` L4–32: offline page, hold/beat/stop L16–21, scan/setup L22–23, Ráp L25–29.
+- `crab/QrEncoder.c/.h`: upstream MIT QR encoder renamed to avoid ESP-IDF qrcode.h collision.
+- `tests/test_core.cpp`: Wi-Fi/NVS/API/BOOT; gaitTests L83–140 checks physical knee pulse direction/peak lift, rate/acceleration/projection.
+- `tests/test_web.js`: production inline-JS VM with mock DOM/fetch, release/visibility/offline/SSID tests.
+- `tests/test_hardware.cpp` + `tests/stubs/Wire.h`: production PCA driver register model, warm reset/NACK.
+- `tests/qr_dump.cpp`: actual C encoder output for independent ZXing decode at LCD pixel scale.
+- `tools/firmware/build.py`: shared-cache Arduino build, all CPUs, input fingerprint skips unchanged binary.
+- `tools/firmware/check.py`: parallel host suite, cached ASan/UBSan compile -> build/firmware/host/report.json.
+- `tools/firmware/check_qr.py`: independent QR decoder; `check_interfaces.py` L18–31 reconciles Config/integration/case knee signs.
+- FAST checks from project root: `python3 tools/firmware/check.py wifi api` / `assembly boot` / `gait` / `web` / `qr` / `hardware` / `pins`.
+- FULL check: `python3 tools/firmware/check.py`; target build: `python3 tools/firmware/build.py` (skips unchanged).
+- Toolchain: Arduino CLI1.5.1 / ESP32 core2.0.14; TFT_eSPI2.5.43 / NeoPixel1.12.3 in shared cache. No installs.
+- Test helpers require clang/Node and shared Python Pillow/ZXing. Binary/objects/tool evidence only in build/firmware/.
+- Physical assumptions: actual SG90 direction/horn splines, PCA clone pull-down/pull-ups, direct3.3V LED data, power bank.
+- Case shaft signs reconciled against mechanical.json; neutral45° horn geometry and ±25° total servo envelope incl trim remain model/assembly checks.
+- Planar stance projection supports intended directions; floor contact, traction, closed-lid QR scan, Wi-Fi remain untested.
+- Actual dummy PCB is present and inspected; no robot GPIO on it. Run `...check.py pins` after case integration changes.
+- Native ERC/DRC logs: build/firmware/native/. Gate native0; stored manufacturing has gerber_silk_line_width1 despite fab.ready=true. Lead/board follow-up; untouched.
+- Three lead-reported case defects are outside this role; final team readiness still needs case repair/integration. No user blocker.
+- Root guide should link firmware instructions and merge checklist/deviation; root .gitignore must exclude build artifacts/caches.

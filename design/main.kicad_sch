@@ -1,0 +1,327 @@
+(kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0")
+	(uuid "f0d180ad-768b-4d15-b8fb-7bb595514022")
+	(paper "A4")
+	(title_block (title "BOARD GI\u1ea2 - KH\u00d4NG \u0110\u1eb6T - KH\u00d4NG \u0110\u1eb6T V\u00c0O ROBOT") (date "2026-11-06") (rev "A") (company "Dummy only; no robot electronics"))
+	(lib_symbols
+(symbol "Dummy:Conn_01x01"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_01x01"
+				(at 0 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "connector"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Connector*:*_1x??_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Conn_01x01_1_1"
+				(rectangle
+					(start -1.27 1.27)
+					(end 1.27 -1.27)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(rectangle
+					(start -1.27 0.127)
+					(end 0 -0.127)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+(symbol "Dummy:MountingHole"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "H"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "MountingHole"
+				(at 0 3.175 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Mounting Hole without connection"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "mounting hole"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "MountingHole*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "MountingHole_0_1"
+				(circle
+					(center 0 0)
+					(radius 1.27)
+					(stroke
+						(width 1.27)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	)
+	(symbol
+		(lib_id "Dummy:Conn_01x01")
+		(at 76.2 76.2 0)
+		(unit 1)
+		(exclude_from_sim no) (in_bom no) (on_board yes) (dnp no)
+		(uuid "862fdec9-6c7b-46c0-a180-07d991e684c1")
+		(property "Reference" "J1" (at 80.01 71.12 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Value" "SOLDER_PAD_1" (at 80.01 81.28 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Footprint" "Dummy:SolderPad_2x3mm" (at 76.2 76.2 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "" (at 76.2 76.2 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "Integral bare PCB solder pad; nothing fitted" (at 76.2 76.2 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "bbde97f6-1b06-4829-a0eb-346e01bf92e4"))
+		(instances (project "main" (path "/f0d180ad-768b-4d15-b8fb-7bb595514022" (reference "J1") (unit 1))))
+	)
+	(symbol
+		(lib_id "Dummy:Conn_01x01")
+		(at 127.0 76.2 0)
+		(unit 1)
+		(exclude_from_sim no) (in_bom no) (on_board yes) (dnp no)
+		(uuid "277abf2e-b6b9-4c50-95f1-335fb9a51aca")
+		(property "Reference" "J2" (at 130.81 71.12 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Value" "SOLDER_PAD_2" (at 130.81 81.28 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Footprint" "Dummy:SolderPad_2x3mm" (at 127.0 76.2 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "" (at 127.0 76.2 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "Integral bare PCB solder pad; nothing fitted" (at 127.0 76.2 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "9b1a7671-bda0-4dd4-af5c-d5b134ef9f06"))
+		(instances (project "main" (path "/f0d180ad-768b-4d15-b8fb-7bb595514022" (reference "J2") (unit 1))))
+	)
+	(symbol
+		(lib_id "Dummy:Conn_01x01")
+		(at 76.2 111.76 0)
+		(unit 1)
+		(exclude_from_sim no) (in_bom no) (on_board yes) (dnp no)
+		(uuid "7414155f-a95f-4bae-9f8c-0f435d2108cc")
+		(property "Reference" "J3" (at 80.01 106.68 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Value" "SOLDER_PAD_3" (at 80.01 116.84 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Footprint" "Dummy:SolderPad_2x3mm" (at 76.2 111.76 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "" (at 76.2 111.76 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "Integral bare PCB solder pad; nothing fitted" (at 76.2 111.76 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "7eff11d4-c5a1-49c3-a48e-020d7d33cd07"))
+		(instances (project "main" (path "/f0d180ad-768b-4d15-b8fb-7bb595514022" (reference "J3") (unit 1))))
+	)
+	(symbol
+		(lib_id "Dummy:Conn_01x01")
+		(at 127.0 111.76 0)
+		(unit 1)
+		(exclude_from_sim no) (in_bom no) (on_board yes) (dnp no)
+		(uuid "61d5ea56-befe-4311-860b-d542b6006a24")
+		(property "Reference" "J4" (at 130.81 106.68 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Value" "SOLDER_PAD_4" (at 130.81 116.84 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Footprint" "Dummy:SolderPad_2x3mm" (at 127.0 111.76 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "" (at 127.0 111.76 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "Integral bare PCB solder pad; nothing fitted" (at 127.0 111.76 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "45a20813-e148-4856-905a-ec8b7779aca3"))
+		(instances (project "main" (path "/f0d180ad-768b-4d15-b8fb-7bb595514022" (reference "J4") (unit 1))))
+	)
+	(symbol
+		(lib_id "Dummy:MountingHole")
+		(at 76.2 149.86 0)
+		(unit 1)
+		(exclude_from_sim no) (in_bom no) (on_board yes) (dnp no)
+		(uuid "ebf5cea0-9448-4f95-ba23-95dba1569b4b")
+		(property "Reference" "MH1" (at 80.01 144.78 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Value" "NPTH_3.2mm" (at 80.01 154.94000000000003 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Footprint" "Dummy:MountingHole_3.2mm_M3" (at 76.2 149.86 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "" (at 76.2 149.86 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "" (at 76.2 149.86 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(instances (project "main" (path "/f0d180ad-768b-4d15-b8fb-7bb595514022" (reference "MH1") (unit 1))))
+	)
+	(symbol
+		(lib_id "Dummy:MountingHole")
+		(at 127.0 149.86 0)
+		(unit 1)
+		(exclude_from_sim no) (in_bom no) (on_board yes) (dnp no)
+		(uuid "d363f669-b4b8-486d-9786-fe79d8001177")
+		(property "Reference" "MH2" (at 130.81 144.78 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Value" "NPTH_3.2mm" (at 130.81 154.94000000000003 0) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Footprint" "Dummy:MountingHole_3.2mm_M3" (at 127.0 149.86 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "" (at 127.0 149.86 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "" (at 127.0 149.86 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(instances (project "main" (path "/f0d180ad-768b-4d15-b8fb-7bb595514022" (reference "MH2") (unit 1))))
+	)
+	(wire (pts (xy 71.12 76.2) (xy 68.58 76.2)) (stroke (width 0) (type default)) (uuid "4c30fc7c-af9d-46b3-bc85-b0b9315ced4c"))
+	(global_label "DUMMY_A" (shape passive) (at 68.58 76.2 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "df15fdd2-ba80-44ed-813f-a9d611b561dd") (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 68.58 76.2 0) (effects (font (size 1.27 1.27)) (hide yes))))
+	(wire (pts (xy 121.92 76.2) (xy 119.38 76.2)) (stroke (width 0) (type default)) (uuid "8bbcdf5f-8563-47aa-a279-9d57cb51121d"))
+	(global_label "DUMMY_A" (shape passive) (at 119.38 76.2 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "f905ce43-c1a7-4137-a7a9-345c8f6bbd5e") (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 119.38 76.2 0) (effects (font (size 1.27 1.27)) (hide yes))))
+	(wire (pts (xy 71.12 111.76) (xy 68.58 111.76)) (stroke (width 0) (type default)) (uuid "748d6079-1a24-40fa-8768-1a1c32a2ecf0"))
+	(global_label "DUMMY_B" (shape passive) (at 68.58 111.76 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4ac1e4c1-0f06-464a-97b5-e67e578683a7") (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 68.58 111.76 0) (effects (font (size 1.27 1.27)) (hide yes))))
+	(wire (pts (xy 121.92 111.76) (xy 119.38 111.76)) (stroke (width 0) (type default)) (uuid "db8b1f55-8313-4e58-93a8-46ace366cf8c"))
+	(global_label "DUMMY_B" (shape passive) (at 119.38 111.76 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "2a3b169b-ef43-4ca9-a04a-080a7f682450") (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 119.38 111.76 0) (effects (font (size 1.27 1.27)) (hide yes))))
+	(sheet_instances (path "/" (page "1")))
+	(embedded_fonts no)
+)

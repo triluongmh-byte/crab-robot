@@ -1,0 +1,34 @@
+# Private user assembly photos
+prompts/assets/**/IMG_243*.jpg
+# Harness runtime and team worktrees
+.harness/
+.circuit/team-runs/
+# Derived artifacts: regenerate with ./build.sh
+.circuit/
+.kicadpy/
+.pilot/
+boards/
+build/
+case/out/
+case/print/
+case/reports/
+case/images/
+case/overview.html
+**/__pycache__/
+*.pyc
+*.bin
+*.elf
+*.map
+*.stl
+*.step
+*.stp
+*.3mf
+*.gcode
+*.zip
+*.kicad_prl
+*.lck
+.DS_Store
+# Preserve full original evidence locally; publish smaller non-personal copies.
+prompts/assets/**
+!prompts/assets/**/
+!prompts/assets/**/2026-10-31-owner-native-project-settings.json

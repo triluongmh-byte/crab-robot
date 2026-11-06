@@ -1,0 +1,90 @@
+{
+  "contractSha256": "65b9793b07d82edc0defd9900ba1cfbee13dc730266cc0b675d897c87a75d9ea",
+  "hardwareTested": false,
+  "assemblyVariant": "handwired; dummy PCB excluded",
+  "pins": {
+    "SDA": 18,
+    "SCL": 17,
+    "LED_DIN": 21,
+    "BOOT": 0,
+    "LCD_POWER_ON": 15,
+    "LCD_BL": 38
+  },
+  "logicRailV": 3.3,
+  "servoRailV": 5,
+  "pcaAddress": "0x40",
+  "pwmHz": 50,
+  "jointOrder": [
+    "FL_HIP",
+    "FL_KNEE",
+    "FR_HIP",
+    "FR_KNEE",
+    "RL_HIP",
+    "RL_KNEE",
+    "RR_HIP",
+    "RR_KNEE"
+  ],
+  "directionSigns": [
+    1,
+    -1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    -1
+  ],
+  "startupOrder": [
+    0,
+    2,
+    4,
+    6,
+    1,
+    3,
+    5,
+    7
+  ],
+  "startupIntervalMs": 300,
+  "heartbeatTimeoutMs": 600,
+  "neutralServoDegrees": 90,
+  "neutralPulseUs": 1500,
+  "pulseUsPerDegree": 10,
+  "maximumServoDeltaDegrees": 25,
+  "trimLimitDegrees": 15,
+  "gait": {
+    "type": "Kame32 oscillator-derived one-leg crawl",
+    "periodMs": 8000,
+    "hipAmplitudeDegrees": 12,
+    "kneeLiftDegrees": 16,
+    "sideways": true,
+    "physicalLocomotionVerified": false
+  },
+  "caseReconciliationRequired": [
+    "Recheck sign parity if the case shaft geometry changes; current knee lift and hip CCW signs agree with mechanical.json",
+    "Confirm neutral45-degree radial horn pose and mechanical mirror error independent of trim",
+    "Check gait against actual joint collision range; firmware caps total commanded angle including trim to±25 degrees",
+    "QR 148x148px, portrait170x320 display; closed lid must expose scan area; BOOT and USB need access"
+  ],
+  "boardOutputAvailableAtBuild": true,
+  "rootDocumentationMerge": [
+    "Merge firmware/CHECKLIST-RAP.md into root CHECKLIST-RAP.md",
+    "Use LED remedy in firmware/DEVIATIONS.md; do not advise3.3V WS2812 supply",
+    "Explain Flash and slow-current gait without claiming physical motion tests"
+  ],
+  "directionSignConvention": {
+    "hipPositive": "CCW seen from above",
+    "kneePositive": "foot UP (gait swing lift)",
+    "pulseConversion": "angle = 90 + trim + directionSign * gaitAngle; positive pulseUsPerDegree"
+  },
+  "caseReconciliation": {
+    "report": "case/reports/mechanical.json",
+    "kneeLargerPulse": {
+      "FL": "foot DOWN",
+      "FR": "foot UP",
+      "RL": "foot UP",
+      "RR": "foot DOWN"
+    },
+    "kneeLiftSignsConfirmedAgainstReport": true,
+    "hardwareTested": false
+  }
+}

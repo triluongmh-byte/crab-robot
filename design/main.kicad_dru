@@ -1,0 +1,6 @@
+(version 1)
+(rule "Dummy conservative trace and clearance"
+ (constraint track_width (min 0.25mm))
+ (constraint clearance (min 0.20mm)))
+(rule "Dummy conservative board edge"
+ (constraint edge_clearance (min 0.50mm)))

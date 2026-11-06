@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Robot Cua A1 V4 — Tổng quan ráp</title>
+<style>
+:root{--bg:#edf3f5;--panel:#ffffff;--text:#24313a;--accent:#1d668f;--muted:#5b6b75;--border:#cbd6d9}
+body.dark{--bg:#0e0f13;--panel:#161a22;--text:#e6e9ef;--accent:#7fb0ff;--muted:#a9b3c2;--border:#3a414c}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+#wrap{display:flex;flex-direction:column;height:100%;width:100%;max-width:100vw;overflow:hidden}#bar,#main,#side{max-width:100vw;min-width:0}.hw{white-space:normal;overflow-wrap:anywhere}
+#bar{display:flex;gap:6px;align-items:center;padding:8px;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap}
+select,button{min-height:44px;font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:0 12px}
+button:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+#step{flex:1 1 0;width:0;min-width:0}#bar>button{padding:0 8px}html,body{overflow-x:hidden}
+#main{flex:1;display:flex;min-height:0}
+#cv{flex:1;min-width:0;width:100%;touch-action:none;display:block}
+#side{width:340px;overflow:auto;background:var(--panel);border-left:1px solid var(--border);padding:10px}
+@media (max-width:760px){#main{flex-direction:column}#side{width:auto;max-height:46%;border-left:0;border-top:1px solid var(--border)}#cv{min-height:300px}}
+h2{font-size:16px;margin:4px 0 6px}.card{border:1px solid var(--border);border-radius:10px;padding:8px;margin:8px 0}
+.hw{display:block;width:100%;text-align:left;margin:4px 0;min-height:44px}.small{color:var(--muted);font-size:13px}
+details summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
+label{display:flex;align-items:center;gap:8px;min-height:40px}input[type=range]{flex:1}
+.tag{display:inline-block;padding:1px 6px;border-radius:6px;background:#fde7c8;color:#5a3a00;font-size:12px}
+#lbl{position:absolute;pointer-events:none;font-size:12px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:2px 6px;display:none}
+</style></head>
+<body><div id="wrap">
+<div id="bar"><button id="prev" aria-label="Bước trước">◀ Trước</button>
+<select id="step" aria-label="Chọn bước"></select>
+<button id="next" aria-label="Bước sau">Sau ▶</button>
+<button id="tHw" class="on" aria-pressed="true">Vít/tán</button></div>
+<div id="main"><canvas id="cv"></canvas><div id="lbl"></div>
+<div id="side"><h2 id="title"></h2><div id="act"></div>
+<div class="card"><b>Vít/tán bước này</b><div id="hwcard"></div></div>
+<details id="det"><summary>Chi tiết</summary>
+<label><input type="checkbox" id="cLid"> Mở/ẩn nắp</label>
+<label><input type="checkbox" id="cX"> X-ray nắp + đáy</label>
+<label><input type="checkbox" id="cEl" checked> Điện tử</label>
+<label><input type="checkbox" id="cW"> Đường dây</label>
+<label><input type="checkbox" id="cEx"> Bung vít (minh họa)</label>
+<label>Hông <input type="range" id="sHip" min="-30" max="30" value="0"><span id="vHip">0°</span></label>
+<label>Gối <input type="range" id="sKnee" min="-30" max="30" value="0"><span id="vKnee">0°</span></label>
+<button id="bStop">Dừng / về giữa</button> <button id="bAnim">Chạy thử dáng</button>
+<div class="small">Biên độ ±30° là vùng đã kiểm va chạm trên CAD (mỗi 5°). Hoạt cảnh chỉ minh họa, không phải thử thật.</div>
+<div class="card"><b>Camera</b><br><button id="vTop">Từ trên</button> <button id="vFront">Từ trước</button> <button id="vIso">Xiên</button></div>
+<div class="small" id="assume"></div></details></div></div></div>
+<script>
+const D=/*DATA*/null;
+const $=id=>document.getElementById(id);
+function theme(){document.body.classList.toggle('dark',/theme=dark/.test(location.hash))}
+theme();addEventListener('hashchange',()=>{theme();draw()});
+const COL={frame:'#d6cfc1',frame2:'#c9bfae',cover:'#eee9df',moving:'#9ebcca',moving2:'#86a9b9',servo:'#3d4a8f',horn:'#f2f2f2',elec:'#4c806c',pack:'#607d8b',metal:'#596872',sel:'#1d668f'};
+const cv=$('cv'),gl=cv.getContext('webgl',{antialias:true});
+function hex(c){return[parseInt(c.slice(1,3),16)/255,parseInt(c.slice(3,5),16)/255,parseInt(c.slice(5,7),16)/255]}
+function dec(b64){const s=atob(b64),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);const a=new Int16Array(u.buffer),f=new Float32Array(a.length);for(let i=0;i<a.length;i++)f[i]=a[i]*D.q;return f}
+const vs=`attribute vec3 p;attribute vec3 n;uniform mat4 M,V;varying vec3 vn;void main(){vn=mat3(M)*n;gl_Position=V*M*vec4(p,1.);}`;
+const fs=`precision mediump float;varying vec3 vn;uniform vec3 c;uniform float a,lit;void main(){vec3 N=normalize(vn);float d=max(dot(N,normalize(vec3(.4,-.5,.8))),0.);float k=lit>0.5?.45+.55*d+.12*max(dot(N,normalize(vec3(-.6,.7,.3))),0.):1.;gl_FragColor=vec4(c*k,a);}`;
+function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+const L={p:gl.getAttribLocation(pr,'p'),n:gl.getAttribLocation(pr,'n'),M:gl.getUniformLocation(pr,'M'),V:gl.getUniformLocation(pr,'V'),c:gl.getUniformLocation(pr,'c'),a:gl.getUniformLocation(pr,'a'),lit:gl.getUniformLocation(pr,'lit')};
+function buf(arr){const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,arr,gl.STATIC_DRAW);return b}
+function mk(pos){const n=new Float32Array(pos.length);for(let i=0;i<pos.length;i+=9){const ax=pos[i+3]-pos[i],ay=pos[i+4]-pos[i+1],az=pos[i+5]-pos[i+2],bx=pos[i+6]-pos[i],by=pos[i+7]-pos[i+1],bz=pos[i+8]-pos[i+2];let x=ay*bz-az*by,y=az*bx-ax*bz,z=ax*by-ay*bx;const l=Math.hypot(x,y,z)||1;for(let k=0;k<3;k++){n[i+3*k]=x/l;n[i+3*k+1]=y/l;n[i+3*k+2]=z/l}}return{p:buf(pos),n:buf(n),c:pos.length/3}}
+// primitive meshes for hardware (cylinder along z, unit) built once
+function cylMesh(seg){const p=[];for(let i=0;i<seg;i++){const a=i/seg*2*Math.PI,b=(i+1)/seg*2*Math.PI,c1=Math.cos(a),s1=Math.sin(a),c2=Math.cos(b),s2=Math.sin(b);p.push(c1,s1,0,c2,s2,0,c2,s2,1,c1,s1,0,c2,s2,1,c1,s1,1, 0,0,1,c1,s1,1,c2,s2,1, 0,0,0,c2,s2,0,c1,s1,0)}return mk(new Float32Array(p))}
+const CYL=cylMesh(20),HEX=cylMesh(6);
+const meshes=D.meshes.map(m=>{const pos=dec(m.tri),e=m.edge?dec(m.edge):new Float32Array(0);const o=mk(pos);o.e=buf(e);o.ec=e.length/3;Object.assign(o,m);let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(let i=0;i<pos.length;i+=3)for(let k=0;k<3;k++){mn[k]=Math.min(mn[k],pos[i+k]);mx[k]=Math.max(mx[k],pos[i+k])}o.ctr=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];return o});
+// matrices (column-major)
+const I=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+function mul(a,b){const o=new Array(16).fill(0);for(let i=0;i<4;i++)for(let j=0;j<4;j++)for(let k=0;k<4;k++)o[j*4+i]+=a[k*4+i]*b[j*4+k];return o}
+const T=(x,y,z)=>[1,0,0,0,0,1,0,0,0,0,1,0,x,y,z,1],S=(x,y,z)=>[x,0,0,0,0,y,0,0,0,0,z,0,0,0,0,1];
+function Rax(ax,deg){const a=deg*Math.PI/180,c=Math.cos(a),s=Math.sin(a),[x,y,z]=ax,t=1-c;return[t*x*x+c,t*x*y+s*z,t*x*z-s*y,0,t*x*y-s*z,t*y*y+c,t*y*z+s*x,0,t*x*z+s*y,t*y*z-s*x,t*z*z+c,0,0,0,0,1]}
+function about(p,ax,deg){return mul(T(...p),mul(Rax(ax,deg),T(-p[0],-p[1],-p[2])))}
+const st={step:0,hip:0,knee:0,lid:false,x:false,el:true,w:false,ex:false,hw:true,focus:null,yaw:-35,pitch:28,dist:330,tgt:[0,0,15]};
+function legM(leg,link){const g=D.legs[leg];// gait angle -> world: mirror sign keeps the motion symmetric
+ const sgn=g.sx*g.sy;const hipA=st.hip*sgn;let m=about([g.hip[0],g.hip[1],0],[0,0,1],hipA);
+ if(link==='tibia'){const a=g.ang*Math.PI/180,r=D.knee.r;const kp=[g.hip[0]+r*Math.cos(a),g.hip[1]+r*Math.sin(a),D.knee.z];const t=[-Math.sin(a),Math.cos(a),0];m=mul(m,about(kp,t,st.knee))}return m}
+function groupsFor(){const s=st.step?D.steps[st.step-1].show:['all'];const all=s.includes('all');const h=x=>all||s.includes(x);return{body0:h('body0')||h('body')||all,bars:h('bars')||h('body')||all,pack:h('pack')||all,hips:h('hips')||all,elec:(h('elec')||all)&&st.el,lid:(h('lid')||all)&&!st.lid,femur:h('femur')||all,tibia:all,horns:h('horns')||all,wires:h('wires')||st.w}}
+function visible(m,g){if(m.group==='body')return m.id==='P01_day'?g.body0:g.bars;if(m.group==='lid')return g.lid;if(m.group==='elec')return m.role==='pack'?g.pack:g.elec;
+ if(m.group==='servo'){if(m.id.includes('_hip')&&!m.id.includes('horn'))return g.hips;if(m.id.includes('knee')&&!m.id.includes('horn'))return g.femur;if(m.id.includes('hip_horn'))return g.horns||g.tibia;return g.tibia}
+ if(m.link==='femur')return g.femur;if(m.link==='tibia')return g.tibia;return true}
+function view(){const W=cv.clientWidth,H=cv.clientHeight,asp=W/H,f=1/Math.tan(0.45/2*1.6),n=5,fa=3000;const P=[f/asp,0,0,0,0,f,0,0,0,0,(fa+n)/(n-fa),-1,0,0,2*fa*n/(n-fa),0];
+ const y=st.yaw*Math.PI/180,p=st.pitch*Math.PI/180;const e=[st.tgt[0]+st.dist*Math.cos(p)*Math.cos(y),st.tgt[1]+st.dist*Math.cos(p)*Math.sin(y),st.tgt[2]+st.dist*Math.sin(p)];
+ const z=norm(sub(e,st.tgt)),x=norm(cross([0,0,1],z)),u=cross(z,x);const Vw=[x[0],u[0],z[0],0,x[1],u[1],z[1],0,x[2],u[2],z[2],0,-dot(x,e),-dot(u,e),-dot(z,e),1];return mul(P,Vw)}
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],norm=a=>{const l=Math.hypot(...a)||1;return a.map(v=>v/l)};
+function drawMesh(o,M,col,alpha,lines){gl.uniformMatrix4fv(L.M,false,M);gl.uniform3fv(L.c,hex(col));gl.uniform1f(L.a,alpha);gl.uniform1f(L.lit,1);
+ gl.bindBuffer(gl.ARRAY_BUFFER,o.p);gl.vertexAttribPointer(L.p,3,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(L.p);gl.bindBuffer(gl.ARRAY_BUFFER,o.n);gl.vertexAttribPointer(L.n,3,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(L.n);gl.drawArrays(gl.TRIANGLES,0,o.c);
+ if(lines&&o.ec){gl.uniform1f(L.lit,0);gl.uniform3fv(L.c,hex(document.body.classList.contains('dark')?'#0b0d11':'#4e5d65'));gl.disableVertexAttribArray(L.n);gl.vertexAttrib3f(L.n,0,0,1);gl.bindBuffer(gl.ARRAY_BUFFER,o.e);gl.vertexAttribPointer(L.p,3,gl.FLOAT,false,0,0);gl.drawArrays(gl.LINES,0,o.ec)}}
+function stepHw(){if(!st.step)return D.fasteners.map(f=>f.id);return D.steps[st.step-1].hw.filter(h=>h[0]==='S')}
+function drawHw(){if(!st.hw)return;const ids=stepHw(),showAll=!st.step;for(const f of D.fasteners){const on=showAll||ids.includes(f.id);const g=groupsFor();if(!on&&!(st.step>=f.step))continue;
+ const sel=st.focus===f.id,ex=st.ex&&(on)?18:0;const col=sel?COL.sel:COL.metal;
+ drawMesh(CYL,mul(T(f.x,f.y,f.zhead+ex),S(2.75,2.75,3)),col,1,false);drawMesh(CYL,mul(T(f.x,f.y,f.zhead-f.L+ex),S(1.5,1.5,f.L)),col,1,false);
+ drawMesh(HEX,mul(T(f.x,f.y,f.nut-1.2-(st.ex&&on?6:0)),S(3.17,3.17,2.4)),sel?COL.sel:'#8a969d',1,false);
+ if(on&&st.step){drawMesh(CYL,mul(T(f.x,f.y,f.zhead+4+ex),S(.5,.5,14)),'#d32f2f',1,false);drawMesh(CYL,mul(T(f.x,f.y,f.zhead+3.2+ex),S(1.6,1.6,1)),'#d32f2f',1,false)}}}
+function drawWires(){for(const w of D.wires){for(let i=0;i<w.pts.length-1;i++){const a=w.pts[i],b=w.pts[i+1],d=sub(b,a),l=Math.hypot(...d);const z=[0,0,1],ax=cross(z,d),s=Math.hypot(...ax),ang=Math.atan2(s,d[2])*180/Math.PI;let M=T(...a);if(s>1e-6)M=mul(M,Rax(norm(ax),ang));else if(d[2]<0)M=mul(M,Rax([1,0,0],180));drawMesh(CYL,mul(M,S(1.6,1.6,l)),w.color,1,false)}}}
+function draw(){const dpr=devicePixelRatio||1;cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;gl.viewport(0,0,cv.width,cv.height);
+ const bg=hex(document.body.classList.contains('dark')?'#0e0f13':'#edf3f5');gl.clearColor(bg[0],bg[1],bg[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);
+ gl.uniformMatrix4fv(L.V,false,view());const g=groupsFor();const stepParts=st.step?D.steps[st.step-1].parts:[];
+ // ground grid
+ const dark=document.body.classList.contains('dark');for(let i=-150;i<=150;i+=25){drawMesh(CYL,mul(T(i,-150,-27.3),mul(Rax([1,0,0],-90),S(.15,.15,300))),dark?'#3a414c':'#cbd6d9',1,false);drawMesh(CYL,mul(T(-150,i,-27.3),mul(Rax([0,1,0],90),S(.15,.15,300))),dark?'#3a414c':'#cbd6d9',1,false)}
+ drawHw();if(g.wires)drawWires();
+ const trans=[];for(const m of meshes){if(!visible(m,g))continue;const M=m.leg?legM(m.leg,m.link):I();let col=COL[m.role]||'#999';if(stepParts.includes(m.id)||st.focus===m.id)col=COL.sel;
+  if(st.x&&(m.group==='lid'||m.id==='P01_day')){trans.push([m,M,col]);continue}drawMesh(m,M,col,1,true)}
+ gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);for(const [m,M,c] of trans)drawMesh(m,M,c,.28,true);gl.depthMask(true);gl.disable(gl.BLEND)}
+function hwCard(){const box=$('hwcard');box.innerHTML='';if(!st.step){const n=D.fasteners.length;box.innerHTML=`<div>Tổng: <b>${n} vít M3</b> (4× M3×12 + 4× M3×20) + <b>${n} tán M3</b>. Vít túi SG90: 8 vít tai servo gối + 8 vít tâm horn.</div>`;for(const f of D.fasteners)box.appendChild(btn(f));return}
+ const s=D.steps[st.step-1];if(!s.hw.length){box.innerHTML='<div class="small">Bước này không dùng vít hay tán.</div>';return}
+ for(const h of s.hw){if(h[0]==='S'){box.appendChild(btn(D.fasteners.find(f=>f.id===h)))}else{const f=D.factory[h];const d=document.createElement('div');d.className='card';d.innerHTML=`<b>${f.id}</b> — ${f.size} × ${f.n}<br>Tán: ${f.nut}. Hướng: ${f.entry}. ${f.note}. <span class="tag">vít nhà máy, không phải M3</span>`;box.appendChild(d)}}}
+function btn(f){const b=document.createElement('button');b.className='hw';b.innerHTML=`<b>${f.id}</b> ${f.size} + 1 tán M3 — ${f.entry}; ${f.tool}; ${f.note} (${f.parts.join(' + ')})`;b.onclick=()=>{st.focus=st.focus===f.id?null:f.id;if(st.focus){st.tgt=[f.x,f.y,f.zhead-5];st.dist=150}draw()};return b}
+function setStep(i){st.step=Math.max(0,Math.min(D.steps.length,i));st.focus=null;st.ex=false;$('cEx').checked=false;st.tgt=[0,0,15];st.dist=330;$('step').value=st.step;
+ $('title').textContent=st.step?D.steps[st.step-1].t:'Đủ bộ';$('act').textContent=st.step?D.steps[st.step-1].act:'Robot ráp xong ở tư thế đứng (neutral). 12 part in, 8 vít M3 + 8 tán. Chọn Bước 1 để bắt đầu ráp.';hwCard();draw()}
+const sel=$('step');sel.add(new Option('Đủ bộ',0));D.steps.forEach((s,i)=>sel.add(new Option(s.t,i+1)));sel.onchange=()=>setStep(+sel.value);
+$('prev').onclick=()=>setStep(st.step-1);$('next').onclick=()=>setStep(st.step+1);
+$('tHw').onclick=e=>{st.hw=!st.hw;e.target.classList.toggle('on',st.hw);e.target.setAttribute('aria-pressed',st.hw);draw()};
+$('cLid').onchange=e=>{st.lid=e.target.checked;draw()};$('cX').onchange=e=>{st.x=e.target.checked;draw()};$('cEl').onchange=e=>{st.el=e.target.checked;draw()};$('cW').onchange=e=>{st.w=e.target.checked;draw()};$('cEx').onchange=e=>{st.ex=e.target.checked;draw()};
+$('sHip').oninput=e=>{st.hip=+e.target.value;$('vHip').textContent=st.hip+'°';draw()};$('sKnee').oninput=e=>{st.knee=+e.target.value;$('vKnee').textContent=st.knee+'°';draw()};
+let anim=null;$('bStop').onclick=()=>{if(anim){cancelAnimationFrame(anim);anim=null}st.hip=0;st.knee=0;$('sHip').value=0;$('sKnee').value=0;$('vHip').textContent='0°';$('vKnee').textContent='0°';draw()};
+$('bAnim').onclick=()=>{if(anim)return;const t0=performance.now();const f=t=>{const p=(t-t0)/1000;st.hip=Math.round(25*Math.sin(p*2));st.knee=Math.round(25*Math.cos(p*2));$('sHip').value=st.hip;$('sKnee').value=st.knee;$('vHip').textContent=st.hip+'°';$('vKnee').textContent=st.knee+'°';draw();anim=requestAnimationFrame(f)};anim=requestAnimationFrame(f)};
+$('vTop').onclick=()=>{st.yaw=-90;st.pitch=89;draw()};$('vFront').onclick=()=>{st.yaw=0;st.pitch=5;draw()};$('vIso').onclick=()=>{st.yaw=-35;st.pitch=28;draw()};
+$('assume').textContent='GIẢ ĐỊNH: kích thước SG90, LILYGO, PCA9685, LED và pin là số danh nghĩa, chưa đo. Hình dây là sơ đồ minh họa; đấu dây thật theo firmware/WIRING.md. Chưa thử phần cứng. Bản '+D.revision+'.';
+let drag=null;cv.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];cv.setPointerCapture(e.pointerId)});cv.addEventListener('pointerup',()=>drag=null);
+cv.addEventListener('pointermove',e=>{if(!drag)return;st.yaw-=(e.clientX-drag[0])*.4;st.pitch=Math.max(-10,Math.min(89,st.pitch+(e.clientY-drag[1])*.4));drag=[e.clientX,e.clientY];draw()});
+cv.addEventListener('wheel',e=>{e.preventDefault();st.dist=Math.max(80,Math.min(900,st.dist*(1+e.deltaY*.001)));draw()},{passive:false});
+addEventListener('resize',draw);setStep(0);
+</script></body></html>

@@ -1,0 +1,14 @@
+{
+ "orientation": {"mount": "flat", "faceToUser": "top", "upEdge": "front"},
+ "handwired": true,
+ "note": "Handwired robot: the dummy KiCad PCB is never placed in the robot. Module interfaces come from PILOT_CONTRACT.json r1.",
+ "printer": {"model": "Bambu Lab A1", "bedMm": [256, 256, 256], "nozzleMm": 0.4, "material": "PETG"},
+ "interfaces": {},
+ "extra": [
+  {"name": "LILYGO screen window 44 x 24", "kind": "display", "centerMm": [2, 19], "face": "lid"},
+  {"name": "BOOT / KEY poke holes d3", "kind": "button", "centerMm": [[-29, 10], [-29, 28]], "face": "lid"},
+  {"name": "LED diffuser skin 0.8 mm", "kind": "light", "centerMm": [0, -2], "face": "lid"},
+  {"name": "power bank ports + finger window", "kind": "cable", "centerMm": [-63, 0], "face": "-X end"},
+  {"name": "power bank slides out", "kind": "service", "centerMm": [63, 0], "face": "+X end"}
+ ]
+}

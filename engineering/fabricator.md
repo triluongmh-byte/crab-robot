@@ -1,0 +1,6 @@
+# Fabricator profile — export only, do not order
+Selected digital export profile: two-layer FR-4, 1.6 mm nominal, 35 µm (1 oz) copper per side, lead-free HASL, green mask. Explicit stackup sums to 1.6 mm including two 0.01 mm masks. Board outline is exactly 30 × 20 mm; two Ø3.2 mm NPTH drills at ±10 mm; no vias, plated holes, slots, edge plating, castellations, stencil, special process or components. The copper solder lands need mask openings and no paste.
+
+Source read 2026-11-06: https://jlcpcb.com/capabilities/pcb-capabilities . The current table lists FR-4 1.6 mm and two-layer 1 oz copper, minimum NPTH 0.50 mm, 3 × 3 mm minimum board, lead-free HASL. Our holes and outline exceed those floors. Local native rules require 0.20 mm copper clearance, 0.25 mm minimum track, 0.50 mm copper-to-edge and 0.15 mm silk clearance; routed links are designed 0.50 mm wide and sit far inside the outline. Every front silk stroke is at least 0.15 mm. Actual route geometry is measured in build/board/geometry.json. Independent packet parsing and fab-floor DRC validate the exported copper, mask, silk, outline and drills; manufacturing.json binds source and evidence hashes.
+
+The packet exists only to satisfy the native pipeline. It is not a request to order this dummy board and contains no robot circuitry.

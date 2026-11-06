@@ -1,0 +1,2 @@
+# Thermal
+No fitted parts and no power source, so designed heat dissipation is 0 W. All routed copper is on F.Cu; minimum designed trace width is 0.5 mm, copper thickness is explicitly 35 µm on both layers. The native geometry audit measures the final track widths and lengths. There is no regulator, thermal pad, heatsink pour, plane, via or current-carrying supply to assess. No temperature or current measurement is claimed. Do not power this board.

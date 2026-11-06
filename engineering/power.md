@@ -1,0 +1,2 @@
+# Power
+This is the contract's isolated dummy PCB, not a robot carrier. No supply pins, powered ICs, capacitors, connectors or switches are fitted. The two nets are DUMMY_A (J1.1–J2.1) and DUMMY_B (J3.1–J4.1). They have no external power interface. Design current and dissipation are 0 A and 0 W. No reset state or firmware applies. Native geometry audit is build/board/geometry.json; schematic-to-copper parity is checked separately. Do not connect the pads to the robot. Physical hardware remains untested.
