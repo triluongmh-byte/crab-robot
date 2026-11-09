@@ -14,3 +14,16 @@ Ngày 06/11/2026: **PASS**, exit code 0. Clone commit `251ee83f4b717c0e3ad1585b0
 Log đầy đủ lưu cục bộ ở thư mục clean build (đường dẫn trong `build/clean-check-directory.txt`), không push cache/log. Ba SVG KiCad cuối đã được raster hóa và xem; ảnh tổng thể/từ trước được xem. Case → Overview không mở được vì môi trường không có cửa sổ; builder đã kiểm headless desktop/phone. Print team được thử lại riêng một lần và vẫn lỗi điều phối đề xuất plate; không chạy lại thiết kế đã đạt.
 
 Build cần các công cụ đã cài của Harness trên máy này. Không cài qua mạng, không tự nạp firmware, không chạy motor hoặc máy in. Output/cache không đưa vào Git.
+
+## Kiểm lại cho cập nhật hướng dẫn — 09/11/2026
+
+Clone sạch commit `289ff22` vào thư mục tạm trống, chạy `./build.sh`: **PASS, exit 0**. Không chép output từ workspace, không cài qua mạng, không nạp/in/chạy motor. Sau build, Git trong clone sạch. Các commit tiếp theo của lần cập nhật này chỉ sửa tài liệu/ảnh SVG, không đổi source build.
+
+- Native board/gate: 0 finding; không stale.
+- CAD: 18 part, sweep ±30° mẫu 5°, khe nhỏ nhất 3,3 mm; kiểm cơ khí đạt.
+- Print: 2 plate, 6,96 giờ / 186,9 g; check-print không lỗi/cảnh báo.
+- Overview, bốn ảnh và toàn bộ file bàn giao baseline được tạo lại.
+- ESP32-S3 compile và host tests core, PCA, interface, gait, QR, web, Wi-Fi đạt.
+- Đã kiểm link Markdown, ảnh, XML SVG và diff không chứa token/backup flash.
+
+Đây là kiểm source baseline thân kín, không phải kiểm lại skeleton r2 hay binary đã nạp trên board của chủ. [Phân biệt phiên bản và kết quả thử thật](docs/STATUS.md).

@@ -1,12 +1,12 @@
 # Đồ để ráp
 
-GIẢ ĐỊNH danh sách đã có theo yêu cầu/ảnh của chủ; nếu còn thiếu thì mua đúng từ khóa và dấu nhận biết dưới đây. Không mua linh kiện cho board giả.
+Cập nhật 09/11: LILYGO đã có và đã hiện QR/web; PCA9685 chưa có. [Hướng dẫn mua PCA và đấu dây](docs/PCA9685-VA-DAU-DAY.md). Các số vít/nhựa dưới đây thuộc source baseline thân kín 06/11, khác skeleton r2. GIẢ ĐỊNH các món khác theo yêu cầu/ảnh của chủ; nếu còn thiếu thì mua đúng từ khóa và dấu nhận biết dưới đây. Không mua linh kiện cho board giả.
 
 | Nhóm | Món / số lượng | Từ khóa và cách nhận đúng |
 |---|---|---|
-| Đã có | LILYGO T-Display-S3 non-touch ×1 | Màn liền board, ESP32-S3; schematic 29/04/2024; chân cắm sẵn, có nhãn 17,18,21,3V,GND |
+| Đã có | LILYGO T-Display-S3 non-touch ×1 | Màn liền board, ESP32-S3; schematic 29/04/2024; chân cắm sẵn, có nhãn 17,18,1,21,3V,GND; LED tùy phiên bản firmware |
 | Đã có | SG90 ×8 dùng +2 dự phòng | Servo vị trí 180°, không phải continuous; giữ horn một tay và vít trong túi |
-| Đã có | PCA9685 ×1 | Module 16 kênh servo, hàng 3 chân/kênh; có SDA/SCL/VCC/GND và terminal V+/GND |
+| **Cần mua** | **PCA9685 ×1, hàn sẵn chân** | Tìm **“PCA9685 16 kênh điều khiển servo I2C hàn sẵn chân”**; 16 cụm 3 chân đánh số 0–15, terminal V+/GND; hàng VCC/GND/SDA/SCL. Chọn đủ chân và terminal đã hàn. |
 | Đã có | Thanh KK10 WS2812 8 bóng ×1 | Có 8 LED địa chỉ, đầu **DIN/5V/GND**, không dùng thanh LED trắng hai dây |
 | Đã có | 4 M3×12, 4 M3×20, 8 tán M3 | Không cần long đen/trụ đệm; M3×6/M3×8 để dư; vít SG90 lấy từ túi |
 | Cần mua | Pin dự phòng USB 5V hai cổng ×1 | Tìm “pin dự phòng mỏng 5000mAh 2 USB-A 2.4A”; chọn **≤100×65×15 mm, ≤120 g**, hai cổng cùng dùng được, mỗi cổng ≥2,4 A; cổng trên cạnh ngắn; vỏ kín, không cell rời |

@@ -1,5 +1,7 @@
 # Robot Cua — firmware ESP32-S3
 
+> **Phiên bản baseline 06/11:** source này dùng LED GPIO21. Board của chủ đã nạp firmware mới ngày 09/11 dùng GPIO1; xem [hướng dẫn hiện tại](../docs/PCA9685-VA-DAU-DAY.md) và [trạng thái](../docs/STATUS.md). Bốn dây PCA và CH0–CH7 không đổi.
+
 **[ĐẤU DÂY CÓ HÌNH → WIRING.md](WIRING.md)** · [Kiểm khi ráp → CHECKLIST-RAP.md](CHECKLIST-RAP.md)
 
 Dùng **LILYGO T-Display-S3 non-touch**, PCA9685, 8 SG90 và thanh 8 WS2812 KK10. Đây là bản đấu dây trực tiếp. **BOARD GIẢ KiCad không đặt và không lắp vào robot.**

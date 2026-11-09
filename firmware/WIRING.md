@@ -1,5 +1,7 @@
 # Đấu dây Robot Cua — nhìn nhãn rồi cắm
 
+> **Phiên bản baseline 06/11:** source này dùng LED GPIO21. Board của chủ đã nạp firmware mới ngày 09/11 dùng GPIO1; xem [hướng dẫn hiện tại](../docs/PCA9685-VA-DAU-DAY.md) và [trạng thái](../docs/STATUS.md). Bốn dây PCA và CH0–CH7 không đổi.
+
 **Bản dùng dây trực tiếp:** LILYGO T-Display-S3 **non-touch**, PCA9685 địa chỉ **0x40**, 8 SG90, thanh KK10 8 WS2812. **BOARD GIẢ KiCad không đặt, không lắp vào robot.** Sơ đồ KiCad không phải sơ đồ dây robot; dùng tài liệu này và `crab/Config.h`.
 
 ![Sơ đồ nối dây hai cổng nguồn](wiring.svg)

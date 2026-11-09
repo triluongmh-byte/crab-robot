@@ -1,4 +1,6 @@
-# Checklist ráp — chưa có mục nào xác nhận trên robot thật
+# Checklist ráp — source baseline 06/11
+
+Cập nhật 09/11: QR, web và quét Wi-Fi đã được chủ xác nhận trên board để rời với firmware mới; chưa có PCA9685 và chưa thử motor. Plate 2 được báo đang in, chưa xác nhận hoàn tất. Xem [trạng thái/phiên bản](docs/STATUS.md). Các bước dưới áp dụng cho source baseline trong repo.
 
 Không cần đồng hồ điện. Khi cắm/rút dây hoặc lắp horn, rút cả hai USB nguồn. Chỉ người dùng tự nạp, tự cấp nguồn và tự bấm in.
 
@@ -8,4 +10,4 @@ Không cần đồng hồ điện. Khi cắm/rút dây hoặc lắp horn, rút c
 4. **Kiểm Wi-Fi, QR, Ráp, điều khiển, mất kết nối, đèn và pin:** làm từng dòng [checklist firmware](firmware/CHECKLIST-RAP.md); mỗi dòng có đạt/không đạt và cách xử lý. Kê chân trước khi thử servo, chỉ hạ xuống sàn sau khi test thả nút/mất Wi-Fi đạt.
 5. **Cân và kiểm dây:** robot gồm pin <500 g; pin rút ra sạc được; dây nguồn đi cạnh trụ đèn không kẹt; QR quét được khi đóng nắp. Không đạt: dùng pin nhỏ/nhẹ đúng BOM hoặc báo vị trí cần sửa. Không đo điện, không thêm mạch.
 
-Kết quả thật sẽ ghi vào [PRINTED-INVENTORY](case/PRINTED-INVENTORY.md) theo xác nhận của chủ, không suy từ slice hay ảnh CAD. Hiện tại: chưa in, chưa ráp, chưa nạp, chưa xác nhận đi được.
+Kết quả thật sẽ ghi vào [PRINTED-INVENTORY](case/PRINTED-INVENTORY.md) theo xác nhận của chủ, không suy từ slice hay ảnh CAD. Binary baseline này chưa có xác nhận nạp/chạy thật; firmware mới trên board đã hiện QR/web. Chưa xác nhận in xong, ráp khít hoặc đi được.

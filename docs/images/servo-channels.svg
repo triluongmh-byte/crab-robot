@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="660" viewBox="0 0 960 660" role="img" aria-labelledby="title desc">
+<title id="title">Vị trí tám servo và kênh PCA9685</title><desc id="desc">Nhìn từ trên, đầu cua hướng lên. Trước trái CH0 hông CH1 gối; trước phải CH2 hông CH3 gối; sau trái CH4 hông CH5 gối; sau phải CH6 hông CH7 gối.</desc>
+<rect width="960" height="660" rx="16" fill="#f4f8fc"/>
+<style>text{font-family:Arial,sans-serif;fill:#172b40;text-anchor:middle}.heading{font-size:25px;font-weight:bold}.label{font-size:21px;font-weight:bold}.small{font-size:17px}.hip{fill:#176b9a;stroke:white;stroke-width:3}.knee{fill:#a44b13;stroke:white;stroke-width:3}.ch{font-size:20px;font-weight:bold;fill:white}.leg{fill:none;stroke:#7c919f;stroke-width:25;stroke-linecap:round}</style>
+<text x="480" y="40" class="heading">CH = số ổ cắm trên PCA9685</text>
+<text x="480" y="72" class="small">Nhìn từ trên • Trái/phải theo con cua</text>
+<path d="M480 170V108M465 124L480 108L495 124" fill="none" stroke="#172b40" stroke-width="5"/>
+<text x="480" y="195" class="label">ĐẦU CUA</text>
+<rect x="345" y="225" width="270" height="270" rx="32" fill="#dae5eb" stroke="#607d8b" stroke-width="3"/>
+<text x="480" y="355" class="heading">THÂN</text><text x="480" y="385" class="small">4 servo hông gắn ở đây</text>
+<path d="M355 255L210 175L140 240M605 255L750 175L820 240M355 455L210 535L140 470M605 455L750 535L820 470" class="leg"/>
+<circle cx="355" cy="255" r="32" class="hip"/><text x="355" y="262" class="ch">CH0</text>
+<circle cx="210" cy="175" r="32" class="knee"/><text x="210" y="182" class="ch">CH1</text>
+<circle cx="605" cy="255" r="32" class="hip"/><text x="605" y="262" class="ch">CH2</text>
+<circle cx="750" cy="175" r="32" class="knee"/><text x="750" y="182" class="ch">CH3</text>
+<circle cx="355" cy="455" r="32" class="hip"/><text x="355" y="462" class="ch">CH4</text>
+<circle cx="210" cy="535" r="32" class="knee"/><text x="210" y="542" class="ch">CH5</text>
+<circle cx="605" cy="455" r="32" class="hip"/><text x="605" y="462" class="ch">CH6</text>
+<circle cx="750" cy="535" r="32" class="knee"/><text x="750" y="542" class="ch">CH7</text>
+<text x="210" y="125" class="label">TRƯỚC TRÁI</text><text x="750" y="125" class="label">TRƯỚC PHẢI</text>
+<text x="210" y="588" class="label">SAU TRÁI</text><text x="750" y="588" class="label">SAU PHẢI</text>
+<circle cx="305" cy="570" r="10" class="hip"/><text x="445" y="577" class="small">Chấm xanh: hông, gắn thân</text>
+<circle cx="305" cy="605" r="10" class="knee"/><text x="450" y="612" class="small">Chấm nâu: gối, trên chân</text>
+<text x="480" y="645" class="small">Minh họa vị trí, không phải CAD; màu chấm không phải màu dây.</text>
+</svg>
