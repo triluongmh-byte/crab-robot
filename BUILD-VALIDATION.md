@@ -2,6 +2,25 @@
 
 This branch is a **work-in-progress integrated controller**, not an order-ready robot packet. Main is unchanged. The current native PCB passes electrical/manufacturing checks, and both firmware targets compile, but its case insertion/tool-access check fails. Do not use the automatic team-ready flag to override that failure.
 
+## Empty-clone result — 2026-11-09
+
+Tested source commit `b7d8938247f8a3bc7d603b8b7e31a9675b0c5d99` in a new empty temporary clone using `./build.sh`. An earlier clone caught filename-case errors hidden by the authoring Mac; those were fixed in Git before this run.
+
+| Check | Result |
+|---|---|
+| Native board / ERC / DRC / manufacturing | PASS, zero findings |
+| Actual PCB STEP and manufacturing exports | Regenerated |
+| Frozen r1 parts / baseline base | Source-recreated and complete hashes verified |
+| Seated-pose native case / mechanical sweep | PASS; physical fit/strength untested |
+| Offline Bambu slicing / print bindings | PASS, two plates; no printer contacted |
+| Overview / both firmware image sets | Regenerated |
+| Firmware host groups / independent QR decoding | All six groups PASS |
+| Final native-board pin reconciliation | Reconciled, no findings |
+| Tracked source after build / board freshness | Unchanged / no stale inputs |
+| Actual PCB insertion and screw access | **FAIL** — current board cannot be assembled |
+
+**Full build exit: 1, at the intentional release rejection in stage 6. This is not a full-product pass.** Every promised generated artifact exists, but the actual-board insertion check remains false. The virtual revision is not accepted as proof. The subsequent commit adds this validation record only; it does not change the tested implementation.
+
 ## Required repair
 
 `case/DEVIATIONS.md` D18 requests actual PCB corner notches, moved mounting holes and a recessed USB connector. Those changes exist only as a virtual fit proposal, not routed copper. The current PCB cannot be lowered into the base, and only one of its four screws is reachable. The U1 courtyard/antenna envelope also needs correction at the board handoff so the temporary 0.6 mm nut-seat floor can be restored. A new design-team run must repair the actual native PCB, rebuild case/plates, refresh firmware reconciliation, and pass `case/reports/assembly-access.json` for the **published** board.
