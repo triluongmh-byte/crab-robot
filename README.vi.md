@@ -1,12 +1,16 @@
 # Robot Cua A1 V4
 
+<p align="center"><img src="docs/images/assembled.webp" alt="Robot Cua A1 V4 ráp xong (ảnh CAD)" width="720"></p>
+
+English: [README.md](README.md) — có thêm phần Gallery đầy đủ ảnh.
+
 Đồ chơi bốn chân, 8 SG90, quét QR để cài Wi-Fi và lái bằng web trên điện thoại. Dùng LILYGO T-Display-S3 non-touch + PCA9685 + thanh WS2812 8 bóng, cấp bằng pin dự phòng USB 5 V hai cổng. **BOARD GIẢ KiCad 30×20 mm không đặt, không lắp vào robot.**
 
 Ngày 06/11/2026: team bridge **candidate_ready, teamReady=true**. Board, firmware, cơ khí và tích hợp đã được tester độc lập duyệt sau sửa. Chưa in, chưa nạp, chưa ráp, chưa chạy motor; chưa chứng minh robot đi được trên sàn.
 
 ## Bắt đầu
 
-1. Xem [BOM](BOM.md), [hình tổng thể](case/images/assembled.png), [hình bung](case/images/exploded.png), [từ trên](case/images/top.png), [từ trước](case/images/front.png).
+1. Xem [BOM](BOM.md), [hình tổng thể](docs/images/assembled.webp), [hình bung](docs/images/exploded.webp), [từ trên](docs/images/top.webp), [từ trước](docs/images/front.webp).
 2. **Chỉ in thử trước:** [TEST ONLY + MATING_TEST](case/print/TEST-ONLY-coupons.3mf). Coupon không lắp vào robot; hai part MATING_TEST đạt thì giữ làm P05/P09. Làm [checklist](CHECKLIST-RAP.md), báo cả hai bộ thử đạt trước khi chọn plate sản xuất.
 3. [Overview ráp từng bước](case/overview.html): Đủ bộ → Bước 1…9, Trước/Sau; từng bước có thẻ vít/tán, có bước cắm dây. Chi tiết mặc định đóng.
 4. [Đấu dây có hình](firmware/WIRING.md), rồi [tự nạp firmware](firmware/README.md#nạp-firmware--người-dùng-tự-làm). Rút cổng USB nguồn servo khi nạp.
