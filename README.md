@@ -1,5 +1,7 @@
 # Crab Robot A1 V4
 
+<p align="center"><img src="docs/images/assembled.webp" alt="Crab Robot A1 V4, assembled CAD render" width="720"></p>
+
 A four-legged toy crab with 8 SG90 servos. Scan a QR code to join Wi-Fi, then drive it from a web page on your phone. Electronics: LILYGO T-Display-S3 (non-touch) + PCA9685 servo driver + 8-LED WS2812 bar, powered by a two-port 5 V USB power bank. Everything is hand-wired; **the 30×20 mm KiCad board is a dummy for the schematic only — it is not ordered or fitted.**
 
 Status (6 Nov 2026): **candidate ready, `teamReady=true`.** Board, firmware, case and integration passed independent review after repairs. **Not yet printed, flashed, assembled or run** — walking on a real floor is unproven.
@@ -8,11 +10,28 @@ Tiếng Việt: [README.vi.md](README.vi.md)
 
 ## Getting started
 
-1. Look at the [BOM](BOM.md) and the renders: [assembled](case/images/assembled.png), [exploded](case/images/exploded.png), [top](case/images/top.png), [front](case/images/front.png).
+1. Look at the [BOM](BOM.md) and the [gallery](#gallery) below.
 2. **Print the test pieces first:** [TEST ONLY + MATING_TEST](case/print/TEST-ONLY-coupons.3mf). The coupons are not part of the robot; if the two MATING_TEST parts fit, keep them as P05/P09. Go through the [checklist](CHECKLIST-RAP.md) and confirm both tests pass before printing the production plates.
 3. Follow the [step-by-step assembly overview](case/overview.html): Full kit → Step 1…9, with a screw/nut card and wiring notes per step.
 4. [Wire it](firmware/WIRING.md), then [flash the firmware yourself](firmware/README.md). Unplug the servo power USB while flashing.
 5. Scan the Wi-Fi QR, pick your 2.4 GHz home network and enter the password, then scan the web-address QR. If the page does not open, go to `http://192.168.4.1/`. Hold a button to walk, release to stop; if the 600 ms heartbeat is lost the gait stops and the robot eases back to standing. The Assembly page centers, trims and saves the servos. Hold BOOT for 8 s to clear Wi-Fi.
+
+## Gallery
+
+All images are CAD renders or screenshots of the generated files — nothing here has been printed yet.
+
+| | |
+|---|---|
+| ![Exploded view](docs/images/exploded.webp) | ![Top view](docs/images/top.webp) |
+| **Exploded view** — lid and clamp bars lifted off the base | **Top view** — lid with the T-Display window |
+| ![Front view](docs/images/front.webp) | ![Wiring diagram](docs/images/wiring.webp) |
+| **Front view** | **Wiring** — LILYGO T-Display-S3 → PCA9685 → 8 SG90 + LED bar ([full](firmware/wiring.svg)) |
+
+<p align="center"><img src="docs/images/assembly-overview.webp" alt="Step-by-step assembly overview" width="820"><br>
+<b>Assembly overview</b> (<code>case/overview.html</code>) — interactive 3D, one step at a time, with the screws for each step</p>
+
+<p align="center"><img src="docs/images/web-control.webp" alt="Phone web control page" width="300"><br>
+<b>Phone control page</b> served by the robot — hold an arrow to walk, release to stop (UI text is Vietnamese)</p>
 
 ## Current build
 
