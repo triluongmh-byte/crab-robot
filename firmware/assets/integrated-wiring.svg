@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="640" viewBox="0 0 860 640">
+<rect width="860" height="640" fill="#fff"/>
+<g font-family="sans-serif" fill="#152131">
+<text x="24" y="33" font-size="23" font-weight="bold">BOARD TÍCH HỢP — SƠ ĐỒ CHỨC NĂNG</text>
+<text x="24" y="61" font-size="17" fill="#9a3500">NETLIST CUỐI: ĐỌC NHÃN / PAD 1 VUÔNG TRÊN PCB</text>
+<rect x="25" y="100" width="220" height="200" rx="12" fill="#e6edf8" stroke="#214b7a" stroke-width="2"/>
+<text x="45" y="132" font-size="21">Pin dự phòng 5 V</text>
+<text x="45" y="160" font-size="16">Cổng 1 → cáp USB-C</text>
+<text x="45" y="236" font-size="16">Cổng 2 → adapter</text>
+<text x="45" y="260" font-size="16">terminal (+ đỏ, − đen)</text>
+<rect x="350" y="100" width="475" height="320" rx="12" fill="#e4f3e7" stroke="#24643a" stroke-width="2"/>
+<text x="373" y="132" font-size="21" font-weight="bold">PCB MỚI (thay LILYGO + PCA rời)</text>
+<text x="373" y="178" font-size="17">J1 USB-C → PB1_5V → LDO → 3V3</text>
+<text x="373" y="208" font-size="17">ESP32-S3 + màn hình QR</text>
+<text x="373" y="238" font-size="17">PCA9685 trên board • I²C 0x40</text>
+<text x="373" y="284" font-size="17">J12: 1=SERVO_5V / 2=GND</text>
+<text x="373" y="314" font-size="17">GND nối chung ngay trên PCB</text>
+<text x="373" y="357" font-size="17">J2…J9: CH0…7 • 1GND / 2=5V / 3PWM</text>
+<text x="373" y="390" font-size="17">J11: 1DIN / 2=SERVO_5V / 3GND</text>
+<path d="M245 167 H350" stroke="#246bb8" stroke-width="7"/>
+<text x="258" y="151" font-size="14">USB-C</text>
+<path d="M245 251 H298 V278 H350" stroke="#d43434" stroke-width="5" fill="none"/>
+<path d="M245 278 H287 V302 H350" stroke="#192331" stroke-width="5" fill="none"/>
+<rect x="350" y="478" width="248" height="100" rx="10" fill="#fff1dd" stroke="#b06e1e" stroke-width="2"/>
+<text x="368" y="510" font-size="19">8 SG90 nguyên giắc</text>
+<text x="368" y="538" font-size="16">Nâu=GND • Đỏ=5V</text>
+<text x="368" y="562" font-size="16">Cam=PWM (CH0…7)</text>
+<path d="M445 420 V478" stroke="#c17124" stroke-width="9"/>
+<rect x="625" y="478" width="200" height="100" rx="10" fill="#fff8cf" stroke="#8b790a" stroke-width="2"/>
+<text x="640" y="510" font-size="19">WS2812 8 bóng</text>
+<text x="640" y="539" font-size="16">DIN / 5V / GND</text>
+<text x="640" y="564" font-size="16">Không cắm DOUT</text>
+<path d="M710 420 V478" stroke="#b79300" stroke-width="5"/>
+<text x="25" y="604" font-size="17" font-weight="bold">Hai rail 5 V tách cực dương. GND chung. Không còn dây LILYGO → PCA.</text>
+<text x="25" y="630" font-size="16">J10 màn: 1BL 2RES 3DC 4CS 5SCK 6MOSI 7GND 8=3V3. Xem bảng dây.</text>
+</g></svg>

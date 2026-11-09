@@ -1,25 +1,17 @@
-# Firmware deviations / decisions — 2026-11-06
+# Note-4 firmware reconciliation — 2026-11-09
 
-Contract unchanged: `65b9793b07d82edc0defd9900ba1cfbee13dc730266cc0b675d897c87a75d9ea`.
+The sealed contract and release notes are unchanged. Firmware follows the final
+board fallback allowed by note4 and the lead's concrete integration findings.
 
-## WS2812 fallback voltage (own wiring domain)
+| Contract / former draft | Verified final option | Evidence | Cross-team impact |
+|---|---|---|---|
+| Note4 prefers bare 1.9in i80; permits documented plug-in ST7789 fallback | Waveshare 23822 SPI ST7789V2; SCLK8, MOSI39, CS6, DC7, RES5, BL38 | engineering/DEVIATIONS.md, engineering/firmware-interface.md, final XML/PCB, vendor/LCD_1in9.c + vendor/LCD_1inch9.py | Integrated SPI configuration; LILYGO i80 retained. GPIO9/40–42/45–48 NC. No user behaviour/channel/gait change. |
+| Earlier firmware proposed GPIO15=OE; note4 asks to state GPIO15's role | GPIO21 drives /OE; GPIO15 NC | U1.23–U3.23 and R9.2 on SERVO_OE; R9.1=3V3, R9=10k | Firmware and integrated tests now use21; no copper, rail or wire change. Blank flash/reset stays inhibited by physical pullup. |
+| Screen must read through case window | Vendor landscape MADCTL0x70 xor0xc0=0xb0, window gap(0,35) | Official Python landscape driver; case/DEVIATIONS.md D15 panel rotation180° | Integrated-only rotation compensation. Case orientation unchanged. QR/window legibility still needs physical check. |
 
-- Sealed text, `interfaces.assumptions[3]`: if flicker persists, “move the bar's 5V wire to the LILYGO 3V pin and keep brightness at 20% or less”.
-- Change: keep the bar on 5 V. Shorten DIN beside GND first; if still unreliable, leave this optional light unplugged pending a compatible replacement. Do not advise 3.3 V as a verified supply for a 5 V WS2812B bar.
-- Evidence: manufacturer Worldsemi WS2812B datasheet, supply range 3.5–5.3 V, digital VIH ≥0.7 VDD: https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf . At 5 V the guaranteed high threshold is 3.5 V; direct GPIO21 3.3 V therefore remains the explicitly requested hardware assumption. Supplying the LEDs from 3.3 V is outside the specified supply range and cannot be promised as the fix.
-- Closest V0: unchanged three wires, no extra component, brightness cap 51/255, all 8 LEDs same colour, empirical flicker check. GPIO, rail, case, outline and mounts unchanged. Cross-team impact: lead should use this remedy in the root checklist/README; light remains untested.
+board-interface.json records source/evidence hashes and actual pad groups;
+BOARD-RECONCILIATION.json now passes from the actual native PCB/XML, including
+USB series paths, rails, output-enable pullup and servo connector order.
+The previous candidate and pending-carrier statements are superseded.
 
-## Knee lift direction reconciliation (integration repair)
-
-- Sealed text, `interfaces.firmwareBehavior[10]`: “default knee: FL +1, RR +1, FR -1, RL -1”; the same item says the case team confirms the signs in its mechanical report.
-- Change: positive gait knee angle means foot UP, so knee signs are FL −1, FR +1, RL +1, RR −1. All hip signs remain +1. Contract and release notes remain untouched.
-- Evidence: `case/reports/mechanical.json`, `servoSigns.kneeLargerPulse`: larger pulses move FL/RR feet DOWN and FR/RL feet UP. With positive `pulseUsPerDegree`, the sealed defaults drove every swing foot down. The lead integration review independently confirmed the shaft-axis geometry.
-- Closest verified V0: reverse only the four knee conversion signs in `crab/Config.h`; neutral, trim, GPIO, channels, power rails, motion limits, outline and mounts stay the same. `integration.json` and README now distinguish gait lift from pulse direction.
-- Checks: `check.py gait` traces production `Robot::tick` servo angles through the pulse mapping for all eight directions; `check.py pins` compares the actual case sign report with Config.h and integration.json. Both reproduced the old failure before the repair. No physical locomotion claim.
-- Cross-team impact: lead must use the corrected knee signs in integrated instructions; case geometry needs no change for this firmware fix. The three separately reported case defects remain for the case team.
-
-## Firmware-owned tunables (not sealed deviations)
-
-- 8000 ms crawl period, 12° hip / 16° knee target amplitude, ±25° absolute servo envelope including trim, 8°/s slow / 24°/s swing and 80°/s² acceleration. One swing leg at a time; target axes use Kame32 oscillator concepts adapted to the contract's adjacent hip/knee channel order.
-- Wi-Fi falls back to setup AP after 15 seconds; the owner can re-enter credentials. The saved credential record is atomic, contains no hardcoded network, and is never returned by a handler.
-- No sideways-to-turn fallback selected: the planar stance projection test supports requested sideways directions in the simplified model. This is not physical locomotion proof; case joint signs/range and floor behavior remain integration/assembly checks.
+No flash, motors, hardware, order, commit or push. No user blocker.

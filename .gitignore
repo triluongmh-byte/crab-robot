@@ -1,19 +1,34 @@
-# Private user assembly photos
-prompts/assets/**/IMG_243*.jpg
-# Harness runtime and team worktrees
+# Harness runtime, private task history and machine state
 .harness/
-.circuit/team-runs/
-# Derived artifacts: regenerate with ./build.sh
 .circuit/
-.kicadpy/
 .pilot/
+.kicadpy/
+recovery/
+prompts/
+print/
+# All generated artifacts; build.sh regenerates these
 boards/
 build/
 case/out/
+case/robot/
 case/print/
 case/reports/
 case/images/
+case/ref/
 case/overview.html
+case/fastener_map.csv
+case/board_placement.json
+engineering/sources/
+engineering/board-interface.json
+manufacturing.json
+firmware/BUILD*.json
+firmware/TEST-RESULTS.json
+firmware/BOARD-RECONCILIATION.json
+firmware/GAIT-REPORT.json
+firmware/board-interface.json
+firmware/assets/font-manifest.json
+firmware/history/
+design/Local.3dshapes/
 **/__pycache__/
 *.pyc
 *.bin
@@ -28,7 +43,5 @@ case/overview.html
 *.kicad_prl
 *.lck
 .DS_Store
-# Preserve full original evidence locally; publish smaller non-personal copies.
-prompts/assets/**
-!prompts/assets/**/
-!prompts/assets/**/2026-10-31-owner-native-project-settings.json
+
+*.log

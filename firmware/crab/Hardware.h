@@ -1,26 +1,31 @@
 #pragma once
-#include "Robot.h"
-#include <Wire.h>
-namespace crab {
-class Pca {
- bool write(uint8_t reg,uint8_t value){Wire.beginTransmission(cfg::pcaAddress);Wire.write(reg);Wire.write(value);return Wire.endTransmission()==0;}
- public:
- bool allOff(){return write(0xFD,0x10);}
- bool begin(){
-  Wire.begin(CRAB_SDA,CRAB_SCL,400000);Wire.setTimeOut(10);
-  if(!write(0x00,0x30)||!allOff()||!write(0xFE,121)||!write(0x01,0x04)||!write(0x00,0x20))return false;
-  // ALL_LED_OFF_H writes all individual OFF_H registers (NXP §7.3.4).
-  // Keep every channel full-off; servo() clears only the enabled channel.
-  delay(1);return write(0x00,0xA0);
- }
- bool servo(uint8_t channel,float angle){
-  int us=cfg::pulseNeutralUs+int((angle-90)*cfg::pulseUsPerDegree);
-  int ticks=(us*4096L+10000)/20000;
-  // Stagger PWM rising edges across the 20ms frame as well as mechanical startup.
-  uint16_t on=channel*512,off=(on+ticks)&4095;
-  Wire.beginTransmission(cfg::pcaAddress);Wire.write(uint8_t(0x06+4*channel));
-  Wire.write(uint8_t(on));Wire.write(uint8_t(on>>8));Wire.write(uint8_t(off));Wire.write(uint8_t(off>>8));
-  return Wire.endTransmission()==0;
- }
-};
+// Select at compile time; never detect/remap hardware from a running device.
+#ifndef CRAB_INTEGRATED_BOARD
+#define CRAB_INTEGRATED_BOARD 0
+#endif
+#if CRAB_INTEGRATED_BOARD != 0 && CRAB_INTEGRATED_BOARD != 1
+#error "CRAB_INTEGRATED_BOARD must be 0 (LILYGO) or 1 (integrated)"
+#endif
+namespace cfg {
+constexpr bool INTEGRATED_BOARD=CRAB_INTEGRATED_BOARD;
+constexpr int SDA_PIN=18, SCL_PIN=17, LED_PIN=1, BOOT_PIN=0;
+constexpr int USB_DM=19, USB_DP=20;
+constexpr int LCD_BL=38, LCD_RST=5, LCD_CS=6, LCD_DC=7;
+#if CRAB_INTEGRATED_BOARD
+// Final U1.23 -> U3.23, R9 10k to 3V3. GPIO15 is physically NC.
+constexpr int POWER_PIN=-1, PCA_OE_PIN=21;
+constexpr bool LCD_SPI=true;
+constexpr int LCD_SCLK=8, LCD_MOSI=39, LCD_SPI_HZ=10000000;
+constexpr int LCD_WR=-1, LCD_RD=-1, LCD_DATA[8]={-1,-1,-1,-1,-1,-1,-1,-1};
+constexpr int LCD_ROTATION_DEG=270; // vendor landscape 90 + case D15 180
+constexpr const char* HARDWARE_TARGET="integrated";
+#else
+constexpr int POWER_PIN=15, PCA_OE_PIN=-1;
+constexpr bool LCD_SPI=false;
+constexpr int LCD_SCLK=-1, LCD_MOSI=-1, LCD_SPI_HZ=0;
+constexpr int LCD_WR=8, LCD_RD=9, LCD_DATA[8]={39,40,41,42,45,46,47,48};
+constexpr int LCD_ROTATION_DEG=90;
+constexpr const char* HARDWARE_TARGET="lilygo";
+#endif
+constexpr bool LCD_NEW_PANEL=true; // LILYGO factory only; integrated uses Waveshare init
 }

@@ -1,29 +1,60 @@
 #!/usr/bin/env python3
-"""Compile only when inputs/toolchain change. Never installs or flashes anything."""
-import hashlib,json,os,shutil,subprocess,sys
+"""Compile named targets with the shared toolchain, all CPUs and verified cache.
+No downloads, uploads, port enumeration or hardware access.
+"""
+import argparse, hashlib, json, os, subprocess
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2]
-OUT=ROOT/'build/firmware/esp32'
-recipe=json.loads((ROOT/'firmware/flash.json').read_text())
-cli=shutil.which('arduino-cli')
-if not cli:sys.exit('Missing arduino-cli; use the Harness shared Arduino cache.')
-data=os.environ.get('ARDUINO_DIRECTORIES_DATA')
-if not data:sys.exit('ARDUINO_DIRECTORIES_DATA must name the shared cache, not this worktree.')
-libs=Path(os.environ.get('CIRCUIT_FIRMWARE_CACHE',str(Path(data).parent)))/'sketchbook/libraries'
-inputs=sorted(p for p in (ROOT/'firmware/crab').rglob('*') if p.is_file())+[ROOT/'firmware/flash.json',Path(__file__)]
-fingerprint=hashlib.sha256()
-for path in inputs:fingerprint.update(path.name.encode()+path.read_bytes())
-for cmd in ([cli,'version'],[cli,'core','list']):fingerprint.update(subprocess.check_output(cmd))
-for name in ['TFT_eSPI','Adafruit_NeoPixel']:
- p=libs/name/'library.properties'
- if not p.exists():sys.exit(f'Missing shared library: {p}; no automatic installs.')
- fingerprint.update(p.read_bytes())
-stamp=OUT/'input-sha256.txt';digest=fingerprint.hexdigest()
-if stamp.exists() and stamp.read_text().strip()==digest and (OUT/'crab.ino.bin').exists():
- print('Firmware unchanged; reusing',OUT/'crab.ino.bin');sys.exit(0)
-OUT.mkdir(parents=True,exist_ok=True)
-cmd=[cli,'compile','--jobs',str(os.cpu_count() or 1),'--fqbn',recipe['fqbn'],'--libraries',str(libs),'--build-path',str(OUT),'--build-property',f'compiler.cpp.extra_flags=-include {ROOT}/firmware/crab/TftSetup.h',str(ROOT/'firmware/crab')]
-print('Building ESP32-S3 using all CPU cores and shared dependencies.',flush=True)
-subprocess.run(cmd,check=True,cwd=ROOT)
-stamp.write_text(digest+'\n')
-print('Built',OUT/'crab.ino.bin')
+ROOT = Path(__file__).resolve().parents[2]
+RECIPES = {'lilygo': ('flash.json', 'BUILD.json'),
+           'integrated': ('flash-integrated.json', 'BUILD-integrated.json')}
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def build(target, toolchain):
+    recipe_name, manifest_name = RECIPES[target]
+    recipe_path = ROOT/'firmware'/recipe_name
+    recipe = json.loads(recipe_path.read_text())
+    paths = [p for p in (ROOT/'firmware/crab').glob('*') if p.is_file()] + [recipe_path]
+    sources = {str(p.relative_to(ROOT)): sha(p) for p in sorted(paths)}
+    digest = hashlib.sha256(json.dumps({'sources': sources, 'toolchain': toolchain}, sort_keys=True).encode()).hexdigest()
+    out = (ROOT/'firmware'/recipe['build']).resolve()
+    assert out.is_relative_to(ROOT/'build/firmware')
+    out.mkdir(parents=True, exist_ok=True)
+    manifest = ROOT/'firmware'/manifest_name
+    previous = json.loads(manifest.read_text()) if manifest.exists() else {}
+    artifacts = previous.get('artifacts', {})
+    unchanged = (previous.get('sourceDigest') == digest and 'crab.ino.bin' in artifacts
+        and all((out/n).is_file() and (out/n).stat().st_size == r['bytes']
+                and sha(out/n) == r['sha256'] for n, r in artifacts.items()))
+    if unchanged:
+        print(f'SKIP {target}: sources/config/toolchain and all binary hashes unchanged', flush=True)
+        return
+    # Each compile uses all CPUs. Targets compile sequentially to avoid competing
+    # for Arduino's shared core cache; no nested installation in the worktree.
+    subprocess.run(['arduino-cli', 'compile', '--fqbn', recipe['fqbn'],
+                    '--build-path', str(out), *recipe.get('compileArgs', ['--jobs', '0']),
+                    str(ROOT/'firmware'/recipe['sketch'])], cwd=ROOT, check=True)
+    artifacts = {p.name: {'sha256': sha(p), 'bytes': p.stat().st_size} for p in sorted(out.glob('*.bin'))}
+    assert all(n in artifacts for n in ['crab.ino.bin', 'crab.ino.bootloader.bin', 'crab.ino.partitions.bin'])
+    manifest.write_text(json.dumps({'target': target, 'hardwareTested': False,
+        'interfaceStatus': 'final SPI/OE interface; see BOARD-RECONCILIATION.json' if target == 'integrated' else 'LILYGO baseline',
+        'sourceDigest': digest, 'sourceInputs': sources, 'toolchain': toolchain,
+        'fqbn': recipe['fqbn'], 'compileArgs': recipe.get('compileArgs', []),
+        'core': 'esp32 2.0.14', 'output': str(out.relative_to(ROOT)), 'artifacts': artifacts}, indent=2)+'\n')
+    print(f'BUILT {target}: {artifacts["crab.ino.bin"]["bytes"]} bytes', flush=True)
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--target', choices=[*RECIPES, 'all'], default='lilygo')
+    args = parser.parse_args()
+    platforms = json.loads(subprocess.check_output(['arduino-cli', 'core', 'list', '--format', 'json']))['platforms']
+    installed = {p['id']: p['installed_version'] for p in platforms if p.get('installed_version')}
+    if installed.get('esp32:esp32') != '2.0.14':
+        raise SystemExit('Expected shared esp32 core 2.0.14; no automatic core installation')
+    toolchain = {'cli': subprocess.check_output(['arduino-cli', 'version'], text=True).strip(), 'installedCores': installed}
+    for target in RECIPES if args.target == 'all' else [args.target]:
+        build(target, toolchain)
+
+if __name__ == '__main__':
+    main()

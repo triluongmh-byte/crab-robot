@@ -1,121 +1,206 @@
 <!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="case-overview-input" content="__INPUTHASH__">
 <title>Robot Cua A1 V4 — Tổng quan ráp</title>
 <style>
-:root{--bg:#edf3f5;--panel:#ffffff;--text:#24313a;--accent:#1d668f;--muted:#5b6b75;--border:#cbd6d9}
-body.dark{--bg:#0e0f13;--panel:#161a22;--text:#e6e9ef;--accent:#7fb0ff;--muted:#a9b3c2;--border:#3a414c}
-*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-#wrap{display:flex;flex-direction:column;height:100%;width:100%;max-width:100vw;overflow:hidden}#bar,#main,#side{max-width:100vw;min-width:0}.hw{white-space:normal;overflow-wrap:anywhere}
-#bar{display:flex;gap:6px;align-items:center;padding:8px;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap}
-select,button{min-height:44px;font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:0 12px}
-button:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
-button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-#step{flex:1 1 0;width:0;min-width:0}#bar>button{padding:0 8px}html,body{overflow-x:hidden}
-#main{flex:1;display:flex;min-height:0}
-#cv{flex:1;min-width:0;width:100%;touch-action:none;display:block}
-#side{width:340px;overflow:auto;background:var(--panel);border-left:1px solid var(--border);padding:10px}
-@media (max-width:760px){#main{flex-direction:column}#side{width:auto;max-height:46%;border-left:0;border-top:1px solid var(--border)}#cv{min-height:300px}}
-h2{font-size:16px;margin:4px 0 6px}.card{border:1px solid var(--border);border-radius:10px;padding:8px;margin:8px 0}
-.hw{display:block;width:100%;text-align:left;margin:4px 0;min-height:44px}.small{color:var(--muted);font-size:13px}
-details summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
-label{display:flex;align-items:center;gap:8px;min-height:40px}input[type=range]{flex:1}
-.tag{display:inline-block;padding:1px 6px;border-radius:6px;background:#fde7c8;color:#5a3a00;font-size:12px}
-#lbl{position:absolute;pointer-events:none;font-size:12px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:2px 6px;display:none}
+:root{--bg:#edf3f5;--ground:#e3e9e8;--grid:#cbd6d9;--panel:#ffffff;--text:#24313a;--muted:#55636c;--accent:#1d668f;--edge:#4e5d65;--line:#d5dde1}
+html.dark{--bg:#0e0f13;--ground:#1d2229;--grid:#3a414c;--panel:#161a22;--text:#e6e9ef;--muted:#aab3bf;--accent:#7fb0ff;--edge:#0b0d11;--line:#2a313b}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:10px 14px 4px}h1{font-size:18px;margin:0}.sub{color:var(--muted);font-size:13px}
+nav{display:flex;gap:8px;align-items:center;padding:6px 14px;position:sticky;top:0;background:var(--bg);z-index:3}
+nav select{flex:1;min-width:0;font-size:16px;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text)}
+button{min-height:44px;min-width:44px;padding:8px 12px;font-size:15px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}html.dark button.primary{color:#0e0f13}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:10px;padding:0 14px 14px}.wrap>*{min-width:0}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}}
+.stage{position:relative;background:var(--ground);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+canvas{display:block;width:100%;max-width:100%;height:62vh;min-height:320px;touch-action:none}
+.cams{position:absolute;left:8px;bottom:8px;display:flex;gap:6px;flex-wrap:wrap}.cams button{min-height:36px;font-size:13px;padding:4px 10px;opacity:.92}
+.tog{position:absolute;right:8px;top:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;display:flex;gap:6px;align-items:center;min-height:44px}
+.tog input{width:22px;height:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card h2{font-size:16px;margin:0 0 6px}.card h3{font-size:14px;margin:10px 0 4px}
+.hwrow{border-top:1px solid var(--line);padding:6px 0}.ids{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.ids button{min-height:36px;min-width:52px;padding:4px 8px;font-size:13px}.ids button.on{background:var(--accent);color:#fff}
+html.dark .ids button.on{color:#0e0f13}
+.muted{color:var(--muted);font-size:13px}.warn{font-size:13px;color:var(--muted);border-left:3px solid var(--accent);padding-left:8px;margin-top:8px}
+details{margin-top:10px}summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap}.row label{min-width:90px}
+input[type=range]{flex:1;min-width:140px;height:32px}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-top:1px solid var(--line);padding:4px;text-align:left}
+#legend{font-size:12px;color:var(--muted);margin-top:6px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle;border:1px solid var(--edge)}
 </style></head>
-<body><div id="wrap">
-<div id="bar"><button id="prev" aria-label="Bước trước">◀ Trước</button>
-<select id="step" aria-label="Chọn bước"></select>
-<button id="next" aria-label="Bước sau">Sau ▶</button>
-<button id="tHw" class="on" aria-pressed="true">Vít/tán</button></div>
-<div id="main"><canvas id="cv"></canvas><div id="lbl"></div>
-<div id="side"><h2 id="title"></h2><div id="act"></div>
-<div class="card"><b>Vít/tán bước này</b><div id="hwcard"></div></div>
-<details id="det"><summary>Chi tiết</summary>
-<label><input type="checkbox" id="cLid"> Mở/ẩn nắp</label>
-<label><input type="checkbox" id="cX"> X-ray nắp + đáy</label>
-<label><input type="checkbox" id="cEl" checked> Điện tử</label>
-<label><input type="checkbox" id="cW"> Đường dây</label>
-<label><input type="checkbox" id="cEx"> Bung vít (minh họa)</label>
-<label>Hông <input type="range" id="sHip" min="-30" max="30" value="0"><span id="vHip">0°</span></label>
-<label>Gối <input type="range" id="sKnee" min="-30" max="30" value="0"><span id="vKnee">0°</span></label>
-<button id="bStop">Dừng / về giữa</button> <button id="bAnim">Chạy thử dáng</button>
-<div class="small">Biên độ ±30° là vùng đã kiểm va chạm trên CAD (mỗi 5°). Hoạt cảnh chỉ minh họa, không phải thử thật.</div>
-<div class="card"><b>Camera</b><br><button id="vTop">Từ trên</button> <button id="vFront">Từ trước</button> <button id="vIso">Xiên</button></div>
-<div class="small" id="assume"></div></details></div></div></div>
+<body>
+<header><h1>Robot Cua A1 V4 — ráp từng bước</h1>
+<div class="sub">Hình học CAD thật (STEP/STL bản <span id="rev"></span>). Chỉ là mô hình: chưa in, chưa ráp, chưa thử thật.</div></header>
+<nav aria-label="Các bước ráp"><button id="prev" aria-label="Bước trước">‹ Trước</button>
+<select id="step" aria-label="Chọn bước"></select><button id="next" class="primary" aria-label="Bước sau">Sau ›</button></nav>
+<div class="wrap">
+ <div class="stage"><canvas id="c" aria-label="Mô hình 3D"></canvas>
+  <label class="tog"><input type="checkbox" id="hwToggle" checked> Vít/tán</label>
+  <div class="cams"><button data-cam="top">Từ trên</button><button data-cam="front">Từ trước</button><button data-cam="iso">Xiên</button><button data-cam="fit">Vừa khung</button></div>
+ </div>
+ <div>
+  <div class="card" id="card"></div>
+  <details id="detail"><summary>Chi tiết</summary>
+   <div class="card">
+    <div class="row"><label><input type="checkbox" id="openCover"> Mở nắp (ẩn nắp + thanh đè)</label></div>
+    <div class="row"><label><input type="checkbox" id="xray"> X-ray nắp</label></div>
+    <div class="row"><label><input type="checkbox" id="elecT" checked> Điện tử</label><label><input type="checkbox" id="wireT" checked> Dây</label></div>
+    <div class="row"><label for="explode">Tách rời</label><input type="range" id="explode" min="0" max="40" value="0"><span id="exv">0</span></div>
+    <div class="muted">Tách rời chỉ để minh hoạ thứ tự lắp theo trục thật; không phải chuyển động.</div>
+    <h3>Khớp (trong vùng đã kiểm ±30°)</h3>
+    <div class="row"><label for="hip">Hông</label><input type="range" id="hip" min="-30" max="30" value="0"><span id="hipv">0°</span></div>
+    <div class="row"><label for="knee">Gối</label><input type="range" id="knee" min="-30" max="30" value="0"><span id="kneev">0°</span></div>
+    <div class="row"><button id="center">Về giữa (0°)</button><button id="anim">Chạy thử chuyển động</button></div>
+    <div class="muted">Phần đứng yên: đáy, nắp, thanh đè, servo hông. Phần quay: đùi (+servo gối) quanh trục hông đứng; cẳng quanh trục servo gối nằm ngang. Chân đối xứng gương.</div>
+    <h3>Chọn từng vít/tán</h3><div class="ids" id="allIds"></div>
+    <div id="legend"></div>
+   </div>
+  </details>
+ </div>
+</div>
 <script>
-const D=/*DATA*/null;
-const $=id=>document.getElementById(id);
-function theme(){document.body.classList.toggle('dark',/theme=dark/.test(location.hash))}
-theme();addEventListener('hashchange',()=>{theme();draw()});
-const COL={frame:'#d6cfc1',frame2:'#c9bfae',cover:'#eee9df',moving:'#9ebcca',moving2:'#86a9b9',servo:'#3d4a8f',horn:'#f2f2f2',elec:'#4c806c',pack:'#607d8b',metal:'#596872',sel:'#1d668f'};
-const cv=$('cv'),gl=cv.getContext('webgl',{antialias:true});
-function hex(c){return[parseInt(c.slice(1,3),16)/255,parseInt(c.slice(3,5),16)/255,parseInt(c.slice(5,7),16)/255]}
-function dec(b64){const s=atob(b64),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);const a=new Int16Array(u.buffer),f=new Float32Array(a.length);for(let i=0;i<a.length;i++)f[i]=a[i]*D.q;return f}
-const vs=`attribute vec3 p;attribute vec3 n;uniform mat4 M,V;varying vec3 vn;void main(){vn=mat3(M)*n;gl_Position=V*M*vec4(p,1.);}`;
-const fs=`precision mediump float;varying vec3 vn;uniform vec3 c;uniform float a,lit;void main(){vec3 N=normalize(vn);float d=max(dot(N,normalize(vec3(.4,-.5,.8))),0.);float k=lit>0.5?.45+.55*d+.12*max(dot(N,normalize(vec3(-.6,.7,.3))),0.):1.;gl_FragColor=vec4(c*k,a);}`;
+"use strict";
+const DATA=/*__DATA__*/null;
+const $=s=>document.querySelector(s);
+document.getElementById('rev').textContent=DATA.rev||'';
+function applyTheme(){document.documentElement.classList.toggle('dark',/theme=dark/.test(location.hash));draw()}
+window.addEventListener('hashchange',applyTheme);
+// ---------------------------------------------------------------- geometry
+function dec(b64){const s=atob(b64),n=s.length/2,o=new Float32Array(n);for(let i=0;i<n;i++){let v=s.charCodeAt(2*i)|(s.charCodeAt(2*i+1)<<8);if(v>32767)v-=65536;o[i]=v/50}return o}
+const cv=$('#c');const gl=cv.getContext('webgl',{antialias:true});
+const VS=`attribute vec3 p;attribute vec3 n;uniform mat4 M,VP;varying vec3 vn;void main(){vn=mat3(M)*n;gl_Position=VP*M*vec4(p,1.);}`;
+const FS=`precision mediump float;varying vec3 vn;uniform vec3 col;uniform float a,lit;uniform vec3 L;void main(){float d=max(dot(normalize(vn),L),0.);float s=mix(1.,0.58+0.42*d,lit);gl_FragColor=vec4(col*s,a);}`;
 function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
-const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
-const L={p:gl.getAttribLocation(pr,'p'),n:gl.getAttribLocation(pr,'n'),M:gl.getUniformLocation(pr,'M'),V:gl.getUniformLocation(pr,'V'),c:gl.getUniformLocation(pr,'c'),a:gl.getUniformLocation(pr,'a'),lit:gl.getUniformLocation(pr,'lit')};
+const prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);gl.useProgram(prog);
+const loc={p:gl.getAttribLocation(prog,'p'),n:gl.getAttribLocation(prog,'n'),M:gl.getUniformLocation(prog,'M'),VP:gl.getUniformLocation(prog,'VP'),col:gl.getUniformLocation(prog,'col'),a:gl.getUniformLocation(prog,'a'),lit:gl.getUniformLocation(prog,'lit'),L:gl.getUniformLocation(prog,'L')};
 function buf(arr){const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,arr,gl.STATIC_DRAW);return b}
-function mk(pos){const n=new Float32Array(pos.length);for(let i=0;i<pos.length;i+=9){const ax=pos[i+3]-pos[i],ay=pos[i+4]-pos[i+1],az=pos[i+5]-pos[i+2],bx=pos[i+6]-pos[i],by=pos[i+7]-pos[i+1],bz=pos[i+8]-pos[i+2];let x=ay*bz-az*by,y=az*bx-ax*bz,z=ax*by-ay*bx;const l=Math.hypot(x,y,z)||1;for(let k=0;k<3;k++){n[i+3*k]=x/l;n[i+3*k+1]=y/l;n[i+3*k+2]=z/l}}return{p:buf(pos),n:buf(n),c:pos.length/3}}
-// primitive meshes for hardware (cylinder along z, unit) built once
-function cylMesh(seg){const p=[];for(let i=0;i<seg;i++){const a=i/seg*2*Math.PI,b=(i+1)/seg*2*Math.PI,c1=Math.cos(a),s1=Math.sin(a),c2=Math.cos(b),s2=Math.sin(b);p.push(c1,s1,0,c2,s2,0,c2,s2,1,c1,s1,0,c2,s2,1,c1,s1,1, 0,0,1,c1,s1,1,c2,s2,1, 0,0,0,c2,s2,0,c1,s1,0)}return mk(new Float32Array(p))}
-const CYL=cylMesh(20),HEX=cylMesh(6);
-const meshes=D.meshes.map(m=>{const pos=dec(m.tri),e=m.edge?dec(m.edge):new Float32Array(0);const o=mk(pos);o.e=buf(e);o.ec=e.length/3;Object.assign(o,m);let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(let i=0;i<pos.length;i+=3)for(let k=0;k<3;k++){mn[k]=Math.min(mn[k],pos[i+k]);mx[k]=Math.max(mx[k],pos[i+k])}o.ctr=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];return o});
-// matrices (column-major)
-const I=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+function hex(c){return[parseInt(c.slice(1,3),16)/255,parseInt(c.slice(3,5),16)/255,parseInt(c.slice(5,7),16)/255]}
+const meshes=DATA.meshes.map(m=>{const P=dec(m.tri),N=new Float32Array(P.length);for(let i=0;i<P.length;i+=9){const ax=P[i+3]-P[i],ay=P[i+4]-P[i+1],az=P[i+5]-P[i+2],bx=P[i+6]-P[i],by=P[i+7]-P[i+1],bz=P[i+8]-P[i+2];let x=ay*bz-az*by,y=az*bx-ax*bz,z=ax*by-ay*bx;const l=Math.hypot(x,y,z)||1;x/=l;y/=l;z/=l;for(let k=0;k<3;k++){N[i+3*k]=x;N[i+3*k+1]=y;N[i+3*k+2]=z}}
+ const E=dec(m.edge);let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(let i=0;i<P.length;i+=3)for(let k=0;k<3;k++){mn[k]=Math.min(mn[k],P[i+k]);mx[k]=Math.max(mx[k],P[i+k])}
+ return Object.assign({},m,{pb:buf(P),nb:buf(N),cnt:P.length/3,eb:buf(E),ecnt:E.length/3,eN:buf(new Float32Array(E.length)),rgb:hex(m.color),c:[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2],mn,mx})});
+const byId=Object.fromEntries(meshes.map(m=>[m.id,m]));
+// wires as 6-sided tubes
+function tube(pts,r){const out=[];for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];const d=[b[0]-a[0],b[1]-a[1],b[2]-a[2]];const l=Math.hypot(...d)||1;const u=d.map(v=>v/l);let t=Math.abs(u[2])<.9?[0,0,1]:[1,0,0];let s=[u[1]*t[2]-u[2]*t[1],u[2]*t[0]-u[0]*t[2],u[0]*t[1]-u[1]*t[0]];const sl=Math.hypot(...s);s=s.map(v=>v/sl);const w=[u[1]*s[2]-u[2]*s[1],u[2]*s[0]-u[0]*s[2],u[0]*s[1]-u[1]*s[0]];
+ for(let k=0;k<6;k++){const a0=k*Math.PI/3,a1=(k+1)*Math.PI/3;const o0=[0,1,2].map(j=>r*(Math.cos(a0)*s[j]+Math.sin(a0)*w[j])),o1=[0,1,2].map(j=>r*(Math.cos(a1)*s[j]+Math.sin(a1)*w[j]));
+ const p00=[0,1,2].map(j=>a[j]+o0[j]),p01=[0,1,2].map(j=>a[j]+o1[j]),p10=[0,1,2].map(j=>b[j]+o0[j]),p11=[0,1,2].map(j=>b[j]+o1[j]);out.push(...p00,...p10,...p11,...p00,...p11,...p01)}}
+ return new Float32Array(out)}
+const wires=DATA.wires.map(w=>{const P=tube(w.pts,0.9),N=new Float32Array(P.length);for(let i=0;i<P.length;i+=9){const ax=P[i+3]-P[i],ay=P[i+4]-P[i+1],az=P[i+5]-P[i+2],bx=P[i+6]-P[i],by=P[i+7]-P[i+1],bz=P[i+8]-P[i+2];let x=ay*bz-az*by,y=az*bx-ax*bz,z=ax*by-ay*bx;const l=Math.hypot(x,y,z)||1;for(let k=0;k<3;k++){N[i+3*k]=x/l;N[i+3*k+1]=y/l;N[i+3*k+2]=z/l}}return Object.assign({},w,{pb:buf(P),nb:buf(N),cnt:P.length/3,rgb:hex(w.color)})});
+// ---------------------------------------------------------------- math
+const I4=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function mul(a,b){const o=new Array(16).fill(0);for(let i=0;i<4;i++)for(let j=0;j<4;j++)for(let k=0;k<4;k++)o[j*4+i]+=a[k*4+i]*b[j*4+k];return o}
-const T=(x,y,z)=>[1,0,0,0,0,1,0,0,0,0,1,0,x,y,z,1],S=(x,y,z)=>[x,0,0,0,0,y,0,0,0,0,z,0,0,0,0,1];
-function Rax(ax,deg){const a=deg*Math.PI/180,c=Math.cos(a),s=Math.sin(a),[x,y,z]=ax,t=1-c;return[t*x*x+c,t*x*y+s*z,t*x*z-s*y,0,t*x*y-s*z,t*y*y+c,t*y*z+s*x,0,t*x*z+s*y,t*y*z-s*x,t*z*z+c,0,0,0,0,1]}
-function about(p,ax,deg){return mul(T(...p),mul(Rax(ax,deg),T(-p[0],-p[1],-p[2])))}
-const st={step:0,hip:0,knee:0,lid:false,x:false,el:true,w:false,ex:false,hw:true,focus:null,yaw:-35,pitch:28,dist:330,tgt:[0,0,15]};
-function legM(leg,link){const g=D.legs[leg];// gait angle -> world: mirror sign keeps the motion symmetric
- const sgn=g.sx*g.sy;const hipA=st.hip*sgn;let m=about([g.hip[0],g.hip[1],0],[0,0,1],hipA);
- if(link==='tibia'){const a=g.ang*Math.PI/180,r=D.knee.r;const kp=[g.hip[0]+r*Math.cos(a),g.hip[1]+r*Math.sin(a),D.knee.z];const t=[-Math.sin(a),Math.cos(a),0];m=mul(m,about(kp,t,st.knee))}return m}
-function groupsFor(){const s=st.step?D.steps[st.step-1].show:['all'];const all=s.includes('all');const h=x=>all||s.includes(x);return{body0:h('body0')||h('body')||all,bars:h('bars')||h('body')||all,pack:h('pack')||all,hips:h('hips')||all,elec:(h('elec')||all)&&st.el,lid:(h('lid')||all)&&!st.lid,femur:h('femur')||all,tibia:all,horns:h('horns')||all,wires:h('wires')||st.w}}
-function visible(m,g){if(m.group==='body')return m.id==='P01_day'?g.body0:g.bars;if(m.group==='lid')return g.lid;if(m.group==='elec')return m.role==='pack'?g.pack:g.elec;
- if(m.group==='servo'){if(m.id.includes('_hip')&&!m.id.includes('horn'))return g.hips;if(m.id.includes('knee')&&!m.id.includes('horn'))return g.femur;if(m.id.includes('hip_horn'))return g.horns||g.tibia;return g.tibia}
- if(m.link==='femur')return g.femur;if(m.link==='tibia')return g.tibia;return true}
-function view(){const W=cv.clientWidth,H=cv.clientHeight,asp=W/H,f=1/Math.tan(0.45/2*1.6),n=5,fa=3000;const P=[f/asp,0,0,0,0,f,0,0,0,0,(fa+n)/(n-fa),-1,0,0,2*fa*n/(n-fa),0];
- const y=st.yaw*Math.PI/180,p=st.pitch*Math.PI/180;const e=[st.tgt[0]+st.dist*Math.cos(p)*Math.cos(y),st.tgt[1]+st.dist*Math.cos(p)*Math.sin(y),st.tgt[2]+st.dist*Math.sin(p)];
- const z=norm(sub(e,st.tgt)),x=norm(cross([0,0,1],z)),u=cross(z,x);const Vw=[x[0],u[0],z[0],0,x[1],u[1],z[1],0,x[2],u[2],z[2],0,-dot(x,e),-dot(u,e),-dot(z,e),1];return mul(P,Vw)}
-const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],norm=a=>{const l=Math.hypot(...a)||1;return a.map(v=>v/l)};
-function drawMesh(o,M,col,alpha,lines){gl.uniformMatrix4fv(L.M,false,M);gl.uniform3fv(L.c,hex(col));gl.uniform1f(L.a,alpha);gl.uniform1f(L.lit,1);
- gl.bindBuffer(gl.ARRAY_BUFFER,o.p);gl.vertexAttribPointer(L.p,3,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(L.p);gl.bindBuffer(gl.ARRAY_BUFFER,o.n);gl.vertexAttribPointer(L.n,3,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(L.n);gl.drawArrays(gl.TRIANGLES,0,o.c);
- if(lines&&o.ec){gl.uniform1f(L.lit,0);gl.uniform3fv(L.c,hex(document.body.classList.contains('dark')?'#0b0d11':'#4e5d65'));gl.disableVertexAttribArray(L.n);gl.vertexAttrib3f(L.n,0,0,1);gl.bindBuffer(gl.ARRAY_BUFFER,o.e);gl.vertexAttribPointer(L.p,3,gl.FLOAT,false,0,0);gl.drawArrays(gl.LINES,0,o.ec)}}
-function stepHw(){if(!st.step)return D.fasteners.map(f=>f.id);return D.steps[st.step-1].hw.filter(h=>h[0]==='S')}
-function drawHw(){if(!st.hw)return;const ids=stepHw(),showAll=!st.step;for(const f of D.fasteners){const on=showAll||ids.includes(f.id);const g=groupsFor();if(!on&&!(st.step>=f.step))continue;
- const sel=st.focus===f.id,ex=st.ex&&(on)?18:0;const col=sel?COL.sel:COL.metal;
- drawMesh(CYL,mul(T(f.x,f.y,f.zhead+ex),S(2.75,2.75,3)),col,1,false);drawMesh(CYL,mul(T(f.x,f.y,f.zhead-f.L+ex),S(1.5,1.5,f.L)),col,1,false);
- drawMesh(HEX,mul(T(f.x,f.y,f.nut-1.2-(st.ex&&on?6:0)),S(3.17,3.17,2.4)),sel?COL.sel:'#8a969d',1,false);
- if(on&&st.step){drawMesh(CYL,mul(T(f.x,f.y,f.zhead+4+ex),S(.5,.5,14)),'#d32f2f',1,false);drawMesh(CYL,mul(T(f.x,f.y,f.zhead+3.2+ex),S(1.6,1.6,1)),'#d32f2f',1,false)}}}
-function drawWires(){for(const w of D.wires){for(let i=0;i<w.pts.length-1;i++){const a=w.pts[i],b=w.pts[i+1],d=sub(b,a),l=Math.hypot(...d);const z=[0,0,1],ax=cross(z,d),s=Math.hypot(...ax),ang=Math.atan2(s,d[2])*180/Math.PI;let M=T(...a);if(s>1e-6)M=mul(M,Rax(norm(ax),ang));else if(d[2]<0)M=mul(M,Rax([1,0,0],180));drawMesh(CYL,mul(M,S(1.6,1.6,l)),w.color,1,false)}}}
-function draw(){const dpr=devicePixelRatio||1;cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;gl.viewport(0,0,cv.width,cv.height);
- const bg=hex(document.body.classList.contains('dark')?'#0e0f13':'#edf3f5');gl.clearColor(bg[0],bg[1],bg[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);
- gl.uniformMatrix4fv(L.V,false,view());const g=groupsFor();const stepParts=st.step?D.steps[st.step-1].parts:[];
- // ground grid
- const dark=document.body.classList.contains('dark');for(let i=-150;i<=150;i+=25){drawMesh(CYL,mul(T(i,-150,-27.3),mul(Rax([1,0,0],-90),S(.15,.15,300))),dark?'#3a414c':'#cbd6d9',1,false);drawMesh(CYL,mul(T(-150,i,-27.3),mul(Rax([0,1,0],90),S(.15,.15,300))),dark?'#3a414c':'#cbd6d9',1,false)}
- drawHw();if(g.wires)drawWires();
- const trans=[];for(const m of meshes){if(!visible(m,g))continue;const M=m.leg?legM(m.leg,m.link):I();let col=COL[m.role]||'#999';if(stepParts.includes(m.id)||st.focus===m.id)col=COL.sel;
-  if(st.x&&(m.group==='lid'||m.id==='P01_day')){trans.push([m,M,col]);continue}drawMesh(m,M,col,1,true)}
- gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);for(const [m,M,c] of trans)drawMesh(m,M,c,.28,true);gl.depthMask(true);gl.disable(gl.BLEND)}
-function hwCard(){const box=$('hwcard');box.innerHTML='';if(!st.step){const n=D.fasteners.length;box.innerHTML=`<div>Tổng: <b>${n} vít M3</b> (4× M3×12 + 4× M3×20) + <b>${n} tán M3</b>. Vít túi SG90: 8 vít tai servo gối + 8 vít tâm horn.</div>`;for(const f of D.fasteners)box.appendChild(btn(f));return}
- const s=D.steps[st.step-1];if(!s.hw.length){box.innerHTML='<div class="small">Bước này không dùng vít hay tán.</div>';return}
- for(const h of s.hw){if(h[0]==='S'){box.appendChild(btn(D.fasteners.find(f=>f.id===h)))}else{const f=D.factory[h];const d=document.createElement('div');d.className='card';d.innerHTML=`<b>${f.id}</b> — ${f.size} × ${f.n}<br>Tán: ${f.nut}. Hướng: ${f.entry}. ${f.note}. <span class="tag">vít nhà máy, không phải M3</span>`;box.appendChild(d)}}}
-function btn(f){const b=document.createElement('button');b.className='hw';b.innerHTML=`<b>${f.id}</b> ${f.size} + 1 tán M3 — ${f.entry}; ${f.tool}; ${f.note} (${f.parts.join(' + ')})`;b.onclick=()=>{st.focus=st.focus===f.id?null:f.id;if(st.focus){st.tgt=[f.x,f.y,f.zhead-5];st.dist=150}draw()};return b}
-function setStep(i){st.step=Math.max(0,Math.min(D.steps.length,i));st.focus=null;st.ex=false;$('cEx').checked=false;st.tgt=[0,0,15];st.dist=330;$('step').value=st.step;
- $('title').textContent=st.step?D.steps[st.step-1].t:'Đủ bộ';$('act').textContent=st.step?D.steps[st.step-1].act:'Robot ráp xong ở tư thế đứng (neutral). 12 part in, 8 vít M3 + 8 tán. Chọn Bước 1 để bắt đầu ráp.';hwCard();draw()}
-const sel=$('step');sel.add(new Option('Đủ bộ',0));D.steps.forEach((s,i)=>sel.add(new Option(s.t,i+1)));sel.onchange=()=>setStep(+sel.value);
-$('prev').onclick=()=>setStep(st.step-1);$('next').onclick=()=>setStep(st.step+1);
-$('tHw').onclick=e=>{st.hw=!st.hw;e.target.classList.toggle('on',st.hw);e.target.setAttribute('aria-pressed',st.hw);draw()};
-$('cLid').onchange=e=>{st.lid=e.target.checked;draw()};$('cX').onchange=e=>{st.x=e.target.checked;draw()};$('cEl').onchange=e=>{st.el=e.target.checked;draw()};$('cW').onchange=e=>{st.w=e.target.checked;draw()};$('cEx').onchange=e=>{st.ex=e.target.checked;draw()};
-$('sHip').oninput=e=>{st.hip=+e.target.value;$('vHip').textContent=st.hip+'°';draw()};$('sKnee').oninput=e=>{st.knee=+e.target.value;$('vKnee').textContent=st.knee+'°';draw()};
-let anim=null;$('bStop').onclick=()=>{if(anim){cancelAnimationFrame(anim);anim=null}st.hip=0;st.knee=0;$('sHip').value=0;$('sKnee').value=0;$('vHip').textContent='0°';$('vKnee').textContent='0°';draw()};
-$('bAnim').onclick=()=>{if(anim)return;const t0=performance.now();const f=t=>{const p=(t-t0)/1000;st.hip=Math.round(25*Math.sin(p*2));st.knee=Math.round(25*Math.cos(p*2));$('sHip').value=st.hip;$('sKnee').value=st.knee;$('vHip').textContent=st.hip+'°';$('vKnee').textContent=st.knee+'°';draw();anim=requestAnimationFrame(f)};anim=requestAnimationFrame(f)};
-$('vTop').onclick=()=>{st.yaw=-90;st.pitch=89;draw()};$('vFront').onclick=()=>{st.yaw=0;st.pitch=5;draw()};$('vIso').onclick=()=>{st.yaw=-35;st.pitch=28;draw()};
-$('assume').textContent='GIẢ ĐỊNH: kích thước SG90, LILYGO, PCA9685, LED và pin là số danh nghĩa, chưa đo. Hình dây là sơ đồ minh họa; đấu dây thật theo firmware/WIRING.md. Chưa thử phần cứng. Bản '+D.revision+'.';
-let drag=null;cv.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];cv.setPointerCapture(e.pointerId)});cv.addEventListener('pointerup',()=>drag=null);
-cv.addEventListener('pointermove',e=>{if(!drag)return;st.yaw-=(e.clientX-drag[0])*.4;st.pitch=Math.max(-10,Math.min(89,st.pitch+(e.clientY-drag[1])*.4));drag=[e.clientX,e.clientY];draw()});
-cv.addEventListener('wheel',e=>{e.preventDefault();st.dist=Math.max(80,Math.min(900,st.dist*(1+e.deltaY*.001)));draw()},{passive:false});
-addEventListener('resize',draw);setStep(0);
+function tr(x,y,z){const m=I4();m[12]=x;m[13]=y;m[14]=z;return m}
+function rotAxis(p,u,deg){const a=deg*Math.PI/180,c=Math.cos(a),s=Math.sin(a),t=1-c;const l=Math.hypot(...u);const[x,y,z]=u.map(v=>v/l);
+ const R=[t*x*x+c,t*x*y+s*z,t*x*z-s*y,0,t*x*y-s*z,t*y*y+c,t*y*z+s*x,0,t*x*z+s*y,t*y*z-s*x,t*z*z+c,0,0,0,0,1];return mul(tr(p[0],p[1],p[2]),mul(R,tr(-p[0],-p[1],-p[2])))}
+function persp(f,a,n,fr){const t=1/Math.tan(f/2);return[t/a,0,0,0,0,t,0,0,0,0,(fr+n)/(n-fr),-1,0,0,2*fr*n/(n-fr),0]}
+function look(e,c,u){let z=[e[0]-c[0],e[1]-c[1],e[2]-c[2]];let l=Math.hypot(...z);z=z.map(v=>v/l);let x=[u[1]*z[2]-u[2]*z[1],u[2]*z[0]-u[0]*z[2],u[0]*z[1]-u[1]*z[0]];l=Math.hypot(...x);x=x.map(v=>v/l);const y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];
+ return[x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-(x[0]*e[0]+x[1]*e[1]+x[2]*e[2]),-(y[0]*e[0]+y[1]*e[1]+y[2]*e[2]),-(z[0]*e[0]+z[1]*e[1]+z[2]*e[2]),1]}
+function xf(m,p){return[m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12],m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13],m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]]}
+// ---------------------------------------------------------------- state
+const S={step:0,hip:0,knee:0,explode:0,open:false,xray:false,elec:true,wire:true,hw:true,focus:null,cam:{th:-55,ph:28,d:330,t:[0,0,20]}};
+const SIGN={FL:[1,1],FR:[1,-1],RL:[-1,1],RR:[-1,-1]};
+function match(id,pat){if(pat==='*')return true;if(pat.endsWith('*')&&!pat.includes('*',0)===false){}const re=new RegExp('^'+pat.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*')+'$');return re.test(id)}
+function stepDef(){return S.step?DATA.steps[S.step-1]:null}
+function visible(m){const st=stepDef();if(m.group==='hw'||m.group==='nut'){if(!S.hw)return false}
+ if(!S.elec&&(m.group==='elec'||m.group==='bank'))return false;
+ if(S.open&&(m.group==='cover'||m.group==='clamp'))return false;
+ if(!st)return true;return st.show.some(p=>match(m.id,p))}
+function legMatrix(m,role){const c=m.corner;if(!c)return I4();const[sx,sy]=SIGN[c];const hp=DATA.joints.hip[c];const g=sx*sy;let M=I4();
+ const st=stepDef();let aside=st&&st.legsAside;
+ if(role==='foot'){const a=Math.PI/4;const kx=hp[0]+sx*DATA.joints.rk*Math.cos(a),ky=hp[1]+sy*DATA.joints.rk*Math.sin(a);const td=[sx*-Math.sin(a),sy*Math.cos(a),0];M=rotAxis([kx,ky,DATA.joints.zk],td,g*S.knee)}
+ M=mul(rotAxis([hp[0],hp[1],0],[0,0,1],g*S.hip),M);
+ if(aside){const r=Math.hypot(hp[0],hp[1]);M=mul(tr(hp[0]/r*28,hp[1]/r*28,-30),M)}
+ return M}
+function modelMatrix(m){let M=I4();const role=m.group==='foot'?'foot':(['thigh','kneeservo','hiphorn'].includes(m.group)?'thigh':(m.moveWith||null));
+ if(role)M=legMatrix(m,role);
+ const e=S.explode+(stepDef()&&stepDef().explode||0);if(e){
+  if(m.group==='cover')M=mul(tr(0,0,e*1.6),M);else if(m.group==='clamp')M=mul(tr(0,0,e*1.1),M);
+  else if(m.group==='hw'&&m.axis){M=mul(tr(-m.axis[0]*e*0.8,-m.axis[1]*e*0.8,-m.axis[2]*e*0.8),M)}
+  else if(m.group==='nut'&&m.nutEntry){M=mul(tr(m.nutEntry[0]*e*0.5,m.nutEntry[1]*e*0.5,m.nutEntry[2]*e*0.5),M)}
+  else if(m.group==='foot'){const[sx,sy]=SIGN[m.corner];M=mul(tr(sx*e*0.5,sy*e*0.5,-e*0.3),M)}
+  else if(m.group==='kneeservo'){const[sx,sy]=SIGN[m.corner];M=mul(tr(sx*e*0.25,sy*e*0.25,0),M)}
+  else if(m.group==='elec'&&m.id!=='pca')M=mul(tr(0,0,e*0.6),M)}
+ return M}
+// ---------------------------------------------------------------- draw
+function cam(){const c=S.cam,th=c.th*Math.PI/180,ph=c.ph*Math.PI/180;const e=[c.t[0]+c.d*Math.cos(ph)*Math.cos(th),c.t[1]+c.d*Math.cos(ph)*Math.sin(th),c.t[2]+c.d*Math.sin(ph)];
+ const up=Math.abs(c.ph)>89?[-Math.cos(th),-Math.sin(th),0]:[0,0,1];return{e,V:look(e,c.t,up)}}
+function draw(){const dpr=Math.min(2,window.devicePixelRatio||1);const w=cv.clientWidth*dpr|0,h=cv.clientHeight*dpr|0;if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
+ gl.viewport(0,0,w,h);const dark=document.documentElement.classList.contains('dark');const bg=dark?[.114,.133,.161]:[.89,.914,.91];gl.clearColor(bg[0],bg[1],bg[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);
+ const{e,V}=cam();const P=persp(0.62,w/h,2,3000);const VP=mul(P,V);gl.uniformMatrix4fv(loc.VP,false,VP);
+ const L=[0.35,-0.45,0.82];const ll=Math.hypot(...L);gl.uniform3fv(loc.L,L.map(v=>v/ll));
+ const st=stepDef();const foc=new Set();if(st&&!S.focus)meshes.forEach(m=>{if(st.focus.some(p=>match(m.id,p)))foc.add(m.id)});
+ if(S.focus)meshes.forEach(m=>{if(m.hw===S.focus)foc.add(m.id)});
+ const later=[];
+ for(const m of meshes){if(!visible(m))continue;const M=modelMatrix(m);m._M=M;
+  if(S.xray&&m.group==='cover'){later.push(m);continue}
+  drawMesh(m,M,1,foc,dark)}
+ if(S.wire&&(!st||st.show.some(p=>p.startsWith('wire:'))))for(const w of wires){if(st&&!st.show.some(p=>p==='wire:*'||p==='wire:'+w.id))continue;
+  gl.uniformMatrix4fv(loc.M,false,I4());gl.uniform3fv(loc.col,w.rgb);gl.uniform1f(loc.a,1);gl.uniform1f(loc.lit,1);bind(w.pb,w.nb);gl.drawArrays(gl.TRIANGLES,0,w.cnt)}
+ // insertion arrows for the focused hardware
+ if(S.focus){const m=byId['hw_'+S.focus];if(m&&m._M){const h0=xf(m._M,m.head);const a=m.axis;const tail=[h0[0]-a[0]*16,h0[1]-a[1]*16,h0[2]-a[2]*16];arrow(tail,h0,dark)}}
+ gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);for(const m of later)drawMesh(m,m._M,0.22,foc,dark);gl.depthMask(true);gl.disable(gl.BLEND)}
+function bind(pb,nb){gl.bindBuffer(gl.ARRAY_BUFFER,pb);gl.enableVertexAttribArray(loc.p);gl.vertexAttribPointer(loc.p,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,nb);gl.enableVertexAttribArray(loc.n);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,0,0)}
+function drawMesh(m,M,alpha,foc,dark){gl.uniformMatrix4fv(loc.M,false,M);let c=m.rgb;const f=foc.has(m.id);
+ if(S.focus&&m.hw===S.focus)c=dark?[0.5,0.7,1]:[0.11,0.4,0.56];
+ gl.uniform3fv(loc.col,c);gl.uniform1f(loc.a,alpha);gl.uniform1f(loc.lit,1);bind(m.pb,m.nb);
+ gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1,1);gl.drawArrays(gl.TRIANGLES,0,m.cnt);gl.disable(gl.POLYGON_OFFSET_FILL);
+ if(m.ecnt){gl.uniform1f(loc.lit,0);const ec=f?(dark?[0.5,0.7,1]:[0.11,0.4,0.56]):(dark?[0.04,0.05,0.07]:[0.31,0.36,0.4]);gl.uniform3fv(loc.col,ec);bind(m.eb,m.eN);gl.drawArrays(gl.LINES,0,m.ecnt)}}
+let arrowBuf=gl.createBuffer(),arrowN=gl.createBuffer();
+function arrow(a,b,dark){const d=[b[0]-a[0],b[1]-a[1],b[2]-a[2]];const l=Math.hypot(...d);const u=d.map(v=>v/l);let s=Math.abs(u[2])<.9?[u[1],-u[0],0]:[1,0,0];const sl=Math.hypot(...s);s=s.map(v=>v/sl);
+ const h1=[0,1,2].map(j=>b[j]-u[j]*4+s[j]*2.5),h2=[0,1,2].map(j=>b[j]-u[j]*4-s[j]*2.5);const P=new Float32Array([...a,...b,...b,...h1,...b,...h2]);
+ gl.uniformMatrix4fv(loc.M,false,I4());gl.uniform1f(loc.lit,0);gl.uniform3fv(loc.col,dark?[1,.75,.3]:[.85,.33,0]);gl.bindBuffer(gl.ARRAY_BUFFER,arrowBuf);gl.bufferData(gl.ARRAY_BUFFER,P,gl.DYNAMIC_DRAW);gl.vertexAttribPointer(loc.p,3,gl.FLOAT,false,0,0);
+ gl.bindBuffer(gl.ARRAY_BUFFER,arrowN);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(P.length),gl.DYNAMIC_DRAW);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,0,0);gl.disable(gl.DEPTH_TEST);gl.drawArrays(gl.LINES,0,6);gl.enable(gl.DEPTH_TEST)}
+// ---------------------------------------------------------------- camera presets & input
+const PRE={iso:{th:-55,ph:28},top:{th:-90,ph:89.5},front:{th:0,ph:4}};
+function fitD(){const a=cv.clientWidth/Math.max(1,cv.clientHeight);return 330/Math.min(1,a*0.95)}
+function setCam(k){if(k==='fit'){S.cam.t=[0,0,20];S.cam.d=fitD()}else Object.assign(S.cam,PRE[k]);draw()}
+document.querySelectorAll('[data-cam]').forEach(b=>b.onclick=()=>setCam(b.dataset.cam));
+let drag=null,pinch=null;const pts=new Map();
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);drag={x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===2}});
+cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,[e.clientX,e.clientY]);
+ if(pts.size===2){const[a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch)S.cam.d=Math.max(60,Math.min(900,S.cam.d*pinch/d));pinch=d;draw();return}
+ if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;
+ if(drag.pan){const th=S.cam.th*Math.PI/180;const k=S.cam.d/600;S.cam.t[0]+=(Math.sin(th)*dx)*k;S.cam.t[1]+=(-Math.cos(th)*dx)*k;S.cam.t[2]+=dy*k}
+ else{S.cam.th-=dx*0.4;S.cam.ph=Math.max(-10,Math.min(89.5,S.cam.ph+dy*0.4))}draw()});
+const up=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(!pts.size)drag=null};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{e.preventDefault();S.cam.d=Math.max(60,Math.min(900,S.cam.d*(1+Math.sign(e.deltaY)*0.1)));draw()},{passive:false});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('resize',draw);
+// ---------------------------------------------------------------- UI
+const sel=$('#step');sel.add(new Option('Đủ bộ',0));DATA.steps.forEach((s,i)=>sel.add(new Option(s.title,i+1)));
+function totals(){const c={};for(const id in DATA.hw){const h=DATA.hw[id];c[h.size]=(c[h.size]||0)+1}const nuts=Object.values(DATA.hw).filter(h=>h.nut).length;
+ return Object.entries(c).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')+`<tr><td>tán M3</td><td>${nuts}</td></tr>`}
+function idBtn(id){return `<button data-id="${id}" class="${S.focus===id?'on':''}" aria-label="Xem ${id}">${id}</button>`}
+function render(){const st=stepDef();const card=$('#card');
+ if(!st){card.innerHTML=`<h2>Đủ bộ — robot đã ráp</h2><div class="muted">12 part in (1 đáy, 1 nắp, 2 thanh đè, 4 đùi, 4 cẳng), 8 servo SG90, 11 vít M3 (giới hạn 12) + vít túi SG90.</div>
+  <h3>Tổng vít/tán</h3><table>${totals()}</table><div class="warn">Đi theo Bước 1 → 8 bằng nút Sau. Mỗi bước có thẻ “Vít/tán bước này”. Bấm một mã vít để xem vít thật, chiều vặn (mũi tên cam) và part nó bắt.</div>
+  <div class="warn">Chưa in, chưa ráp thử: độ khít hốc servo, rãnh horn và tán M3 cần in file TEST ONLY và MATING_TEST trước (case/README.md).</div>`}
+ else{let hw='';if(!st.hw.length)hw='<div class="muted">Bước này không dùng vít/tán.</div>';
+  for(const g of st.hw){hw+=`<div class="hwrow"><b>${g.what}</b> × ${g.count}<div class="ids">${g.ids.map(idBtn).join('')}</div><div class="muted">Hướng: ${g.entry}${g.nutOnly?' · chỉ đặt tán ở bước này':''}</div></div>`}
+  card.innerHTML=`<h2>${st.title}</h2><div>${st.action}</div><h3>Vít/tán bước này</h3>${hw}`+(S.focus&&DATA.hw[S.focus]?`<div class="warn"><b>${S.focus}</b>: ${DATA.hw[S.focus].size}${DATA.hw[S.focus].nut?' + tán M3':''} — ${DATA.hw[S.focus].action}<br>Bắt: ${DATA.hw[S.focus].parts.join(' + ')}</div>`:'')}
+ card.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>focusId(b.dataset.id));
+ $('#prev').disabled=S.step===0;$('#next').disabled=S.step===DATA.steps.length;sel.value=S.step;draw()}
+function focusId(id){S.focus=S.focus===id?null:id;const m=byId['hw_'+id];if(S.focus&&m){const p=m._M?xf(m._M,m.head):m.head;S.cam.t=p;S.cam.d=fitD()*0.5}render();renderAll()}
+function go(i){S.step=Math.max(0,Math.min(DATA.steps.length,i));S.focus=null;S.explode=0;$('#explode').value=0;$('#exv').textContent='0';
+ S.cam.t=[0,0,20];S.cam.d=fitD();const st=stepDef();if(st&&st.camera)Object.assign(S.cam,PRE[st.camera]);else Object.assign(S.cam,PRE.iso);render()}
+sel.onchange=()=>go(+sel.value);$('#prev').onclick=()=>go(S.step-1);$('#next').onclick=()=>go(S.step+1);
+$('#hwToggle').onchange=e=>{S.hw=e.target.checked;draw()};$('#openCover').onchange=e=>{S.open=e.target.checked;draw()};$('#xray').onchange=e=>{S.xray=e.target.checked;draw()};
+$('#elecT').onchange=e=>{S.elec=e.target.checked;draw()};$('#wireT').onchange=e=>{S.wire=e.target.checked;draw()};
+$('#explode').oninput=e=>{S.explode=+e.target.value;$('#exv').textContent=e.target.value;draw()};
+$('#hip').oninput=e=>{S.hip=+e.target.value;$('#hipv').textContent=e.target.value+'°';draw()};
+$('#knee').oninput=e=>{S.knee=+e.target.value;$('#kneev').textContent=e.target.value+'°';draw()};
+let animT=null;$('#center').onclick=()=>{if(animT){clearInterval(animT);animT=null}S.hip=S.knee=0;$('#hip').value=0;$('#knee').value=0;$('#hipv').textContent='0°';$('#kneev').textContent='0°';draw()};
+$('#anim').onclick=()=>{if(animT){clearInterval(animT);animT=null;return}let t=0;animT=setInterval(()=>{t+=0.05;S.hip=Math.round(25*Math.sin(t));S.knee=Math.round(25*Math.sin(t+1.2));$('#hip').value=S.hip;$('#knee').value=S.knee;$('#hipv').textContent=S.hip+'°';$('#kneev').textContent=S.knee+'°';draw()},50)};
+function renderAll(){$('#allIds').innerHTML=Object.keys(DATA.hw).map(idBtn).join('');$('#allIds').querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>focusId(b.dataset.id))}
+$('#legend').innerHTML=[['Đáy/khung','#d6cfc1'],['Nắp','#eee9df'],['Thanh đè','#cfc6b3'],['Chân (quay)','#9ebcca'],['Servo','#4d6fa8'],['Điện tử','#4c806c'],['Vít/tán','#596872']].map(([n,c])=>`<span><span class="sw" style="background:${c}"></span>${n}</span>`).join(' · ')+'<br>Dây: '+DATA.wires.map(w=>`<span><span class="sw" style="background:${w.color}"></span>${w.id} ${w.label}</span>`).join('<br>');
+document.addEventListener('keydown',e=>{if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT')return;if(e.key==='ArrowRight')go(S.step+1);if(e.key==='ArrowLeft')go(S.step-1)});
+renderAll();applyTheme();
+(function(){const h=new URLSearchParams(location.hash.slice(1));go(+(h.get('step')||0));if(h.get('focus'))focusId(h.get('focus'));
+ if(h.get('detail')){$('#detail').open=true}if(h.get('open')){S.open=true;$('#openCover').checked=true}
+ if(h.get('hip')){S.hip=+h.get('hip')}if(h.get('knee')){S.knee=+h.get('knee')}if(h.get('cam'))setCam(h.get('cam'));if(h.get('explode')){S.explode=+h.get('explode');$('#explode').value=S.explode;$('#exv').textContent=S.explode}draw()})();
 </script></body></html>

@@ -1,40 +1,21 @@
-#ifndef CRAB_CONFIG_H
-#define CRAB_CONFIG_H
+#pragma once
 #include <stdint.h>
-// Single GPIO authority, checked against LILYGO 2024-04-29 schematic and pin_config.h.
-#define CRAB_SDA 18
-#define CRAB_SCL 17
-#define CRAB_LED_PIN 21
-#define CRAB_BOOT_PIN 0
-#define CRAB_POWER_ON 15
-#define CRAB_LCD_BL 38
-#define CRAB_LCD_CS 6
-#define CRAB_LCD_DC 7
-#define CRAB_LCD_RST 5
-#define CRAB_LCD_WR 8
-#define CRAB_LCD_RD 9
-#define CRAB_LCD_D0 39
-#define CRAB_LCD_D1 40
-#define CRAB_LCD_D2 41
-#define CRAB_LCD_D3 42
-#define CRAB_LCD_D4 45
-#define CRAB_LCD_D5 46
-#define CRAB_LCD_D6 47
-#define CRAB_LCD_D7 48
+#include "hardware.h"
+// Robot frame: +X front, +Y left, +Z up. Channels alternate hip/knee.
 namespace cfg {
-constexpr uint8_t pcaAddress=0x40, ledCount=8, ledBrightness=51;
-constexpr uint32_t heartbeatMs=600, wifiTimeoutMs=15000, bootHoldMs=8000;
-constexpr uint32_t servoEnableMs=300, gaitPeriodMs=8000, motionTickMs=10;
-constexpr float hipAmplitude=12, kneeAmplitude=16, maxJointDelta=25;
-// FL hip/knee, FR hip/knee, RL hip/knee, RR hip/knee.
-// Positive gait knee = foot UP. Case larger-pulse motion: FL/RR DOWN, FR/RL UP.
-constexpr int8_t signs[8]={1,-1,1,1,1,1,1,-1};
-constexpr uint8_t enableOrder[8]={0,2,4,6,1,3,5,7};
-constexpr float slowRate=8, swingRate=24, acceleration=80;
-constexpr int pulseNeutralUs=1500;
-// Conservative SG90 reference mapping: 90 degrees = 1500us, 10us/degree.
-constexpr float pulseUsPerDegree=10;
+constexpr uint8_t PCA_ADDR=0x40, LED_COUNT=8, LED_BRIGHTNESS=16;
+constexpr int PWM_HZ=50, CENTRE_US=1500;
+constexpr float US_PER_DEG=2000.0f/180.0f, JOINT_LIMIT=30, TRIM_LIMIT=12;
+// Case D7: hip shafts point up; single mirrors FR/RL reverse knee sense.
+// Knees FL +1, FR -1, RL -1, RR +1; negative angle lifts each foot.
+constexpr int SIGN[8]={1,1,1,-1,1,-1,1,1};
+constexpr const char* JOINT[8]={"Hông trước trái","Gối trước trái","Hông trước phải","Gối trước phải",
+                             "Hông sau trái","Gối sau trái","Hông sau phải","Gối sau phải"};
+constexpr uint32_t DEADMAN_MS=500, BOOT_HOLD_MS=8000, ENABLE_GAP_MS=300;
+constexpr float PERIOD_S=6.0f, HIP_AMPLITUDE=12, KNEE_LIFT=15, SLEW_DPS=30;
+constexpr float RADIAL[4]={0.7853981634f,-0.7853981634f,2.3561944902f,-2.3561944902f};
+// Diagonal trot in FL,FR,RL,RR order: FL+RR and FR+RL alternate.
+// Knees lift for half a cycle; quarter-cycle offsets would remove both
+// left or both right supports together. Keep each diagonal exactly in phase.
+constexpr float PHASE[4]={0,3.1415926536f,3.1415926536f,0};
 }
-static_assert(CRAB_SDA!=16 && CRAB_SCL!=43 && CRAB_LED_PIN!=16 && CRAB_LED_PIN!=43,"reserved pin");
-
-#endif

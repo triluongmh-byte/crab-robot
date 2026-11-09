@@ -1,39 +1,94 @@
 #!/usr/bin/env python3
-"""Host checks against production code. Parallel CPU use; cached compilation."""
-import concurrent.futures,hashlib,json,os,subprocess,sys,time
+"""Host-only regressions for both targets; all-core, content-cached compiles.
+Board integration is a separate strict read-only check (reconcile.py).
+"""
 from pathlib import Path
+import concurrent.futures, hashlib, json, os, subprocess, sys
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'build/firmware/host';OUT.mkdir(parents=True,exist_ok=True)
-CORE=ROOT/'firmware/crab';TEST=ROOT/'firmware/tests'
-GROUPS={'wifi','api','assembly','boot','gait','web','qr','pins','hardware'}
-selected=set(sys.argv[1:]) or GROUPS
-if not selected<=GROUPS:sys.exit('Choose: '+', '.join(sorted(GROUPS)))
-def cached(name,inputs,cmd):
- stamp=OUT/(name+'.sha256');digest=hashlib.sha256()
- for p in inputs:digest.update(p.read_bytes())
- digest.update(repr(cmd).encode());sha=digest.hexdigest()
- if stamp.exists() and stamp.read_text()==sha and (OUT/name).exists():return
- subprocess.run(cmd,check=True,cwd=ROOT);stamp.write_text(sha)
-if selected&{'wifi','api','assembly','boot','gait'}:
- cached('core',[CORE/'Config.h',CORE/'Robot.h',CORE/'Robot.cpp',TEST/'test_core.cpp'],['clang++','-std=c++17','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-g','-I'+str(CORE),str(TEST/'test_core.cpp'),str(CORE/'Robot.cpp'),'-o',str(OUT/'core')])
-if 'hardware' in selected:
- cached('hardware',[CORE/'Config.h',CORE/'Hardware.h',TEST/'test_hardware.cpp',TEST/'stubs/Wire.h'],['clang++','-std=c++17','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I'+str(TEST/'stubs'),'-I'+str(CORE),str(TEST/'test_hardware.cpp'),'-o',str(OUT/'hardware')])
-if 'qr' in selected:
- cached('qr.o',[CORE/'QrEncoder.h',CORE/'QrEncoder.c'],['clang','-std=c99','-O2','-I'+str(CORE),'-c',str(CORE/'QrEncoder.c'),'-o',str(OUT/'qr.o')])
- cached('qr',[CORE/'QrEncoder.h',CORE/'QrEncoder.c',TEST/'qr_dump.cpp'],['clang++','-std=c++17','-O2','-I'+str(CORE),str(TEST/'qr_dump.cpp'),str(OUT/'qr.o'),'-o',str(OUT/'qr')])
-def check(group):
- if group=='hardware':cmd=[str(OUT/'hardware')]
- elif group=='web':cmd=['node',str(TEST/'test_web.js')]
- elif group=='qr':cmd=[sys.executable,str(ROOT/'tools/firmware/check_qr.py')]
- elif group=='pins':cmd=[sys.executable,str(ROOT/'tools/firmware/check_interfaces.py')]
- else:cmd=[str(OUT/'core'),group]
- p=subprocess.run(cmd,cwd=ROOT,text=True,capture_output=True)
- return group,p.returncode,p.stdout+p.stderr
-results=[]
-with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count() or 1) as pool:
- for group,code,text in pool.map(check,sorted(selected)):
-  print(text,end='');results.append({'check':group,'pass':code==0,'output':text})
-source_shas={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for base in [ROOT/'firmware/crab',ROOT/'firmware/tests',ROOT/'tools/firmware'] for p in sorted(base.rglob('*')) if p.is_file() and '__pycache__' not in p.parts}
-report={'sourceSha256':source_shas,'hardwareTested':False,'contractSha256':hashlib.sha256((ROOT/'PILOT_CONTRACT.json').read_bytes()).hexdigest(),'checks':results,'pass':all(r['pass'] for r in results)}
-(OUT/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
-sys.exit(0 if report['pass'] else 1)
+PROFILES={'lilygo': [], 'integrated': ['-DCRAB_INTEGRATED_BOARD=1']}
+def run(cmd):
+ p=subprocess.run(cmd,cwd=ROOT,capture_output=True,text=True)
+ if p.returncode:raise RuntimeError(' '.join(map(str,cmd))+'\n'+p.stdout+p.stderr)
+ return p.stdout.strip()
+def digest(paths):
+ h=hashlib.sha256()
+ for p in sorted(set(paths)):h.update(str(p.relative_to(ROOT)).encode());h.update(p.read_bytes())
+ return h.hexdigest()
+def pooled(fn,items):
+ with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
+  return list(pool.map(fn,items))
+def gait_report(core_digest):
+ report=json.loads((OUT/'gait-summary.json').read_text())
+ report.update({
+  'contractSha256':hashlib.sha256((ROOT/'PILOT_CONTRACT.json').read_bytes()).hexdigest(),
+  'fullCycleSamplesPerDirection':720,'maxHipDeg':12,'maxKneeDeg':15,
+  'softJointLimitDeg':30,'trimLimitDeg':12,'coreInputDigest':core_digest,
+  'interpretation':'Ideal knee-angle contact keeps support on both sides and at front/rear. '
+   'Two diagonal feet give a support line, not a static stability margin. '
+   'Tangent stance projection supports 8 translations including sideways; '
+   'mass, friction, dynamic stability, servo lag/load and CAD collisions are not modelled. '
+   'Physical walking remains unverified.',
+  'source':'firmware/crab/core.h::gait; firmware/tests/test_core.cpp::simulation',
+  'trace':'../build/firmware/host/gait.csv'})
+ target=ROOT/'firmware/GAIT-REPORT.json';content=json.dumps(report,ensure_ascii=False,indent=2)+'\n'
+ if not target.exists() or target.read_text()!=content:target.write_text(content)
+def cpp(group,profile):
+ dest=OUT if profile=='lilygo' else OUT/profile;dest.mkdir(parents=True,exist_ok=True)
+ paths=[ROOT/'firmware/crab'/n for n in ['config.h','hardware.h']]+[ROOT/f'firmware/tests/test_{group}.cpp']
+ flags=PROFILES[profile];args=[]
+ if group in ('core','drivers'):paths += [ROOT/'firmware/crab/core.h']
+ if group in ('core','display'):paths += [ROOT/'firmware/crab'/n for n in ['qrcodegen.c','qrcodegen.h']]
+ if group=='display':paths += [ROOT/'firmware/crab'/n for n in ['display.h','waveshare_panel.h','font_vi.h']]
+ if group in ('drivers','display'):
+  paths += ([ROOT/'firmware/crab/drivers.h'] if group=='drivers' else [])+[p for p in (ROOT/'firmware/tests/stubs').rglob('*') if p.is_file()]
+  args += ['-I'+str(ROOT/'firmware/tests/stubs')]
+ # Include this runner (flags/compile recipe), not unrelated docs, in every key.
+ d=hashlib.sha256((digest(paths+[Path(__file__)])+json.dumps(flags)+run(['clang++','--version'])).encode()).hexdigest()
+ stamp=dest/f'{group}.sha256';exe=dest/f'test_{group}'
+ products=[exe]+([dest/'gait-summary.json',dest/'gait.csv',dest/'qr1.pgm',dest/'qr2.pgm'] if group=='core' else ([dest/'panel-commands.txt'] if group=='display' and profile=='integrated' else []))
+ if stamp.exists() and stamp.read_text()==d and all(p.exists() for p in products):
+  result=f'SKIP {profile}: {group} unchanged (previously passed)'
+ else:
+  if group in ('core','display'):
+   obj=dest/f'{group}-qr.o'
+   run(['clang','-std=c99','-O2','-c',str(ROOT/'firmware/crab/qrcodegen.c'),'-o',str(obj)]);args += [str(obj)]
+  run(['clang++','-std=c++11','-Wall','-Wextra','-Werror','-O2',*flags,*args,str(ROOT/f'firmware/tests/test_{group}.cpp'),'-o',str(exe)])
+  result=run([str(exe)]+([str(dest)] if group in ('core','display') else []));stamp.write_text(d)
+ return result,d
+
+def core():
+ results=pooled(lambda p:cpp('core',p),PROFILES)
+ gait_report(results[0][1])
+ # Independent Apple Vision decoder fed exact firmware QR bitmaps at LCD scale.
+ from PIL import Image
+ for i in (1,2):
+  target=OUT/f'qr{i}.png';source=OUT/f'qr{i}.pgm'
+  if not target.exists() or target.stat().st_mtime<source.stat().st_mtime:Image.open(source).save(target)
+ swift=ROOT/'tools/firmware/qr_decode.swift';exe=OUT/'qr_decode';sd=digest([swift]);ss=OUT/'swift.sha256'
+ if not exe.exists() or not ss.exists() or ss.read_text()!=sd:
+  run(['swiftc','-num-threads',str(os.cpu_count()),'-module-cache-path',str(OUT/'swift-modules'),str(swift),'-o',str(exe)]);ss.write_text(sd)
+ return '; '.join(r[0] for r in results)+'; '+run([str(exe),str(OUT)])
+def web():return run(['node','firmware/tests/test_web.js'])
+def static():return run([sys.executable,'firmware/tests/test_interfaces.py'])
+def drivers():return '; '.join(r[0] for r in pooled(lambda p:cpp('drivers',p),PROFILES))
+def display():
+ results=pooled(lambda p:cpp('display',p),PROFILES)
+ return '; '.join(r[0] for r in results)+'; '+run([sys.executable,'firmware/tests/test_panel_vendor.py'])
+def targets():return '; '.join(r[0] for r in pooled(lambda p:cpp('targets',p),PROFILES))
+checks={'core':core,'web':web,'interfaces':static,'drivers':drivers,'targets':targets,'display':display}
+selected=sys.argv[1:] or list(checks)
+outputs={}
+# The interface/doc-link check consumes GAIT-REPORT.json, produced by core.
+# Respect that dependency in an empty clone; the remaining groups are independent.
+if 'core' in selected:
+ outputs['core']=core();print('core: '+outputs['core'],flush=True)
+with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
+ results={name:pool.submit(checks[name]) for name in selected if name!='core'}
+ for name,f in results.items():outputs[name]=f.result();print(name+': '+outputs[name],flush=True)
+if set(selected)==set(checks):
+ paths=list((ROOT/'firmware/crab').glob('*'))+[p for p in (ROOT/'firmware/tests').rglob('*') if p.is_file()]+[ROOT/p for p in ['PILOT_CONTRACT.json','firmware/INTEGRATION.json','firmware/BUILD.json','firmware/BUILD-integrated.json','firmware/WIRING.md','firmware/README.md','firmware/flash.json','firmware/flash-integrated.json','tools/firmware/check.py','tools/firmware/reconcile.py']]
+ (ROOT/'firmware/TEST-RESULTS.json').write_text(json.dumps({'passed':True,'hardwareTested':False,
+  'scope':'host regressions and binary integrity for both targets; board reconciliation separate',
+  'checks':outputs,'inputDigest':digest(paths),
+  'integratedBoardStatus':json.loads((ROOT/'firmware/INTEGRATION.json').read_text())['integratedInterface']['status']},ensure_ascii=False,indent=2)+'\n')

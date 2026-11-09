@@ -1,0 +1,112 @@
+{
+  "nativeLibrary": {
+    "CP_Elec_10x10.step": {
+      "path": "Capacitor_SMD.3dshapes/CP_Elec_10x10.step",
+      "sha256": "8af72237638a055d91e7b5db024aa87cce0ae52e62a77308a6489843773d9c38"
+    },
+    "C_0402_1005Metric.step": {
+      "path": "Capacitor_SMD.3dshapes/C_0402_1005Metric.step",
+      "sha256": "03e44c4b2b727b8d4b6b1fd598cbd12dd5e614f1dfeefa96a92a07e3a3b312a2"
+    },
+    "C_0805_2012Metric.step": {
+      "path": "Capacitor_SMD.3dshapes/C_0805_2012Metric.step",
+      "sha256": "9a669c1a2f1ea25b88b401acef6efeaa80a067bd7da9db6993de719a7fbe155c"
+    },
+    "ESP32-S3-WROOM-1.step": {
+      "path": "RF_Module.3dshapes/ESP32-S3-WROOM-1.step",
+      "sha256": "3e35bb7ba7d030d88855fcf968398c8670934c7dca08b4e30b2c578bc1e13954"
+    },
+    "PinHeader_1x03_P2.54mm_Vertical.step": {
+      "path": "Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x03_P2.54mm_Vertical.step",
+      "sha256": "b91b4ac5acf1a0d28a676703db972d17b8f11ef26a85b58d60786a69246b921b"
+    },
+    "PinHeader_1x08_P2.54mm_Vertical.step": {
+      "path": "Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x08_P2.54mm_Vertical.step",
+      "sha256": "081e2b47a2d73a4502efc64d77b9002c9a28047b5776a46043c3d9ca37bac9e1"
+    },
+    "R_0402_1005Metric.step": {
+      "path": "Resistor_SMD.3dshapes/R_0402_1005Metric.step",
+      "sha256": "91507e5af4251cb4ef38e04889c9b98da29904432bd83786bba13ae9b605eacb"
+    },
+    "SOT-223.step": {
+      "path": "Package_TO_SOT_SMD.3dshapes/SOT-223.step",
+      "sha256": "77ad6dbacc493cb619c728f26d2ddcf461eb0feb6b977b47d01d51e67016f654"
+    },
+    "TSSOP-28_4.4x9.7mm_P0.65mm.step": {
+      "path": "Package_SO.3dshapes/TSSOP-28_4.4x9.7mm_P0.65mm.step",
+      "sha256": "0da3bcc5863b5b295ec337129525942b8ff4242bfc7462229dc96d0b183b0508"
+    },
+    "TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal.step": {
+      "path": "TerminalBlock_Phoenix.3dshapes/TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal.step",
+      "sha256": "2684469b03d2dd46f26862eb86eb283215344c311dd485db877e7139b5381497"
+    }
+  },
+  "measuredEnvelopes": {
+    "SW_Push_1P1T_XKB_TS-1187A.step": {
+      "supplierCode": "C318884",
+      "supplierMeshSha256": "7592147770a104b7ef350a74e2879201a102ffbaaa9156a2db6fb250346dee0f",
+      "vendorBounds": [
+        [
+          -3.25,
+          -2.6,
+          -0.05
+        ],
+        [
+          3.25,
+          2.601,
+          1.5
+        ]
+      ],
+      "usedBounds": [
+        [
+          -3.25,
+          -2.6,
+          -0.05
+        ],
+        [
+          3.25,
+          2.601,
+          1.5
+        ]
+      ],
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-09T15:10:37',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 2"
+      ],
+      "stepSha256": "3ded458e6c9eeb171e0d34d67ce890895aa07494b93c31872d831128a33a5416"
+    },
+    "USB_C_Receptacle_HRO_TYPE-C-31-M-12.step": {
+      "supplierCode": "C165948",
+      "supplierMeshSha256": "9d7e957178f20137fdd5d62ae84281fe3b5bb3a44262f348d8e129b0a4182320",
+      "vendorBounds": [
+        [
+          -4.47,
+          -5.3,
+          -0.85
+        ],
+        [
+          4.47,
+          2.6,
+          3.251
+        ]
+      ],
+      "usedBounds": [
+        [
+          -4.7,
+          -4.8,
+          -0.85
+        ],
+        [
+          4.7,
+          4.8,
+          3.251
+        ]
+      ],
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-09T15:10:37',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 1"
+      ],
+      "stepSha256": "66f69ae6f723c545e631a44fd371c27216735dbfaf23d31852dc258ac8f6db85"
+    }
+  }
+}

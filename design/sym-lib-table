@@ -1,4 +1,4 @@
 (sym_lib_table
   (version 7)
-  (lib (name "Dummy")(type "KiCad")(uri "${KIPRJMOD}/Dummy.kicad_sym")(options "")(descr "written by kicadpy.author"))
+  (lib (name "Integrated")(type "KiCad")(uri "${KIPRJMOD}/Integrated.kicad_sym")(options "")(descr "written by kicadpy.author"))
 )

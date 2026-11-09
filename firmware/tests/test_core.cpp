@@ -1,148 +1,94 @@
-#include "Robot.h"
+#include "../../firmware/crab/core.h"
+#include "../../firmware/crab/qrcodegen.h"
 #include <cassert>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
 #include <iostream>
 #include <vector>
-#include <cmath>
 using namespace crab;
-struct Memory:Storage {
- std::map<Str,Str> data;bool writable=true;
- Str get(const Str& k)override{return data[k];}
- bool put(const Str& k,const Str& v)override{if(!writable)return false;data[k]=v;return true;}
- bool erase(const Str& k)override{if(!writable)return false;data.erase(k);return true;}
-};
-struct MockRadio:Radio {
- bool up=false,ap=false;Str ssid,password,ip="192.168.1.42";int joins=0;
- void accessPoint(const Str&)override{ap=true;}
- void join(const Str& s,const Str& p)override{ssid=s;password=p;up=false;joins++;}
- void stopAP()override{ap=false;}
- void disconnect()override{up=false;}
- bool connected()override{return up;}
- Str address()override{return ip;}
-};
-struct Fixture {
- Memory store;MockRadio radio;Wifi wifi{store,radio,"CuaRobot-ABCD"};Robot robot{store};Api api{robot,wifi};
- Fixture(){wifi.begin(0);robot.begin(0);for(uint32_t t=0;t<=2200;t+=10)robot.tick(t);robot.network(true);}
- Response post(Str path,std::map<Str,Str> args={},uint32_t now=2500){return api.handle({"POST",path,args},now);}
- Response move(Str dir,uint32_t seq=1,uint32_t now=2500){return post("/api/move",{{"client","phone"},{"seq",std::to_string(seq)},{"dir",dir}},now);}
-};
-void wifiTests(){
- Memory mem;MockRadio radio;Wifi wifi(mem,radio,"CuaRobot-A01F");wifi.begin(7);
- assert(wifi.state==WifiState::Portal&&radio.ap);assert(wifi.qr()=="WIFI:T:nopass;S:CuaRobot-A01F;;");
- assert(!wifi.submit("","secret",10));assert(!wifi.submit(Str(33,'a'),"secret",10));
- assert(wifi.submit("Nhà","not-echoed",20));assert(wifi.state==WifiState::Connecting);assert(mem.get("wifi").empty());
- assert(!wifi.submit("Other","x",30));wifi.tick(15019);assert(wifi.state==WifiState::Connecting);
- wifi.tick(15020);assert(wifi.state==WifiState::Portal&&radio.ap);assert(wifi.message.find("Sai mật khẩu")!=Str::npos);assert(mem.get("wifi").empty());
- assert(wifi.submit("Home","good-password",16000));radio.up=true;wifi.tick(16001);
- assert(wifi.state==WifiState::Online&&!radio.ap);assert(wifi.qr()=="http://192.168.1.42/");assert(mem.get("wifi")=="4:Homegood-password");
- Wifi reboot(mem,radio,"CuaRobot-A01F");reboot.begin(18000);assert(reboot.state==WifiState::Connecting);assert(radio.ssid=="Home"&&radio.password=="good-password");
- radio.up=true;reboot.tick(18001);radio.up=false;reboot.tick(18002);assert(reboot.state==WifiState::Portal&&radio.ap);
- assert(reboot.reset());assert(mem.get("wifi").empty());
- mem.data["wifi"]="90:broken";reboot.begin(20000);assert(reboot.state==WifiState::Portal);
- mem.writable=false;assert(reboot.submit("Home","pass",21000));radio.up=true;reboot.tick(21001);assert(reboot.state==WifiState::Portal);assert(reboot.message.find("lưu")!=Str::npos);
- Wifi wrap(mem,radio,"CuaRobot-A01F");mem.writable=true;mem.data.clear();wrap.begin(UINT32_MAX-10000);assert(wrap.submit("A","",UINT32_MAX-10000));wrap.tick(4999);assert(wrap.state==WifiState::Portal);
+static void ready(Motion& m,uint32_t now=0){m.begin(now);for(int ch=0;ch<8;ch++){int seen=m.tick(now+10+ch*cfg::ENABLE_GAP_MS);assert(seen==ch);}assert(m.enabled==8);}
+static void test_network(){
+ Network n;n.begin(false,0);assert(n.state==NetState::Setup&&!n.saved);
+ n.connect(true,100);n.tick(18100,false);assert(n.state==NetState::Setup&&!n.saved&&!n.saveRequested);assert(std::string(n.message)==msg::FAILED);
+ n.connect(true,20000);n.tick(21000,true);assert(n.state==NetState::Online&&n.saved&&n.saveRequested);n.saveRequested=false;
+ n.tick(22000,false);assert(n.state==NetState::Setup);n.tick(51999,false);assert(!n.retryRequested);n.tick(52000,false);assert(n.retryRequested&&n.state==NetState::Connecting);
+ n.tick(53000,true);assert(n.state==NetState::Online&&!n.saveRequested);
+ n.erase(54000);assert(!n.saved&&!n.pending&&n.state==NetState::Setup);n.tick(90000,false);assert(!n.retryRequested);
+ n.begin(true,0xfffffff0);n.tick(0x00005000,false);assert(n.state==NetState::Setup); // timer wrap
 }
-void commandTests(){
- Fixture f;
- assert(f.robot.isReady()&&!f.robot.moving()&&!f.robot.light);
- assert(f.move("forward").status==200&&f.robot.moving());f.robot.tick(3099);assert(f.robot.moving());f.robot.tick(3100);assert(!f.robot.moving());
- assert(f.move("back",2,3200).status==200);f.robot.network(false);assert(!f.robot.moving());assert(f.move("back",3,3210).status==409);
- f.robot.network(true);assert(f.move("left",4,3300).status==200);
- assert(f.post("/api/stop",{{"client","phone"},{"seq","6"}}).status==200);assert(!f.robot.moving());assert(f.move("left",5,3400).status==409);assert(f.move("left",7,3400).status==200);
- assert(f.post("/api/move",{{"client","other"},{"seq","1"},{"dir","forward"}},3410).status==409);
- assert(f.move("bad",8,3420).status==400);assert(f.post("/api/move",{{"client","phone"},{"seq","-1"},{"dir","left"}}).status==400);
- assert(f.api.handle({"GET","/api/move",{}},3500).status==405);
- f.post("/api/assembly",{{"op","enter"}});assert(!f.robot.moving()&&f.robot.assembly);assert(f.move("forward",9).status==409);
- f.post("/api/assembly",{{"op","exit"}});assert(!f.robot.moving());assert(f.move("forward",10).status==200);
- f.robot.hardwareFault();assert(!f.robot.moving());assert(f.move("forward",11).status==409);
- auto light=f.post("/api/light",{{"on","1"}});assert(light.status==200&&!f.robot.light);
- auto status=f.api.handle({"GET","/api/status",{}},4000);assert(status.status==200&&status.body.find("not-echoed")==Str::npos);
- Fixture g;assert(g.post("/api/wifi",{{"ssid","Home"},{"password","UNIQUE_SECRET"}}).body.find("UNIQUE_SECRET")==Str::npos);
- assert(g.api.handle({"GET","/api/status",{}},5000).body.find("UNIQUE_SECRET")==Str::npos);
-}
-void assemblyTests(){
- Fixture f;assert(f.post("/api/trim",{{"ch","0"},{"delta","1"}}).status==400);
- f.post("/api/assembly",{{"op","enter"}});for(int i=0;i<25;i++)assert(f.post("/api/trim",{{"ch","0"},{"delta","1"}}).status==200);assert(f.robot.trim[0]==15);
- for(int i=0;i<40;i++)f.post("/api/trim",{{"ch","7"},{"delta","-1"}});assert(f.robot.trim[7]==-15);
- assert(f.post("/api/trim",{{"ch","8"},{"delta","1"}}).status==400);assert(f.post("/api/trim",{{"ch","0"},{"delta","999"}}).status==400);
- assert(f.post("/api/assembly",{{"op","save"}}).status==200);
- Robot reboot(f.store);reboot.begin(0);assert(reboot.trim[0]==15&&reboot.trim[7]==-15);
- f.post("/api/assembly",{{"op","center"}});for(uint32_t t=2300;t<10000;t+=10)f.robot.tick(t);for(float a:f.robot.angle)assert(std::fabs(a-90)<.01);
- f.post("/api/trim",{{"ch","2"},{"delta","1"}});assert(!f.robot.rawCenter);
- f.post("/api/assembly",{{"op","reset"}});for(int t:f.robot.trim)assert(t==0);
- f.store.writable=false;assert(f.post("/api/assembly",{{"op","save"}}).status==409);
- f.store.data["t0"]="garbage";f.store.data["t7"]="10000";reboot.begin(0);assert(reboot.trim[0]==0&&reboot.trim[7]==0);
-}
-void startupBootTests(){
- Memory mem;Robot robot(mem);robot.begin(1000);assert(robot.enabledCount()==0);
- for(int i=0;i<8;i++){robot.tick(1000+i*300);assert(robot.enabledCount()==i+1);assert(robot.isReady()==(i==7));assert(!robot.moving());}
- BootHold b;assert(!b.update(true,100));assert(b.remaining(7100)==1);assert(!b.update(true,8099));assert(b.update(true,8100));assert(!b.update(true,9000));b.update(false,9001);assert(!b.update(true,10000));assert(b.update(true,18000));
- BootHold c;assert(!c.update(true,UINT32_MAX-3999));assert(c.update(true,4000));
- uint32_t n;assert(!unsignedNumber("4294967296",n)&&unsignedNumber("4294967295",n));
- assert(jsonString("\"\\\n")=="\"\\\"\\\\\\u000a\"");
-}
-void gaitTests(){
- // Independent case geometry: larger pulses lower FL/RR, raise FR/RL.
- // Positive gait knee angles must raise feet after the servo sign conversion.
- constexpr int kneePulseUp[4]={-1,1,1,-1};
- const char* names[]={"forward","back","left","right","fl","fr","bl","br"};
- for(int direction=1;direction<=8;direction++){
-  auto wanted=directionVector(Direction(direction));float bx=0,by=0;
-  constexpr float offsets[4]={0,.5f,.75f,.25f},sx[4]={1,1,-1,-1},sy[4]={1,-1,1,-1};
-  constexpr int samples=3200;
-  for(int n=0;n<samples;n++){
-   float phase=float(n)/samples;auto a=gait(Direction(direction),phase),b=gait(Direction(direction),phase+1.f/samples);
-   for(int leg=0;leg<4;leg++){
-    float p=phase-offsets[leg];p-=std::floor(p);if(p<.25f)continue;
-    float dq=b[leg*2]-a[leg*2];bx+=sy[leg]*dq;by-=sx[leg]*dq;
-   }
-  }
-  float along=bx*wanted.x+by*wanted.y,cross=bx*wanted.y-by*wanted.x;
-  assert(along>1&&std::fabs(cross)<.05*along);
+static void test_button(){HoldButton b;assert(!b.tick(false,0));assert(!b.tick(true,100));assert(!b.tick(true,8099));assert(b.tick(true,8100));assert(!b.tick(true,8200));assert(!b.tick(false,8300));assert(!b.tick(true,9000));assert(b.tick(true,17000));}
+static void test_case_knee_lift(){
+ // Case D7/model.py: FR and RL each mirror FL once; RR mirrors twice.
+ // Independent mounting parity converts the emitted pulse back to FL geometry.
+ const int mirrorParity[4]={1,-1,-1,1};
+ for(int leg=0;leg<4;leg++){
+  const int ch=2*leg+1;
+  const double shaftDeg=(pulse(ch,-15,0)-1500)/(2000.0/180.0);
+  const double theta=mirrorParity[leg]*shaftDeg*3.141592653589793/180;
+  // FOOT_TIP relative to knee: 15 mm outward, 64.6 mm below (+t axis).
+  const double lift=-15*std::sin(theta)-64.6*std::cos(theta)+64.6;
+  if(!(lift>5.5&&lift<6.5))std::cerr<<"Case knee lift failed: leg="<<leg<<" liftMm="<<lift<<"\n";
+  assert(lift>5.5&&lift<6.5);
  }
-
- for(const char* name:names){
-  Direction dir;assert(parseDirection(name,dir));auto v=directionVector(dir);assert(std::fabs(v.x*v.x+v.y*v.y-1)<.0001);
-  Fixture f;auto old=f.robot.angle;float oldVelocity[8]={},peakLiftUs[4]={};unsigned seq=0;int maximumFast=0;
-  for(uint32_t t=2210;t<2210+3*cfg::gaitPeriodMs;t+=10){
-   if(t%200==10)assert(f.move(name,++seq,t).status==200);
-   f.robot.tick(t);int fast=0;
-   for(int i=0;i<8;i++){
-    float vel=(f.robot.angle[i]-old[i])*100;
-    assert(f.robot.angle[i]>=65&&f.robot.angle[i]<=115);
-    assert(std::fabs(vel)<=cfg::swingRate+.05);
-    assert(std::fabs(vel-oldVelocity[i])<=cfg::acceleration*.01+.12);
-    if(std::fabs(vel)>10)fast++;
-    old[i]=f.robot.angle[i];oldVelocity[i]=vel;
-   }
-   assert(fast<=4);maximumFast=std::max(maximumFast,fast);
-   for(int leg=0;leg<4;leg++){
-    float liftUs=(f.robot.angle[leg*2+1]-90)*cfg::pulseUsPerDegree*kneePulseUp[leg];
-    assert(liftUs>=-1); // No commanded swing may push a foot below neutral.
-    peakLiftUs[leg]=std::max(peakLiftUs[leg],liftUs);
-   }
-   auto target=gait(dir,float(t%cfg::gaitPeriodMs)/cfg::gaitPeriodMs);int lifted=0;
-   for(int leg=0;leg<4;leg++){
-    int knee=leg*2+1;
-    float footLift=target[knee]*cfg::signs[knee]*kneePulseUp[leg];
-    assert(footLift>=0);
-    if(footLift>.001)lifted++;
-   }
-   assert(lifted<=1);
-  }
-  for(float lift:peakLiftUs)assert(lift>80); // Every real output lifts, all eight directions.
-  f.robot.stop("phone",++seq);for(uint32_t t=27000;t<37000;t+=10)f.robot.tick(t);
-  for(float angle:f.robot.angle)assert(std::fabs(angle-90)<.01);
-  std::cout<<name<<": max >10deg/s joints="<<maximumFast<<"\n";
+}
+static void test_motion(){
+ Motion m;m.newSession(12);m.begin(0);assert(!m.command(12,1,1,0));assert(m.enabled==0);ready(m);
+ assert(m.command(12,2,1,2200,true));assert(m.velocity.x==1);assert(!m.command(12,1,2,2210));
+ m.tick(2699);assert(m.velocity.x==1);m.tick(2709);assert(m.velocity.x==0&&!m.lease);
+ assert(!m.command(12,3,1,2710,false));assert(m.command(12,4,1,2720,true));
+ assert(m.command(12,6,0,2730,false));assert(!m.command(12,5,1,2740,false));assert(!m.lease);
+ assert(!m.command(13,7,1,2800));m.setAssembly(true);assert(!m.command(12,7,1,2810));
+ m.centre();assert(m.raw);assert(pulse(2,25,12,true)==1500);
+ assert(m.trim(2,1));assert(!m.raw&&m.offsets[2]==1);for(int i=0;i<99;i++)m.trim(2,1);assert(m.offsets[2]==cfg::TRIM_LIMIT);
+ assert(!m.trim(8,1));assert(!m.trim(2,22));m.setAssembly(false);assert(!m.trim(2,-1));
+ m.inhibit=true;assert(!m.command(12,8,1,2900));m.inhibit=false;assert(m.command(12,9,1,3000));m.newSession(99);assert(!m.lease&&!m.command(12,10,1,3010));
+ for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1033&&p<=1967);}
+ Motion wrap;ready(wrap,0xfffff000);wrap.newSession(2);assert(wrap.command(2,1,1,0xffffff00));wrap.tick(0x200);assert(!wrap.lease);
+ // Long realistic run tests the production scheduler, lease renewal, limits, ramp and exact startup order.
+ for(int dir=1;dir<=8;dir++){
+  Motion sim;ready(sim);sim.newSession(1);uint32_t seq=0;float previous[8]={};
+  for(uint32_t t=2200;t<32200;t+=10){if(t%150==100)assert(sim.command(1,++seq,dir,t,!sim.lease));int ch=sim.tick(t);if(ch>=0){assert(std::fabs(sim.position[ch])<=cfg::JOINT_LIMIT);assert(std::fabs(sim.position[ch]-previous[ch])<=cfg::SLEW_DPS*.08f+.0001f);previous[ch]=sim.position[ch];}}
+  sim.stop();for(uint32_t t=32200;t<38200;t+=10)sim.tick(t);assert(sim.amplitude==0);for(float v:sim.position)assert(std::fabs(v)<.001);
  }
+}
+static void test_qr(const std::string& path){
+ assert(apName(0xABCD)=="CuaRobot-ABCD");assert(wifiQr(apName(0x1234))=="WIFI:T:nopass;S:CuaRobot-1234;;");assert(webQr("192.168.1.245")=="http://192.168.1.245/");
+ const std::string cases[]={wifiQr(apName(0x1234)),webQr("192.168.1.245")};int index=0;
+ for(auto& payload:cases){uint8_t tmp[qrcodegen_BUFFER_LEN_FOR_VERSION(5)],qr[qrcodegen_BUFFER_LEN_FOR_VERSION(5)];assert(qrcodegen_encodeText(payload.c_str(),tmp,qr,qrcodegen_Ecc_MEDIUM,1,5,qrcodegen_Mask_AUTO,true));int n=qrcodegen_getSize(qr);int scale=std::min(4,160/(n+8));assert(scale>=3);int side=(n+8)*scale;std::ofstream out(path+"/qr"+std::to_string(++index)+".pgm",std::ios::binary);out<<"P5\n"<<side<<" "<<side<<"\n255\n";for(int y=0;y<side;y++)for(int x=0;x<side;x++){int qx=x/scale-4,qy=y/scale-4;unsigned char c=qrcodegen_getModule(qr,qx,qy)?0:255;out.write((char*)&c,1);}}
+}
+static void simulation(const std::string& dir){
+ std::ofstream out(dir+"/gait.csv");out<<"direction,phase,hip_fl,knee_fl,hip_fr,knee_fr,hip_rl,knee_rl,hip_rr,knee_rr,grounded_mask\n";
+ std::ofstream report(dir+"/gait-summary.json");report<<"{\"model\":\"diagonal trot; ideal knee-angle contact and tangent stance projection; not physical stability or CAD collision proof\",\"contactToleranceDeg\":0.0001,\"directions\":[";
  for(int d=1;d<=8;d++){
-  auto a=gait(Direction(d),.12f),b=gait(Direction(d),1.12f);for(int i=0;i<8;i++)assert(std::fabs(a[i]-b[i])<.0001);
+  Vec v=direction(d);double sx=0,sy=0,maxAngle=0;int samples=720,minGrounded=4,maxLifted=0;
+  int unilateralSupport=0,supportMasks[16]={};
+  for(int k=0;k<samples;k++){
+   float phase=k*6.2831853072f/samples,outAngles[8];gait(phase,v,1,outAngles);out<<d<<","<<phase;
+   for(float a:outAngles){out<<","<<a;assert(std::fabs(a)<=cfg::JOINT_LIMIT);maxAngle=std::max(maxAngle,double(std::fabs(a)));}
+   // Infer contact from the production knee output, not from the phase table:
+   // negative knee = raised foot. Tolerance ignores float roundoff at zero.
+   unsigned grounded=0;int count=0;
+   for(int leg=0;leg<4;leg++)if(outAngles[2*leg+1]>=-0.0001f){grounded|=1u<<leg;count++;}
+   out<<","<<grounded<<"\n";supportMasks[grounded]++;
+   minGrounded=std::min(minGrounded,count);maxLifted=std::max(maxLifted,4-count);
+   const bool bothSides=(grounded&0x5u)&&(grounded&0xAu); // FL/RL and FR/RR
+   if(!bothSides)unilateralSupport++;
+   if(!bothSides)std::cerr<<"Unilateral support: direction="<<d<<" sample="<<k<<" groundedMask="<<grounded<<"\n";
+   assert(bothSides); // regression: the old quarter-phase gait fails here
+   assert(count>=2&&(grounded&0x3u)&&(grounded&0xCu)); // front and rear too
+   for(int leg=0;leg<4;leg++){
+    const float p=phase+cfg::PHASE[leg];if(!(grounded&(1u<<leg)))continue;
+    // hip derivative in stance; minus average ground velocity estimates body travel.
+    double dq=cfg::HIP_AMPLITUDE*hipProjection(leg,v)*std::sin(p);
+    sx-=dq*(-std::sin(cfg::RADIAL[leg]));sy-=dq*std::cos(cfg::RADIAL[leg]);
+   }
+  }
+  double along=sx*v.x+sy*v.y,cross=sx*v.y-sy*v.x;assert(along>1);assert(std::fabs(cross)<along*.02);
+  if(d>1)report<<",";report<<"{\"direction\":"<<d<<",\"forwardProjection\":"<<along<<",\"crossProjection\":"<<cross<<",\"maxJointDeg\":"<<maxAngle<<",\"samples\":"<<samples
+   <<",\"minGroundedFeet\":"<<minGrounded<<",\"maxLiftedFeet\":"<<maxLifted<<",\"unilateralSupportSamples\":"<<unilateralSupport<<",\"groundedMaskSamples\":{";
+  bool first=true;for(int mask=0;mask<16;mask++)if(supportMasks[mask]){if(!first)report<<",";first=false;report<<"\""<<mask<<"\":"<<supportMasks[mask];}report<<"}}";
  }
+ report<<"],\"sidewaysSupportedByModel\":true,\"hardwareTested\":false}\n";
 }
-int main(int argc,char** argv){Str group=argc>1?argv[1]:"all";
- if(group=="all"||group=="wifi")wifiTests();
- if(group=="all"||group=="api")commandTests();
- if(group=="all"||group=="assembly")assemblyTests();
- if(group=="all"||group=="boot")startupBootTests();
- if(group=="all"||group=="gait")gaitTests();
- std::cout<<"PASS "<<group<<"\n";
-}
+int main(int argc,char**argv){assert(argc==2);test_network();test_button();test_case_knee_lift();test_motion();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: network, BOOT, lease, assembly, startup, case knee lift from pulses, gait direction and diagonal foot support, pulse bounds, QR encoding\n";}

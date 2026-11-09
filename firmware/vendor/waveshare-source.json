@@ -1,0 +1,11 @@
+{
+  "url": "https://files.waveshare.com/upload/8/8d/LCD_Module_RPI_code.zip",
+  "archiveSha256": "07afa6be35a710a7e811435eb048e474988cee0946e8e6e99a11b59f0644f0ac",
+  "files": {
+    "LCD_Module_RPI_code/RaspberryPi/c/examples/LCD_1in9_test.c": "d2b26702eafd2e8c29ee516138937ae5669996df12f1b6fdacf159612c859804",
+    "LCD_Module_RPI_code/RaspberryPi/c/lib/LCD/LCD_1in9.c": "b191a3e2d0155c3cd51f678b97095fd0e00ddc19d1449b2adc9ced9dfe45a506",
+    "LCD_Module_RPI_code/RaspberryPi/c/lib/LCD/LCD_1in9.h": "88aeee2943a1e853a582f633942e3b04b5c2c7a02b3d62695dd801ed9e840429",
+    "LCD_Module_RPI_code/RaspberryPi/python/example/1inch9_LCD_test.py": "fb7b1da50221fda06778ae7d0fa7bd460c10598a58f5f3d95eee2548b221e658",
+    "LCD_Module_RPI_code/RaspberryPi/python/lib/LCD_1inch9.py": "e7feb77a2979b560402137ab3142635a48f71352a77496c0e3b6fd0ff659add5"
+  }
+}

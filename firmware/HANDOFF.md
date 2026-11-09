@@ -1,44 +1,52 @@
-# Firmware handoff — 2026-11-06 (knee-sign integration repair complete; independent review pending)
-- Contract SHA256: 65b9793b07d82edc0defd9900ba1cfbee13dc730266cc0b675d897c87a75d9ea; unchanged. No hardware access/flash.
-- Local result: target binary built/current; full host suite9/9 passed. See VALIDATION.md for hashes/evidence.
-- Complete handwired firmware; dummy KiCad PCB is never installed and has no firmware signals.
-- `README.md`: Vietnamese use/build/Flash instructions, pin table, honest physical-test limits.
-- `WIRING.md` + `wiring.svg`: physical label-to-label wiring, two USB ports, channel map, startup.
-- `CHECKLIST-RAP.md`: merge into lead's root checklist; no measurements required of owner.
-- `DEVIATIONS.md`: case-derived knee lift signs replace sealed defaults; WS2812 stays5V/short DIN, omit if flicker persists.
-- `SOURCES.md` + `LICENSE`: pinned LILYGO/Kame32 sources, GPLv3 text, dependency provenance.
-- `integration.json`: GPIO, rail/channel/sign/range data + case/lead reconciliation tasks.
-- `flash.json`: ESP32-S3/16MB/OPI PSRAM recipe -> ../build/firmware/esp32/crab.ino.bin; no auto-flash.
-- `crab/Config.h` L1–40: ONLY GPIO authority, motion limits, startup/channel signs (L29–31).
-- Knee lift now FL−1/FR+1/RL+1/RR−1; hips all+1. Positive gait knee means UP; mechanical.json larger-pulse FL/RR is DOWN.
-- `crab/TftSetup.h` L1–27: forced-include TFT_eSPI Setup206-equivalent using Config.h pins.
-- `crab/Robot.h` L1–93: portable storage/radio interfaces, Wi-Fi/control/API state.
-- `crab/Robot.cpp` L23–64: Wifi::{begin,submit,tick,reset,qr}, atomic saved credential record.
-- `crab/Robot.cpp` L65–91: directionVector/gait; oscillator-derived sequential crawl, 8 vectors.
-- `crab/Robot.cpp` L92–148: Robot::{begin,move,stop,tick}, sequence barrier, startup, ramps, trims.
-- `crab/Robot.cpp` L149–190: BootHold and production Api::handle.
-- `crab/crab.ino` L14–32: NVS/EspRadio adapters; L46–77 actuatorTask (100Hz independent of web).
-- `crab/crab.ino` L78–133: request/handleApi/handleScan/servePage/setup/loop, DNS captive probes.
-- `crab/Hardware.h` L5–26: Pca begin/full-off/servo; warm-reset outputs stay off until enabled.
-- `crab/Display.h` L6–31: portrait170x320, 148px QR + 4-module quiet border, Vietnamese bitmap text.
-- `crab/Font.h`: generated Vietnamese glyph cells; `tools/firmware/make_font.py` optional regeneration.
-- `crab/Web.h/.cpp` L4–32: offline page, hold/beat/stop L16–21, scan/setup L22–23, Ráp L25–29.
-- `crab/QrEncoder.c/.h`: upstream MIT QR encoder renamed to avoid ESP-IDF qrcode.h collision.
-- `tests/test_core.cpp`: Wi-Fi/NVS/API/BOOT; gaitTests L83–140 checks physical knee pulse direction/peak lift, rate/acceleration/projection.
-- `tests/test_web.js`: production inline-JS VM with mock DOM/fetch, release/visibility/offline/SSID tests.
-- `tests/test_hardware.cpp` + `tests/stubs/Wire.h`: production PCA driver register model, warm reset/NACK.
-- `tests/qr_dump.cpp`: actual C encoder output for independent ZXing decode at LCD pixel scale.
-- `tools/firmware/build.py`: shared-cache Arduino build, all CPUs, input fingerprint skips unchanged binary.
-- `tools/firmware/check.py`: parallel host suite, cached ASan/UBSan compile -> build/firmware/host/report.json.
-- `tools/firmware/check_qr.py`: independent QR decoder; `check_interfaces.py` L18–31 reconciles Config/integration/case knee signs.
-- FAST checks from project root: `python3 tools/firmware/check.py wifi api` / `assembly boot` / `gait` / `web` / `qr` / `hardware` / `pins`.
-- FULL check: `python3 tools/firmware/check.py`; target build: `python3 tools/firmware/build.py` (skips unchanged).
-- Toolchain: Arduino CLI1.5.1 / ESP32 core2.0.14; TFT_eSPI2.5.43 / NeoPixel1.12.3 in shared cache. No installs.
-- Test helpers require clang/Node and shared Python Pillow/ZXing. Binary/objects/tool evidence only in build/firmware/.
-- Physical assumptions: actual SG90 direction/horn splines, PCA clone pull-down/pull-ups, direct3.3V LED data, power bank.
-- Case shaft signs reconciled against mechanical.json; neutral45° horn geometry and ±25° total servo envelope incl trim remain model/assembly checks.
-- Planar stance projection supports intended directions; floor contact, traction, closed-lid QR scan, Wi-Fi remain untested.
-- Actual dummy PCB is present and inspected; no robot GPIO on it. Run `...check.py pins` after case integration changes.
-- Native ERC/DRC logs: build/firmware/native/. Gate native0; stored manufacturing has gerber_silk_line_width1 despite fab.ready=true. Lead/board follow-up; untouched.
-- Three lead-reported case defects are outside this role; final team readiness still needs case repair/integration. No user blocker.
-- Root guide should link firmware instructions and merge checklist/deviation; root .gitignore must exclude build artifacts/caches.
+# Firmware handoff — 2026-11-09, final-board integration repair
+- Scope firmware/, tools/firmware/, build/firmware/ only; no push/flash/hardware/delegation.
+- Contract SHA256 7841b7b2e92a0d3f69db70868c7a9649da0c6cd1cfc6d94478ec13886894c1be.
+- Release tip 122b5b3d406fc1cc148b6bf5abaf6c6fc7315e933a95e5565c1b60ee86d35e08.
+- FIXED lead findings: PCA /OE GPIO21, GPIO15 NC; Waveshare23822 SPI, case D15 rotation180°.
+- Board copper, rails, servo channels/signs, case geometry, frozen contract/notes untouched.
+- crab/hardware.h:9–31 cfg target profiles: integrated OE21/SCLK8/MOSI39, LILYGO i80/power15.
+- Fast pin test: "$KICAD_HARNESS_PYTHON" tools/firmware/check.py targets.
+- crab/display.h:27–87 Screen::begin: SPI10MHz mode0 vs LILYGO i80; :88–100 show QR/text.
+- crab/waveshare_panel.h:6–18 INIT/MADCTL/GAP: all16 vendor commands; landscape0x70 xor0xc0=0xb0.
+- Fast display test: "$KICAD_HARNESS_PYTHON" tools/firmware/check.py display.
+- tests/test_display.cpp runs actual Screen::begin/show with esp_lcd/SPI/FreeRTOS host stubs.
+- tests/test_panel_vendor.py compares emitted SPI commands with independent vendor C source;
+  verifies RGB565/gamma/invert/sleep/display-on plus final180° rotation. No hardware simulation claim.
+- crab/drivers.h:10–33 ServoDriver inhibit/begin/pulse/allOff: earliest OE HIGH, clear16,
+  release after first valid pulse, latch I2C fault; :38–42 LightDriver RMT startup black/brightness16.
+- Fast driver test: "$KICAD_HARNESS_PYTHON" tools/firmware/check.py drivers (both target profiles).
+- crab/config.h:5–21 sole channel/sign/limits/gait config; signs {1,1,1,-1,1,-1,1,1}, case D7.
+- crab/core.h:15–33 gait/pulse/QR; :46–70 Wi-Fi/BOOT; :73–112 Motion; unchanged behaviour.
+- Core check: "$KICAD_HARNESS_PYTHON" tools/firmware/check.py core (720 samples ×8 directions).
+- crab/crab.ino:30–48 motionTask/500ms lease; :50–77 configureHttp; :79–120 setup/NVS/loop.
+- assets/ui.html embedded phone UI; crab/web_ui.h generated by tools/firmware/embed_assets.py.
+- Web check: node firmware/tests/test_web.js. qrcodegen.c/.h + font_vi.h are embedded QR/Vietnamese.
+- WIRING.md:1–68 original LILYGO assembly intact; :72+ final integrated J1/J2–J12 wire tables.
+- assets/{wiring,integrated-wiring}.svg illustrate separate assemblies; README links both.
+- README.md gives both build/flash commands. flash.json stays LILYGO pane default;
+  flash-integrated.json selects CRAB_INTEGRATED_BOARD=1. NO integrated flash authorization.
+- TARGETS.md/DEVIATIONS.md/SOURCES.md record final SPI/OE/rotation choice, evidence and impact.
+- vendor/LCD_1in9.c/.h and LCD_1inch9.py are official Waveshare snapshots; source manifest
+  waveshare-source.json binds archive URL/SHA and files. Other vendor/licenses/font assets retained.
+- tools/firmware/build.py:14–45 build, :47–57 main; all-core, content/toolchain/artifact cache;
+  --target lilygo/integrated/all. Shared toolchain env/cache preserved; no install/device access.
+- BUILD.json / BUILD-integrated.json bind all application sources/recipes and binary hashes.
+- Binaries build/firmware/{esp32,integrated}/crab.ino.bin + bootloader/partitions/ELF alongside.
+- Fresh build log build/firmware/repair-build.log: LILYGO792496 bytes, integrated805984 bytes.
+- tools/firmware/reconcile.py:11–82 inspect: PCB/XML parity + reviewed MCU/connector net groups,
+  USB series paths, separate rails, OE10k pullup, GPIO15NC, servo pad order and evidence hashes.
+- Fast board audit: "$KICAD_HARNESS_PYTHON" tools/firmware/reconcile.py (0 reconciled,2 mismatch).
+- board-interface.json is populated from final main.net/PCB/report; BOARD-RECONCILIATION.json PASS.
+- INTEGRATION.json records final target pins/display/rotation; user behaviour/channel signs unchanged.
+- tools/firmware/check.py:31–58 cached host C++; :60–73 core/independent Vision QR decode;
+  :74–89 all-core suites/report. Fast subset names core/web/interfaces/drivers/targets/display.
+- Full suite: "$KICAD_HARNESS_PYTHON" tools/firmware/check.py; TEST-RESULTS.json is host-only proof.
+- Native read-only logs build/firmware/native-{gate,netlist}.log: board/fab findings0,
+  180 schematic pins/pads, differences0, hollow0. Case repairs remain case team's responsibility.
+- history/note3-* is historical carrier evidence; never use it as the current board audit.
+- Open assumptions: real QR/window readability, Wi-Fi range, servo direction/load/bank,
+  gait stability, LED3.3V DIN and physical fit. hardwareTested=false; no whole-product readiness claim.
+- Full suite PASS; repair-host-check.log is cached final run, TEST-RESULTS.json binds current inputs.
+- NATIVE-CHECKS.json records native firmware written/built, native board gate/parity and scope limits.
+- Native LILYGO build-proof.json refreshed through kicadpy.firmware.record_build; no binary rebuild.
+- No user blockers. Lead/tester must recheck combined case integration and final board hashes.

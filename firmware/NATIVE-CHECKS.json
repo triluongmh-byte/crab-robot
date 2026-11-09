@@ -1,0 +1,52 @@
+{
+  "scope": "Firmware integration plus read-only published native board checks; excludes case readiness and hardware testing",
+  "contractSha256": "7841b7b2e92a0d3f69db70868c7a9649da0c6cd1cfc6d94478ec13886894c1be",
+  "hardwareTested": false,
+  "firmware": {
+    "written": true,
+    "built": true
+  },
+  "boardGate": {
+    "ok": true,
+    "command": "gate",
+    "result": {
+      "workspace": ".",
+      "sidecar": {
+        "file": "boards/main.board.json",
+        "fabReady": true,
+        "errors": 0,
+        "warnings": 0,
+        "byKind": []
+      },
+      "check": {
+        "file": "boards/main_review/f5ddd56b344451aaa8a967328228833fbe521c41addc97d5a0aef70e255860e0-56835b5f66a843e0/reports/check.json",
+        "passed": true,
+        "findings": 0,
+        "errors": 0,
+        "warnings": 0,
+        "byType": []
+      },
+      "manufacturing": {
+        "file": "boards/main_review/f5ddd56b344451aaa8a967328228833fbe521c41addc97d5a0aef70e255860e0-56835b5f66a843e0/manufacturing/manufacturing-report.json",
+        "prototypeReady": true,
+        "findings": 0,
+        "byKind": []
+      }
+    }
+  },
+  "nativeNetlist": {
+    "ok": true,
+    "command": "netlist",
+    "result": {
+      "differences": [],
+      "hollowSymbols": [],
+      "sheetLocalNets": [],
+      "schematicPins": 180,
+      "pcbPads": 180
+    }
+  },
+  "reconciliation": "reconciled",
+  "hostTests": true,
+  "wholeProductReady": false,
+  "remainingIntegration": "Case lead must resolve native case check, board insertion and screw-tool paths. No user blocker in firmware."
+}

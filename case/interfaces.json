@@ -1,14 +1,86 @@
 {
- "orientation": {"mount": "flat", "faceToUser": "top", "upEdge": "front"},
- "handwired": true,
- "note": "Handwired robot: the dummy KiCad PCB is never placed in the robot. Module interfaces come from PILOT_CONTRACT.json r1.",
- "printer": {"model": "Bambu Lab A1", "bedMm": [256, 256, 256], "nozzleMm": 0.4, "material": "PETG"},
- "interfaces": {},
+ "variant": "integrated board (ESP32-S3 + PCA9685, Waveshare display on a harness, WS2812 bar)",
+ "nativePCBCheckerApplies": true,
+ "orientation": {
+  "mount": "flat",
+  "faceToUser": "top",
+  "upEdge": "front"
+ },
+ "printer": {
+  "model": "Bambu Lab A1",
+  "bedMm": [
+   256,
+   256,
+   256
+  ],
+  "nozzleMm": 0.4,
+  "material": "PETG"
+ },
+ "interfaces": {
+  "J1": {
+   "confirm": true,
+   "note": "USB-C: reached through the rear tunnel along -X (D18)"
+  },
+  "SW2": {
+   "confirm": true,
+   "note": "RESET: straight pin through the -Y rim notch"
+  },
+  "SW1": {
+   "ignore": true,
+   "note": "BOOT is under the centred LED bar; no vertical pin path. Real access: 1.4 mm pin at 23 deg from the notch, measured in mechanical.json bootAccess."
+  },
+  "J11": {
+   "confirm": true,
+   "note": "LED bar connector, open -Y area"
+  },
+  "J12": {
+   "confirm": true,
+   "note": "SERVO_5V terminal; wire entry +X, screwdriver holes through the lid"
+  },
+  "J10": {
+   "confirm": true,
+   "note": "Waveshare harness header; plug it before the lid closes"
+  },
+  "J2": {
+   "confirm": true
+  },
+  "J3": {
+   "confirm": true
+  },
+  "J4": {
+   "confirm": true
+  },
+  "J5": {
+   "confirm": true
+  },
+  "J6": {
+   "confirm": true
+  },
+  "J7": {
+   "confirm": true
+  },
+  "J8": {
+   "confirm": true
+  },
+  "J9": {
+   "confirm": true
+  }
+ },
  "extra": [
-  {"name": "LILYGO screen window 44 x 24", "kind": "display", "centerMm": [2, 19], "face": "lid"},
-  {"name": "BOOT / KEY poke holes d3", "kind": "button", "centerMm": [[-29, 10], [-29, 28]], "face": "lid"},
-  {"name": "LED diffuser skin 0.8 mm", "kind": "light", "centerMm": [0, -2], "face": "lid"},
-  {"name": "power bank ports + finger window", "kind": "cable", "centerMm": [-63, 0], "face": "-X end"},
-  {"name": "power bank slides out", "kind": "service", "centerMm": [63, 0], "face": "+X end"}
+  {
+   "name": "bank strap band",
+   "kind": "strap",
+   "note": "hook-and-loop around the base between the 0.5 mm guide ribs, z 3.5-16.5"
+  },
+  {
+   "name": "side windows above the deck",
+   "kind": "access",
+   "note": "A1V4-r3: 74 x 15 on both sides; 3 x 7 rails above"
+  },
+  {
+   "name": "rear USB-C tunnel",
+   "kind": "cable",
+   "note": "x -62.5..-40, 12.6 wide: USB-C plug width <= 11.4 mm between the rear hip servos"
+  }
  ]
 }

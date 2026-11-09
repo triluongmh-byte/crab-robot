@@ -1,50 +1,93 @@
 {
-  "description": "# Robot Cua A1 V4 (crab-robot-v13: đồ chơi đơn giản, điều khiển bằng web) — prompt cho project mới\n\n**Tôi không phải dân điện tử.** Tôi chỉ muốn một con cua đồ chơi: quét QR, nhập Wi-Fi, mở web rồi lái nó đi. Hãy chọn cách **đơn giản, ít đồ, dễ ráp nhất**. Tạo project mới, làm ra CAD và firmware THẬT. KHÔNG hỏi tôi câu kỹ thuật: tự chọn, ghi **GIẢ ĐỊNH**, làm tiếp. Không sửa project cũ và không lấy báo cáo, hình học hay kết quả kiểm cũ làm kết quả mới. Áp dụng instruction KiCad hiện hành, gồm print team/plate và luật xếp plate.\n\n**Ảnh lỗi thật của bản trước:** [khung gãy trụ và tai](/Users/macbookpro/harnesses/prompts/ROBOT-CRAB-A1-V3-refs/IMG_2432.jpg), [trụ nắp bị rời](/Users/macbookpro/harnesses/prompts/ROBOT-CRAB-A1-V3-refs/IMG_2434.jpg), [chân lệch](/Users/macbookpro/harnesses/prompts/ROBOT-CRAB-A1-V3-refs/IMG_2435.jpg); [đủ ảnh và cấu hình in của tôi](/Users/macbookpro/harnesses/prompts/ROBOT-CRAB-A1-V3-refs/IMAGES.md). **Mục tiêu độ gọn:** [plate MakerWorld ~10 part](/Users/macbookpro/harnesses/prompts/ROBOT-CRAB-A1-V1-refs/TARGET-makerworld-simple-plate.png), [mẫu ráp xong](/Users/macbookpro/harnesses/prompts/ROBOT-CRAB-A1-V1-refs/makerworld-assembled.jpg); [đủ ảnh tham khảo](/Users/macbookpro/harnesses/prompts/ROBOT-CRAB-A1-V1-refs/IMAGES.md). Ảnh chỉ để tham khảo, không dùng làm số đo.\n\n**Link:** [Kame32](https://github.com/JavierIH/kame32) (cơ cấu 8 SG90 + dáng đi), [LILYGO T-Display-S3](https://github.com/Xinyuan-LilyGO/T-Display-S3) (schematic + STEP), [PCA9685 Adafruit](https://learn.adafruit.com/16-channel-pwm-servo-driver/pinouts).\n\n## Con cua làm được gì (toàn bộ tính năng)\n\n1. **Bật lên lần đầu:** màn hình hiện **mã QR**. Tôi quét bằng điện thoại, điện thoại vào Wi-Fi riêng của con cua và tự mở trang web của nó.\n2. **Nhập Wi-Fi:** trang web liệt kê Wi-Fi quanh đó, tôi chọn Wi-Fi nhà và nhập mật khẩu. Sai mật khẩu thì quay lại QR và báo lỗi bằng tiếng Việt dễ hiểu.\n3. **Vào được Wi-Fi nhà:** màn hình hiện **QR thứ hai và địa chỉ web**. Các lần bật sau nó tự vào Wi-Fi, không phải nhập lại. Giữ nút BOOT có sẵn trên board khoảng 8 giây thì xóa Wi-Fi và quay lại bước 1.\n4. **Trang điều khiển** (mở trong browser, vừa màn hình điện thoại): 8 nút hướng **tới, lui, trái, phải, xiên tới trái, xiên tới phải, xiên lui trái, xiên lui phải**, và 1 nút **bật/tắt đèn**. Trái/phải là đi ngang kiểu cua; nếu mô phỏng cho thấy không đi ngang được thì đổi thành xoay tại chỗ và ghi rõ trong README. **Giữ nút thì đi, thả ra thì dừng.** Mất kết nối thì tự dừng.\n5. **Vậy thôi.** KHÔNG có: cảm biến né vật cản, trạng thái máy in Bambu, giọng nói, quạt, đèn pha, app riêng, tài khoản, cloud, mật khẩu cho trang điều khiển.\n\n## Đồ dùng (mua sẵn, cắm là chạy)\n\n- **Bộ não:** board ESP32-S3 **LILYGO T-Display-S3** liền màn, bản non-touch, schematic 2024-04-29. Đối chiếu đúng revision, không bịa GPIO. GPIO16 có RINT 100k kéo lên và GPIO43 là UART ROM, nên đừng dùng hai chân này.\n- **Servo:** 8 **SG90** cắm nguyên giắc vào 1 module **PCA9685**, thêm 2 con dự phòng để rời.\n- **Đèn:** thanh **LED WS2812 8 bóng kiểu KK10**, nắp thân tán sáng đều, không lệch một phía. Chọn cách nối ít đồ nhất; tín hiệu 3,3V nối thẳng là GIẢ ĐỊNH, ghi cách xử lý nếu đèn nhấp nháy.\n- **Nguồn: 1 pin dự phòng USB 5V có 2 cổng ra**, loại mỏng khoảng 5000 mAh (GIẢ ĐỊNH: tối đa 100 × 65 × 15 mm, 120 g, mỗi cổng ≥ 2,4A; ghi tiêu chí chọn mua dễ hiểu). Cổng 1 cắm cáp USB-C vào board LILYGO. Cổng 2 qua **đầu chuyển USB ra terminal vặn vít** vào nguồn servo của PCA9685 và đèn. Nối chung GND giữa LILYGO và PCA9685 bằng dây tín hiệu. Tháo pin ra sạc như pin dự phòng bình thường.\n- **CẤM:** tự ráp pack pin, cell 18650 rời, BMS, cầu chì tự chọn, MOSFET, buck, crowbar, hay bất kỳ mạch nguồn hoặc mạch bảo vệ tự thiết kế nào. Muốn thêm một linh kiện ngoài danh sách thì phải chứng minh không thể chạy nếu thiếu nó.\n- **Dây:** ưu tiên dây Dupont cái-cái cho tín hiệu và dây có sẵn cho nguồn. Hạn chế hàn tối đa; chỗ nào buộc phải hàn thì ghi rõ và giữ càng ít càng tốt.\n- **Vít:** tôi CHỈ CÓ **M3×6, M3×8, M3×12, M3×20 + tán M3**, cộng vít đi kèm túi SG90. Không thêm loại vít, long đen hay trụ đệm khác. Mọi lỗ vít có nhãn, tua vít phải với tới.\n\n**Dòng servo:** firmware tránh rút dòng đột ngột làm pin dự phòng tự ngắt: bật servo lần lượt, chuyển động mượt, không cho cả 8 servo chuyển mạnh cùng lúc. Nếu pin vẫn ngắt khi thử thật thì ghi hướng xử lý đơn giản trong README (đổi pin, giảm tốc độ).\n\n**Board giả:** pipeline cần một project KiCad, nên làm **1 PCB rất nhỏ chỉ có pad hàn và lỗ bắt, không gắn linh kiện**, schematic đúng với chính board đó, ERC/DRC sạch, ghi rõ **BOARD GIẢ, KHÔNG ĐẶT, KHÔNG ĐẶT VÀO ROBOT**. Sơ đồ đấu dây thật của robot nằm ở `firmware/WIRING.md`, không đưa pin dự phòng, servo hay module vào schematic. Case khai `nativePCBCheckerApplies: false` theo luật handwired, kèm báo cáo cơ khí riêng.\n\n## ĐỊNH NGHĨA XONG (builder và tester đều theo mục này)\n\nĐây là đồ chơi tôi tự ráp, **không phải sản phẩm để bán hay đặt xưởng**. Xong nghĩa là: có file in đạt các giới hạn bên dưới, firmware build được và test host đạt cho trang web, QR, Wi-Fi và điều khiển, cùng hướng dẫn ráp từng bước mà người không biết điện tử làm theo được.\n\n- Không yêu cầu chứng minh trên giấy về linh kiện mua sẵn: định mức pin dự phòng, nhiệt, SOA, chứng nhận, lý lịch nhà cung cấp, mã linh kiện chính xác.\n- Việc chỉ biết được khi ráp hoặc thử thật thì ghi vào **`CHECKLIST-RAP.md`** (làm gì, đạt là sao, không đạt thì làm gì), **không tính là lỗi** và không phải blocker.\n- Thấy rủi ro thì **bỏ bớt hoặc đổi sang đồ đơn giản hơn**. Không thêm mạch, không viết thêm tài liệu để chứng minh.\n- Tester chỉ được trả về lỗi làm **hỏng việc ráp hoặc chơi**, hoặc vi phạm giới hạn đo được trong prompt này. Cùng một lỗi lặp 2 vòng thì builder đổi cách đơn giản hơn hoặc ghi vào checklist, không lặp tiếp.\n- An toàn: chỉ dùng 5V từ pin dự phòng mua sẵn, không có lithium để lộ, không có việc nào bắt tôi đo điện.\n\n## Cơ khí\n\n**Giới hạn cứng (vượt thì gộp part hoặc bỏ phụ kiện, ghi số thật trong README):** thân tối đa **126 × 75 × 47 mm** không tính chân, tối đa **12 part in** không tính file thử, tối đa **12 vít M3**, tổng in tối đa **8 giờ**, mỗi plate tối đa **4h30**, nhựa tối đa **220 g**, tối đa **2 plate**, cả robot dưới **500 g** gồm pin.\n\n**Bài học in thật từ bản trước (đều là lỗi đã xảy ra):**\n- **Không gãy:** in bằng đúng cấu hình của tôi là 2 walls, 7% infill. Thành chịu lực tối thiểu 3 mm; trụ và tai tối thiểu 6 × 6 mm (hoặc Ø8), cao tối đa 3 lần cạnh nhỏ, chân bo tối thiểu 2 mm. Không có trụ cao đứng tự do từ đáy hoặc nắp. Tốt nhất là thiết kế **không cần trụ mảnh**: hốc in liền và dây rút. Có báo cáo đo tiết diện các trụ và tai trên file xuất ra, tester đo lại. Không cần phân tích FEM.\n- **Chân đối xứng:** 4 chân đối xứng gương thật qua giữa thân, servo không lật gương được nên mặt lắp phải xử lý đúng. Đo trên STEP ở tư thế neutral: lệch tối đa **0,5 mm và 1°**, không dùng hiệu chuẩn firmware để che lệch hình học. Overview có ảnh từ trên và từ trước.\n- **Đủ góc khớp:** mục tiêu hip và knee **≥ ±25°**, kiểm bằng mô phỏng dáng đi với mức kiểm vừa đủ, chân không chạm nhau hay chạm thân. Dưới ±20° phải báo trong README.\n\n**Cách làm:**\n- **Thân:** 1 đáy + 1 nắp. Hốc in sẵn giữ pin dự phòng (nằm thấp, rút ra sạc được, giữ bằng dây rút hoặc đai) và cả board, PCA9685, đèn. Chừa chỗ cho đầu cáp USB-C, đầu chuyển terminal và bó dây; dây thừa có chỗ nhét. Cấm khay + nắp riêng cho từng module.\n- **Màn hình phải nhìn thấy và quét được QR** khi đã đóng thân, nút BOOT bấm được bằng que nhỏ. Cổng USB-C của board cắm được để nạp firmware.\n- **Servo:** hốc khít SG90 in liền; thanh đè dùng chung cho 2 servo cùng góc chân, bắt M3. Không làm khung kẹp riêng từng con.\n- **Chân:** mỗi chân 2 part liền khối, dày, bo góc như mẫu MakerWorld. Rãnh hình horn SG90 ép khít, siết bằng vít đi kèm túi SG90 (GIẢ ĐỊNH, ghi vào checklist).\n- **Dây servo** có vòng dư qua khớp, không bị kẹp. Chỉ cần kiểm va chạm chân và thân, bó dây kiểm bằng checklist ráp.\n\n## Firmware\n\nDáng đi port từ Kame32 sang ESP32-S3 + PCA9685, non-blocking, 8 hướng như mục đầu. Wi-Fi lưu trong NVS, không hardcode, không log mật khẩu. Bật máy thì đứng yên ở tư thế đứng, không tự đi. Có **trang Ráp** để mở từ web: đưa cả 8 servo về giữa để gắn horn cho đúng, và chỉnh tâm từng khớp bằng nút +/−, lưu lại. Màn hình chỉ hiện QR, địa chỉ web, trạng thái Wi-Fi và lỗi bằng tiếng Việt. Web chạy ngay trên con cua, không cần internet, không tải thư viện ngoài.\n\n## Bàn giao\n\n- **BOM** cho người không biết gì: **đã có / cần mua / tùy chọn**, kèm từ khóa tìm mua và cách nhận ra đúng món. Pin dự phòng ghi rõ tiêu chí chọn.\n- **`firmware/WIRING.md`** tiếng Việt, có hình: dây nào cắm từ đâu đến đâu, màu gì. Chỉ có việc cắm dây và vặn terminal, không đo điện.\n- **`CHECKLIST-RAP.md`** và **README tiếng Việt**: cách nạp firmware từng bước, cách dùng QR và web, số part, số vít, thời gian in, GIẢ ĐỊNH, phần đã xác minh, phần mới chỉ mô phỏng.\n- Source firmware + binary build được. CAD nguồn, STEP/STL từng part, hình tổng thể, hình bung, **fastener_map.csv**.\n- **Hai file in thử trước khi in cả bộ:** coupon **TEST ONLY** (hốc servo, rãnh horn, 1 lỗ M3 có hốc tán, 1 trụ mảnh nhất đúng hướng in) và **MATING_TEST** (2 part thật của 1 chân). Không khuyên in cả bộ trước khi tôi báo 2 file này đạt.\n- **Overview chung:** dùng hình học thật, menu **Đủ bộ → Bước 1 → … → Bước N**, nút Trước/Sau, có bước cắm dây, mỗi bước có thẻ **Vít/tán bước này**. Chi tiết phụ nằm trong **Chi tiết**, mặc định đóng. Đọc được trên phone.\n\n## In và chốt\n\nBambu A1, nozzle 0,4, PETG; **slice bằng đúng [cấu hình của tôi](/Users/macbookpro/harnesses/prompts/ROBOT-CRAB-A1-V3-refs/IMAGES.md):** PETG Basic Flow Rate Calibrated, layer 0,20, 2 walls, 7% Grid, support tree auto. Tôi tự bấm in. Print all là **một 3MF chứa đủ mọi part**, plate thật có tên. Mỗi plate 1 loại nhựa/màu; cạnh dài part theo trục X, chỉ để theo Y khi không vừa và ghi lý do. Xác nhận đã in ghi vào **case/PRINTED-INVENTORY.md**.\n\nSửa xong thì tạo lại overview/3MF và kiểm đúng file cuối. **Đạt mục ĐỊNH NGHĨA XONG thì dừng**, không làm thêm và không build lại khi nguồn không đổi. Giữ **prompts/current.md** gọn. Compile hay CAD pass không có nghĩa là robot đi được, nên phải nói thật phần nào chưa thử. Không tự nạp firmware, chạy motor, gửi lệnh in hay đặt hàng.\n\n## Publish when finished\n\nWhen the project is done (teamReady/candidate_ready), commit the project and push it to\nhttps://github.com/triluongmh-byte/crab-robot.git (branch main), without asking again.\nGit gets the credential from the macOS Keychain on this machine. Never ask for, print,\nwrite or commit a token or password. If the push is refused for lack of a credential,\nsay so in your final answer and leave the commit local.\nDo not push large build caches, toolchains or .circuit/team-runs/ logs: add them to .gitignore.\n\nPROJECT REFERENCE ASSETS: These files are copied into this pilot workspace. Use the pilot-local path on the right in place of an original absolute attachment path:\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/README.md -> prompts/assets/README.md\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/AVOID-led-one-side.png -> prompts/assets/ROBOT-CRAB-A1-V1-refs/AVOID-led-one-side.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/AVOID-thin-legs.png -> prompts/assets/ROBOT-CRAB-A1-V1-refs/AVOID-thin-legs.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/AVOID-too-many-parts-v8.png -> prompts/assets/ROBOT-CRAB-A1-V1-refs/AVOID-too-many-parts-v8.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/IMAGES.md -> prompts/assets/ROBOT-CRAB-A1-V1-refs/IMAGES.md\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/TARGET-makerworld-simple-plate.png -> prompts/assets/ROBOT-CRAB-A1-V1-refs/TARGET-makerworld-simple-plate.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/kame32.jpg -> prompts/assets/ROBOT-CRAB-A1-V1-refs/kame32.jpg\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/led-bar-kk10.png -> prompts/assets/ROBOT-CRAB-A1-V1-refs/led-bar-kk10.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/makerworld-assembled.jpg -> prompts/assets/ROBOT-CRAB-A1-V1-refs/makerworld-assembled.jpg\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/makerworld-leg-servo.jpg -> prompts/assets/ROBOT-CRAB-A1-V1-refs/makerworld-leg-servo.jpg\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/makerworld-print-layout.png -> prompts/assets/ROBOT-CRAB-A1-V1-refs/makerworld-print-layout.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/makerworld-top.jpg -> prompts/assets/ROBOT-CRAB-A1-V1-refs/makerworld-top.jpg\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/makerworld-user-screenshot.png -> prompts/assets/ROBOT-CRAB-A1-V1-refs/makerworld-user-screenshot.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/tdisplay-s3-screen-on.png -> prompts/assets/ROBOT-CRAB-A1-V1-refs/tdisplay-s3-screen-on.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V1-refs/tdisplay-s3-side.png -> prompts/assets/ROBOT-CRAB-A1-V1-refs/tdisplay-s3-side.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V3-refs/2026-10-31-owner-native-project-settings.json -> prompts/assets/ROBOT-CRAB-A1-V3-refs/2026-10-31-owner-native-project-settings.json\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V3-refs/2026-10-31-owner-print-settings-strength.jpg -> prompts/assets/ROBOT-CRAB-A1-V3-refs/2026-10-31-owner-print-settings-strength.jpg\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V3-refs/2026-10-31-owner-print-settings-support.jpg -> prompts/assets/ROBOT-CRAB-A1-V3-refs/2026-10-31-owner-print-settings-support.jpg\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V3-refs/AVOID-led-one-side.png -> prompts/assets/ROBOT-CRAB-A1-V3-refs/AVOID-led-one-side.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V3-refs/AVOID-thin-legs.png -> prompts/assets/ROBOT-CRAB-A1-V3-refs/AVOID-thin-legs.png\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V3-refs/IMAGES.md -> prompts/assets/ROBOT-CRAB-A1-V3-refs/IMAGES.md\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V3-refs/IMG_2432.jpg -> prompts/assets/ROBOT-CRAB-A1-V3-refs/IMG_2432.jpg\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V3-refs/IMG_2433.jpg -> prompts/assets/ROBOT-CRAB-A1-V3-refs/IMG_2433.jpg\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V3-refs/IMG_2434.jpg -> prompts/assets/ROBOT-CRAB-A1-V3-refs/IMG_2434.jpg\n/Users/macbookpro/harnesses/crab-robot-v17f/prompts/assets/ROBOT-CRAB-A1-V3-refs/IMG_2435.jpg -> prompts/assets/ROBOT-CRAB-A1-V3-refs/IMG_2435.jpg\n",
-  "name": "r001",
+  "name": "Robot Cua — integrated ESP32-S3 board V0",
+  "description": "Integrated certified radio + PCA9685, factory SMT, native USB and separate5V servo input; Waveshare23822 SPI screen fallback. Release note4 supersedes passive carrier.",
   "board": {
-    "name": "DUMMY - not part of robot",
-    "outlineMm": [
-      [
-        -15,
-        -10
-      ],
-      [
-        15,
-        -10
-      ],
-      [
-        15,
-        10
-      ],
-      [
-        -15,
-        10
-      ],
-      [
-        -15,
-        -10
-      ]
+    "sizeMm": [
+      88,
+      62
     ],
     "thicknessMm": 1.6,
     "layers": 2,
     "copperOz": 1,
+    "outlineMm": [
+      [
+        -44,
+        -31
+      ],
+      [
+        44,
+        -31
+      ],
+      [
+        44,
+        31
+      ],
+      [
+        -44,
+        31
+      ]
+    ],
     "mounts": [
       {
-        "ref": "MH1",
-        "xMm": -10,
-        "yMm": 0,
+        "ref": "H1",
+        "positionMm": [
+          -40,
+          -13
+        ],
         "holeDiameterMm": 3.2
       },
       {
-        "ref": "MH2",
-        "xMm": 10,
-        "yMm": 0,
+        "ref": "H2",
+        "positionMm": [
+          39,
+          -26
+        ],
+        "holeDiameterMm": 3.2
+      },
+      {
+        "ref": "H3",
+        "positionMm": [
+          -39,
+          26
+        ],
+        "holeDiameterMm": 3.2
+      },
+      {
+        "ref": "H4",
+        "positionMm": [
+          39,
+          26
+        ],
         "holeDiameterMm": 3.2
       }
-    ],
-    "fittedParts": 0,
-    "powered": false
+    ]
   },
   "hardwareTested": false,
-  "nativePCBCheckerAppliesToRobot": false
+  "railLimitsUF": {
+    "PB1_5V": 10
+  },
+  "powerEntryNets": [
+    "PB1_5V",
+    "SERVO_5V"
+  ],
+  "power": {
+    "logicReserveA": 0.56,
+    "ldoRatedA": 1,
+    "servoSourceA": 2.4,
+    "LED_designMaxA": 0.48
+  },
+  "assumptions": [
+    "GIẢ ĐỊNH: external WS2812 accepts direct3.3V DIN; retains colour on warm MCU reset.",
+    "PCA9685 module đã mua, chưa xác nhận đã nhận; not used in integrated variant.",
+    "Power bank operation under servo transient load requires real assembly check.",
+    "Case team must place PCB and documented Waveshare display from final STEP."
+  ],
+  "releaseNoteSha256": "122b5b3d406fc1cc148b6bf5abaf6c6fc7315e933a95e5565c1b60ee86d35e08",
+  "pinChanges": {
+    "GPIO15": "NC legacy LCD_POWER_ON",
+    "GPIO21": "PCA9685 /OE activeLOW; defaultHIGH",
+    "GPIO8": "LCD SPI SCLK formerlyWR",
+    "GPIO39": "LCD SPI MOSI formerlyD0",
+    "GPIO9,40,41,42,45,46,47,48": "NC formerlyLCD parallel bus"
+  }
 }

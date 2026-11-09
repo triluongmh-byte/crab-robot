@@ -1,0 +1,171 @@
+{
+ "schema": 1,
+ "revision": "A1V4-r1",
+ "sourceCommit": "2ef9e2c",
+ "why": "Owner reports plate 2 printing (release note 2). Reported only: not finished, not confirmed, not fit-checked.",
+ "plate2Name": "MỚI∕SỬA — CẦN IN 2 — Thanh đè và chân (2 thanh đè, 4 đùi, 4 cẳng) — PETG — A1V4-r1",
+ "plate2Parts": [
+  "cap_front",
+  "cap_rear",
+  "thigh_FL",
+  "thigh_FR",
+  "thigh_RL",
+  "thigh_RR",
+  "foot_FL",
+  "foot_FR",
+  "foot_RL",
+  "foot_RR"
+ ],
+ "parts": {
+  "cap_front": {
+   "stlSha256": "a76cb67c4cc9ac97d3b52ffa3d20ee2876c1502088661851068e4225b24a1d39",
+   "stepSha256": "3683c97405395ee5eaf892715a6ae916554effc458c81480b8789f8aaab95e46",
+   "volumeMm3": 6970.3,
+   "printRotateDeg": [
+    180,
+    0,
+    90
+   ],
+   "mesh3mfSha256": "910e259ade3530a761c80b63242bd348dd7bfd1d71d0f0324219ed0e08e6d088",
+   "plate": 2,
+   "transform": "1 0 0 0 1 0 0 0 1 352.2000 93.3115 0"
+  },
+  "cap_rear": {
+   "stlSha256": "ed98dd738d4ce92b72522248a8a8084f6d0f1526215a3bc0e8870eadf841ba5b",
+   "stepSha256": "44aa7f29434e8069dc017566e6fd73f845005b56e44491e48bd342f3563548ce",
+   "volumeMm3": 6970.3,
+   "printRotateDeg": [
+    180,
+    0,
+    90
+   ],
+   "mesh3mfSha256": "5755e83263e76c1b92ee8f02fc0d72c326143edf9aea5cb0ce8fb810ba2645ad",
+   "plate": 2,
+   "transform": "1 0 0 0 1 0 0 0 1 440.2000 93.3115 0"
+  },
+  "thigh_FL": {
+   "stlSha256": "ccc21abe2df60267f5f985c73a58039056e2d3ee6b55145cc9244b7bc7222887",
+   "stepSha256": "73a0d97e45ec4bd18aac1103e47905e27652453633b415395e7c5344cf5c9410",
+   "volumeMm3": 7670.5,
+   "printRotateDeg": [
+    180,
+    0,
+    38
+   ],
+   "mesh3mfSha256": "374a60ac3a88731e13ad0d165502c9ce189b3086f9066fe7a36faf3b6e5b2809",
+   "plate": 2,
+   "transform": "1 0 0 0 1 0 0 0 1 425.2612 127.5604 0"
+  },
+  "thigh_FR": {
+   "stlSha256": "c20f3f61eadedcc0410f504c5d9377605a70cf1968f2e47f80eb419a694d043b",
+   "stepSha256": "8a496c648a63261b71c2b5e6e69014e7088250586f3db9dfc4203f1a2db9abe0",
+   "volumeMm3": 7670.5,
+   "printRotateDeg": [
+    180,
+    0,
+    142
+   ],
+   "mesh3mfSha256": "a827939a4d09b00603097a258f4d2877a5f330b3f46e9662496f4d27ca764954",
+   "plate": 2,
+   "transform": "1 0 0 0 1 0 0 0 1 503.3020 127.5604 0"
+  },
+  "thigh_RL": {
+   "stlSha256": "7b6f592bf25df6d4f6a4029b93546071d2bb677510de91849a16f6cf70a8f278",
+   "stepSha256": "9756753c2c7654ae8293ee8e6ce0d4cb783b011471c5400a477dfae24ded2ce4",
+   "volumeMm3": 7670.5,
+   "printRotateDeg": [
+    180,
+    0,
+    142
+   ],
+   "mesh3mfSha256": "bf2ec8cba83def2d92e0cb38d75ddd36268964ce2c427579e52b415c4958de4f",
+   "plate": 2,
+   "transform": "1 0 0 0 1 0 0 0 1 347.2204 127.5604 0"
+  },
+  "thigh_RR": {
+   "stlSha256": "b3e7a433ac0a191f49aa50065ee0fbc34ed1e64fba9d08c8a1562d680031579f",
+   "stepSha256": "c81a55d0308705dd51274eb98b9d6b81168ceb3a296e39889e98a01508ef9303",
+   "volumeMm3": 7670.5,
+   "printRotateDeg": [
+    180,
+    0,
+    38
+   ],
+   "mesh3mfSha256": "5ee050910621513579e3240be0abc4a733738a2a2b4f576367282fab7e1837c7",
+   "plate": 2,
+   "transform": "1 0 0 0 1 0 0 0 1 347.2204 159.5581 0"
+  },
+  "foot_FL": {
+   "stlSha256": "cacd4c57646ad121535cc4e372d3dd6ab9cb541646a55e4426cb1e90660e455d",
+   "stepSha256": "19ba7449562e5c8cb01a5cacf609c186289ae02d3ef1d64234f3d6d0fe3d6c85",
+   "volumeMm3": 8136.8,
+   "printRotateDeg": [
+    -90,
+    -45,
+    72
+   ],
+   "mesh3mfSha256": "59b45b03780480f2ca8c3ace81a6f4ef548e178b905db3f1ef320737065defae",
+   "plate": 2,
+   "transform": "1 0 0 0 1 0 0 0 1 354.9866 19.5154 0"
+  },
+  "foot_FR": {
+   "stlSha256": "b278a41a4c9df6bfe585cf2530b347a85cd95824aa42fb87a401af38c7777796",
+   "stepSha256": "989a4318e54b4df36502f90c9f0920d42ba6761b6f682c6e8ed4d0ef28dc259f",
+   "volumeMm3": 8136.8,
+   "printRotateDeg": [
+    90,
+    -45,
+    108
+   ],
+   "mesh3mfSha256": "01ea9cf9be4a504a3ac47dc083564a52f51073f5670c2fb36e08ed53e9363c67",
+   "plate": 2,
+   "transform": "1 0 0 0 1 0 0 0 1 448.5597 19.5154 0"
+  },
+  "foot_RL": {
+   "stlSha256": "54c45cf3c8b16163da2d299770663d10a535bc2c5c1885ef44ed53d8481b2009",
+   "stepSha256": "8832cccbf50600106dd60f944429ad5736adf62cb0e3d3fc343ba892a1d4ca93",
+   "volumeMm3": 8136.8,
+   "printRotateDeg": [
+    -90,
+    45,
+    108
+   ],
+   "mesh3mfSha256": "4ea0625ef35b27b61f5a711235fd49bf2a9404b26a7ad28e46d427bc538902f5",
+   "plate": 2,
+   "transform": "1 0 0 0 1 0 0 0 1 354.9866 56.5461 0"
+  },
+  "foot_RR": {
+   "stlSha256": "b5d8ad96d1441936cb04f33ffd04b7bbe9c66e08cc4ad62808841e54392edd18",
+   "stepSha256": "8c53347320e29bbda9e07838b0d99edf886fe78081dfb4769c3c7ba2d34173ed",
+   "volumeMm3": 8136.8,
+   "printRotateDeg": [
+    90,
+    45,
+    72
+   ],
+   "mesh3mfSha256": "a42533588fab740139bafa5837049e4443ea0bf5b0bdc911f1c8e0d376f2111e",
+   "plate": 2,
+   "transform": "1 0 0 0 1 0 0 0 1 448.5597 56.5461 0"
+  },
+  "coupon_TEST_ONLY": {
+   "stlSha256": "9ba4b9fb7c1583d4be660b0c333523922d862d3f1fc2d4866d5839ed7b0a32a7",
+   "stepSha256": "c7c52b47987a279ebb6629e0ae6b8fe2f6db2ed78559d77a609b8a31d3242652",
+   "volumeMm3": null,
+   "printRotateDeg": [
+    0,
+    0,
+    0
+   ]
+  },
+  "MATING_TEST_leg_FL": {
+   "stlSha256": "0c49b344726b934e66a84e5026a0535d8084f09090296769f26b8e7548b5ec3e",
+   "stepSha256": "a5240a631ec7d70382d59798e2f8e39c1fdb646bbe7bb483f32d6ffd94337dd1",
+   "volumeMm3": null,
+   "printRotateDeg": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

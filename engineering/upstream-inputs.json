@@ -1,0 +1,20 @@
+{
+  "checkedDate": "2026-11-09",
+  "inputs": [
+    {
+      "url": "https://files.waveshare.com/upload/7/7f/1.9inch_LCD_Module.pdf",
+      "sha256": "29aa980ba4c0905eef87a095224a7da7bc667b00c3c65110db31101fc73b000d",
+      "path": "engineering/sources/integrated/waveshare.pdf"
+    },
+    {
+      "url": "https://files.waveshare.com/upload/9/98/1.9inch_LCD_Module_3D.zip",
+      "sha256": "5f7e8b080c631df0259cabee3d6a325192b1877f79707c66eb55e9205ec598e7",
+      "path": "engineering/sources/integrated/waveshare-3d.zip",
+      "extract": {
+        "member": "1.9inch LCD Module/1_9inch-lcd-module.stp",
+        "path": "engineering/sources/integrated/waveshare-display.step",
+        "sha256": "b0f1c0cf83221b95561fa0bdede212159476f65140dc4795f81c9ce45b7e6ca5"
+      }
+    }
+  ]
+}

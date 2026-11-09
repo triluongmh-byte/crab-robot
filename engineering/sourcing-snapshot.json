@@ -1,0 +1,667 @@
+{
+  "C1525": {
+    "componentCode": "C1525",
+    "componentLibraryType": "base",
+    "stockCount": 33441064,
+    "erpComponentName": "100nF \u00b110% 16V",
+    "componentBrandEn": "Samsung Electro-Mechanics",
+    "componentModelEn": "CL05B104KO5NNNC",
+    "componentSpecificationEn": "0402",
+    "componentTypeEn": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+    "describe": "100nF 16V X7R \u00b110% 0402 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+    "urlSuffix": "1877-CL05B104KO5NNNC/C1525",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 999,
+        "productPrice": 0.0031
+      },
+      {
+        "startNumber": 1000,
+        "endNumber": 2999,
+        "productPrice": 0.0023
+      },
+      {
+        "startNumber": 3000,
+        "endNumber": 9999,
+        "productPrice": 0.002
+      },
+      {
+        "startNumber": 10000,
+        "endNumber": 49999,
+        "productPrice": 0.0017
+      },
+      {
+        "startNumber": 50000,
+        "endNumber": 50199,
+        "productPrice": 0.0016
+      },
+      {
+        "startNumber": 50200,
+        "endNumber": -1,
+        "productPrice": 0.0016
+      }
+    ]
+  },
+  "C15578": {
+    "componentCode": "C15578",
+    "componentLibraryType": "expand",
+    "stockCount": 937,
+    "erpComponentName": "3.3V 1A 5.5V",
+    "componentBrandEn": "Texas Instruments",
+    "componentModelEn": "TLV1117LV33DCYR",
+    "componentSpecificationEn": "SOT-223",
+    "componentTypeEn": "Voltage Regulators - Linear, Low Drop Out (LDO) Regulators",
+    "describe": "-40\u2103~+125\u2103@(Tj) 1 100uA 1A 3.3V 455mV@(1A) 5.5V 60uVrms 65dB@(1kHz) Fixed Positive Under Voltage Lockout\u3001Over Current Protection\u3001Over Temperature Protection SOT-223 Voltage Regulators - Linear, Low Drop Out (LDO) Regulators ROHS",
+    "urlSuffix": "TexasInstruments-TLV1117LV33DCYR/C15578",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 49,
+        "productPrice": 0.2995
+      },
+      {
+        "startNumber": 50,
+        "endNumber": 149,
+        "productPrice": 0.2323
+      },
+      {
+        "startNumber": 150,
+        "endNumber": 499,
+        "productPrice": 0.1994
+      },
+      {
+        "startNumber": 500,
+        "endNumber": 2499,
+        "productPrice": 0.1701
+      },
+      {
+        "startNumber": 2500,
+        "endNumber": 4999,
+        "productPrice": 0.1621
+      },
+      {
+        "startNumber": 5000,
+        "endNumber": -1,
+        "productPrice": 0.1572
+      }
+    ]
+  },
+  "C15850": {
+    "componentCode": "C15850",
+    "componentLibraryType": "base",
+    "stockCount": 8419783,
+    "erpComponentName": "10uF \u00b110% 25V",
+    "componentBrandEn": "Samsung Electro-Mechanics",
+    "componentModelEn": "CL21A106KAYNNNE",
+    "componentSpecificationEn": "0805",
+    "componentTypeEn": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+    "describe": "10uF 25V X5R \u00b110% 0805 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+    "urlSuffix": "16532-CL21A106KAYNNNE/C15850",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 199,
+        "productPrice": 0.0315
+      },
+      {
+        "startNumber": 200,
+        "endNumber": 599,
+        "productPrice": 0.0236
+      },
+      {
+        "startNumber": 600,
+        "endNumber": 1999,
+        "productPrice": 0.0202
+      },
+      {
+        "startNumber": 2000,
+        "endNumber": 9999,
+        "productPrice": 0.0176
+      },
+      {
+        "startNumber": 10000,
+        "endNumber": 19999,
+        "productPrice": 0.0164
+      },
+      {
+        "startNumber": 20000,
+        "endNumber": -1,
+        "productPrice": 0.0158
+      }
+    ]
+  },
+  "C165948": {
+    "componentCode": "C165948",
+    "componentLibraryType": "expand",
+    "stockCount": 305194,
+    "erpComponentName": "Type-C \u6bcd \u5367\u8d34",
+    "componentBrandEn": "Korean Hroparts Elec",
+    "componentModelEn": "TYPE-C-31-M-12",
+    "componentSpecificationEn": "SMD",
+    "componentTypeEn": "USB Connectors",
+    "describe": "-30\u2103~+80\u2103 1 10,000 cycles 16P 20V 5A 7.35mm Female Surface Mount, Right Angle Type-C SMD USB Connectors ROHS",
+    "urlSuffix": "Korean_HropartsElec-TYPE_C_31_M12/C165948",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 49,
+        "productPrice": 0.1868
+      },
+      {
+        "startNumber": 50,
+        "endNumber": 149,
+        "productPrice": 0.1476
+      },
+      {
+        "startNumber": 150,
+        "endNumber": 999,
+        "productPrice": 0.1283
+      },
+      {
+        "startNumber": 1000,
+        "endNumber": 1999,
+        "productPrice": 0.1041
+      },
+      {
+        "startNumber": 2000,
+        "endNumber": 4999,
+        "productPrice": 0.0993
+      },
+      {
+        "startNumber": 5000,
+        "endNumber": -1,
+        "productPrice": 0.0966
+      }
+    ]
+  },
+  "C1746": {
+    "componentCode": "C1746",
+    "componentLibraryType": "expand",
+    "stockCount": 23591,
+    "erpComponentName": "4.7uF \u00b110% 16V",
+    "componentBrandEn": "Samsung Electro-Mechanics",
+    "componentModelEn": "CL21A475KOFNNNE",
+    "componentSpecificationEn": "0805",
+    "componentTypeEn": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+    "describe": "16V 4.7uF X5R \u00b110% 0805 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+    "urlSuffix": "2098-CL21A475KOFNNNE/C1746",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 99,
+        "productPrice": 0.045
+      },
+      {
+        "startNumber": 100,
+        "endNumber": 299,
+        "productPrice": 0.036
+      },
+      {
+        "startNumber": 300,
+        "endNumber": 1999,
+        "productPrice": 0.0315
+      },
+      {
+        "startNumber": 2000,
+        "endNumber": 3999,
+        "productPrice": 0.0282
+      },
+      {
+        "startNumber": 4000,
+        "endNumber": 9999,
+        "productPrice": 0.0254
+      },
+      {
+        "startNumber": 10000,
+        "endNumber": -1,
+        "productPrice": 0.0241
+      }
+    ]
+  },
+  "C25092": {
+    "componentCode": "C25092",
+    "componentLibraryType": "base",
+    "stockCount": 3300357,
+    "erpComponentName": "\u539a\u819c\u7535\u963b 22\u03a9 \u00b11% 62.5mW",
+    "componentBrandEn": "UNI-ROYAL(Uniroyal Elec)",
+    "componentModelEn": "0402WGF220JTCE",
+    "componentSpecificationEn": "0402",
+    "componentTypeEn": "Chip Resistor - Surface Mount",
+    "describe": "-55\u2103~+155\u2103 22\u03a9 50V 62.5mW Thick Film Resistor \u00b11% \u00b1100ppm/\u2103 0402 Chip Resistor - Surface Mount ROHS",
+    "urlSuffix": "25835-0402WGF220JTCE/C25092",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 999,
+        "productPrice": 0.0019
+      },
+      {
+        "startNumber": 1000,
+        "endNumber": 2999,
+        "productPrice": 0.0016
+      },
+      {
+        "startNumber": 3000,
+        "endNumber": 9999,
+        "productPrice": 0.0014
+      },
+      {
+        "startNumber": 10000,
+        "endNumber": 49999,
+        "productPrice": 0.0013
+      },
+      {
+        "startNumber": 50000,
+        "endNumber": 50199,
+        "productPrice": 0.0011
+      },
+      {
+        "startNumber": 50200,
+        "endNumber": -1,
+        "productPrice": 0.0011
+      }
+    ]
+  },
+  "C25104": {
+    "componentCode": "C25104",
+    "componentLibraryType": "base",
+    "stockCount": 1920181,
+    "erpComponentName": "\u539a\u819c\u7535\u963b 330\u03a9 \u00b11% 62.5mW",
+    "componentBrandEn": "UNI-ROYAL(Uniroyal Elec)",
+    "componentModelEn": "0402WGF3300TCE",
+    "componentSpecificationEn": "0402",
+    "componentTypeEn": "Chip Resistor - Surface Mount",
+    "describe": "-55\u2103~+155\u2103 330\u03a9 50V 62.5mW Thick Film Resistor \u00b11% \u00b1100ppm/\u2103 0402 Chip Resistor - Surface Mount ROHS",
+    "urlSuffix": "25847-0402WGF3300TCE/C25104",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 999,
+        "productPrice": 0.0011
+      },
+      {
+        "startNumber": 1000,
+        "endNumber": 2999,
+        "productPrice": 0.0009
+      },
+      {
+        "startNumber": 3000,
+        "endNumber": 9999,
+        "productPrice": 0.0008
+      },
+      {
+        "startNumber": 10000,
+        "endNumber": 49999,
+        "productPrice": 0.0007
+      },
+      {
+        "startNumber": 50000,
+        "endNumber": 50199,
+        "productPrice": 0.0005
+      },
+      {
+        "startNumber": 50200,
+        "endNumber": -1,
+        "productPrice": 0.0005
+      }
+    ]
+  },
+  "C25744": {
+    "componentCode": "C25744",
+    "componentLibraryType": "base",
+    "stockCount": 22273178,
+    "erpComponentName": "\u539a\u819c\u7535\u963b 10k\u03a9 \u00b11% 62.5mW",
+    "componentBrandEn": "UNI-ROYAL(Uniroyal Elec)",
+    "componentModelEn": "0402WGF1002TCE",
+    "componentSpecificationEn": "0402",
+    "componentTypeEn": "Chip Resistor - Surface Mount",
+    "describe": "-55\u2103~+155\u2103 10k\u03a9 50V 62.5mW Thick Film Resistor \u00b11% \u00b1100ppm/\u2103 0402 Chip Resistor - Surface Mount ROHS",
+    "urlSuffix": "26487-0402WGF1002TCE/C25744",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 999,
+        "productPrice": 0.0028
+      },
+      {
+        "startNumber": 1000,
+        "endNumber": 2999,
+        "productPrice": 0.0021
+      },
+      {
+        "startNumber": 3000,
+        "endNumber": 9999,
+        "productPrice": 0.0018
+      },
+      {
+        "startNumber": 10000,
+        "endNumber": 49999,
+        "productPrice": 0.0016
+      },
+      {
+        "startNumber": 50000,
+        "endNumber": 50199,
+        "productPrice": 0.0015
+      },
+      {
+        "startNumber": 50200,
+        "endNumber": -1,
+        "productPrice": 0.0015
+      }
+    ]
+  },
+  "C25900": {
+    "componentCode": "C25900",
+    "componentLibraryType": "base",
+    "stockCount": 15544297,
+    "erpComponentName": "\u539a\u819c\u7535\u963b 4.7k\u03a9 \u00b11% 62.5mW",
+    "componentBrandEn": "UNI-ROYAL(Uniroyal Elec)",
+    "componentModelEn": "0402WGF4701TCE",
+    "componentSpecificationEn": "0402",
+    "componentTypeEn": "Chip Resistor - Surface Mount",
+    "describe": "-55\u2103~+155\u2103 4.7k\u03a9 50V 62.5mW Thick Film Resistor \u00b11% \u00b1100ppm/\u2103 0402 Chip Resistor - Surface Mount ROHS",
+    "urlSuffix": "26643-0402WGF4701TCE/C25900",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 999,
+        "productPrice": 0.0017
+      },
+      {
+        "startNumber": 1000,
+        "endNumber": 2999,
+        "productPrice": 0.0013
+      },
+      {
+        "startNumber": 3000,
+        "endNumber": 9999,
+        "productPrice": 0.0011
+      },
+      {
+        "startNumber": 10000,
+        "endNumber": 49999,
+        "productPrice": 0.001
+      },
+      {
+        "startNumber": 50000,
+        "endNumber": 50199,
+        "productPrice": 0.0009
+      },
+      {
+        "startNumber": 50200,
+        "endNumber": -1,
+        "productPrice": 0.0009
+      }
+    ]
+  },
+  "C25905": {
+    "componentCode": "C25905",
+    "componentLibraryType": "base",
+    "stockCount": 4453276,
+    "erpComponentName": "\u539a\u819c\u7535\u963b 5.1k\u03a9 \u00b11% 62.5mW",
+    "componentBrandEn": "UNI-ROYAL(Uniroyal Elec)",
+    "componentModelEn": "0402WGF5101TCE",
+    "componentSpecificationEn": "0402",
+    "componentTypeEn": "Chip Resistor - Surface Mount",
+    "describe": "-55\u2103~+155\u2103 5.1k\u03a9 50V 62.5mW Thick Film Resistor \u00b11% \u00b1100ppm/\u2103 0402 Chip Resistor - Surface Mount ROHS",
+    "urlSuffix": "26648-0402WGF5101TCE/C25905",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 999,
+        "productPrice": 0.0023
+      },
+      {
+        "startNumber": 1000,
+        "endNumber": 2999,
+        "productPrice": 0.0017
+      },
+      {
+        "startNumber": 3000,
+        "endNumber": 9999,
+        "productPrice": 0.0015
+      },
+      {
+        "startNumber": 10000,
+        "endNumber": 49999,
+        "productPrice": 0.0013
+      },
+      {
+        "startNumber": 50000,
+        "endNumber": 50199,
+        "productPrice": 0.0012
+      },
+      {
+        "startNumber": 50200,
+        "endNumber": -1,
+        "productPrice": 0.0012
+      }
+    ]
+  },
+  "C2678753": {
+    "componentCode": "C2678753",
+    "componentLibraryType": "expand",
+    "stockCount": 3841,
+    "erpComponentName": "16\u901a\u9053\u300112\u4f4dPWM Fm+ I2C\u603b\u7ebfLED\u63a7\u5236\u5668",
+    "componentBrandEn": "NXP Semicon",
+    "componentModelEn": "PCA9685PW,118",
+    "componentSpecificationEn": "TSSOP-28",
+    "componentTypeEn": "LED Drivers",
+    "describe": "-40\u2103~+85\u2103 100kHz~1MHz 16 2.3V~5.5V 25mA 5.5V Built-in PWM TSSOP-28 LED Drivers ROHS",
+    "urlSuffix": "NXPSemicon-PCA9685PW118/C2678753",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 9,
+        "productPrice": 3.2535
+      },
+      {
+        "startNumber": 10,
+        "endNumber": 29,
+        "productPrice": 2.7857
+      },
+      {
+        "startNumber": 30,
+        "endNumber": 99,
+        "productPrice": 2.4929
+      },
+      {
+        "startNumber": 100,
+        "endNumber": 499,
+        "productPrice": 1.9122
+      },
+      {
+        "startNumber": 500,
+        "endNumber": 999,
+        "productPrice": 1.7764
+      },
+      {
+        "startNumber": 1000,
+        "endNumber": -1,
+        "productPrice": 1.7175
+      }
+    ]
+  },
+  "C2913202": {
+    "componentCode": "C2913202",
+    "componentLibraryType": "expand",
+    "stockCount": 26631,
+    "erpComponentName": "\u4e0d\u5e26\u56fa\u4ef6 \u901a\u7528\u578bWi-Fi+\u4f4e\u529f\u8017\u84dd\u7259MCU\u6a21\u7ec4",
+    "componentBrandEn": "Espressif Systems",
+    "componentModelEn": "ESP32-S3-WROOM-1-N16R8",
+    "componentSpecificationEn": "SMD,25.5x18mm",
+    "componentTypeEn": "WiFi Modules",
+    "describe": "-103.5dBm -40\u2103~+65\u2103 2.4GHz 20.5dBm 355mA 3V~3.6V 95mA ESP32-S3R8 On-board PCB Antenna UART\u3001SPI\u3001I2C\u3001GPIO\u3001I2S\u3001USB SMD,25.5x18mm WiFi Modules ROHS",
+    "urlSuffix": "3198300-ESP32_S3_WROOM_1N16R8/C2913202",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 9,
+        "productPrice": 5.3472
+      },
+      {
+        "startNumber": 10,
+        "endNumber": 29,
+        "productPrice": 4.6978
+      },
+      {
+        "startNumber": 30,
+        "endNumber": 99,
+        "productPrice": 4.1907
+      },
+      {
+        "startNumber": 100,
+        "endNumber": 649,
+        "productPrice": 3.7474
+      },
+      {
+        "startNumber": 650,
+        "endNumber": 1299,
+        "productPrice": 3.5871
+      },
+      {
+        "startNumber": 1300,
+        "endNumber": -1,
+        "productPrice": 3.5201
+      }
+    ]
+  },
+  "C318884": {
+    "componentCode": "C318884",
+    "componentLibraryType": "base",
+    "stockCount": 848562,
+    "erpComponentName": "5.1*5.1*1.5mm \u7acb\u8d34 \u8f7b\u89e6\u5f00\u5173",
+    "componentBrandEn": "XKB Connection",
+    "componentModelEn": "TS-1187A-B-A-B",
+    "componentSpecificationEn": "SMD-4P,5.1x5.1mm",
+    "componentTypeEn": "Tactile Switches",
+    "describe": "-30\u2103~+85\u2103 1.5mm 1.6N 100,000 cycles 12V 5.1mm 5.1mm 50mA Gold No Round Button SPST Surface Mount,Vertical Without Bracket SMD-4P,5.1x5.1mm Tactile Switches ROHS",
+    "urlSuffix": "XKBConnection-TS_1187A_B_AB/C318884",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 199,
+        "productPrice": 0.0207
+      },
+      {
+        "startNumber": 200,
+        "endNumber": 599,
+        "productPrice": 0.0159
+      },
+      {
+        "startNumber": 600,
+        "endNumber": 3999,
+        "productPrice": 0.0139
+      },
+      {
+        "startNumber": 4000,
+        "endNumber": 7999,
+        "productPrice": 0.0121
+      },
+      {
+        "startNumber": 8000,
+        "endNumber": 19999,
+        "productPrice": 0.0115
+      },
+      {
+        "startNumber": 20000,
+        "endNumber": -1,
+        "productPrice": 0.0111
+      }
+    ]
+  },
+  "C52923": {
+    "componentCode": "C52923",
+    "componentLibraryType": "base",
+    "stockCount": 11309346,
+    "erpComponentName": "1uF \u00b110% 25V",
+    "componentBrandEn": "Samsung Electro-Mechanics",
+    "componentModelEn": "CL05A105KA5NQNC",
+    "componentSpecificationEn": "0402",
+    "componentTypeEn": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+    "describe": "1uF 25V X5R \u00b110% 0402 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+    "urlSuffix": "53938-CL05A105KA5NQNC/C52923",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 999,
+        "productPrice": 0.0058
+      },
+      {
+        "startNumber": 1000,
+        "endNumber": 2999,
+        "productPrice": 0.0044
+      },
+      {
+        "startNumber": 3000,
+        "endNumber": 9999,
+        "productPrice": 0.0038
+      },
+      {
+        "startNumber": 10000,
+        "endNumber": 49999,
+        "productPrice": 0.0034
+      },
+      {
+        "startNumber": 50000,
+        "endNumber": 99999,
+        "productPrice": 0.0032
+      },
+      {
+        "startNumber": 100000,
+        "endNumber": -1,
+        "productPrice": 0.0031
+      }
+    ]
+  },
+  "C970714": {
+    "componentCode": "C970714",
+    "componentLibraryType": "expand",
+    "stockCount": 14522,
+    "erpComponentName": "1000uF \u00b120% 16V",
+    "componentBrandEn": "DMBJ",
+    "componentModelEn": "RVT1C102M1010 1000UF 16V",
+    "componentSpecificationEn": "SMD,D10xL10.2mm",
+    "componentTypeEn": "Aluminum Electrolytic Capacitors - SMD",
+    "describe": "-55\u2103~+105\u2103 10.2mm 1000uF 10mm 16V 2800hrs@105\u2103 347mA@120Hz \u00b120% SMD,D10xL10.2mm Aluminum Electrolytic Capacitors - SMD ROHS",
+    "urlSuffix": "DMBJ-RVT1C102M1010_1000UF16V/C970714",
+    "componentPrices": [
+      {
+        "startNumber": 1,
+        "endNumber": 49,
+        "productPrice": 0.1456
+      },
+      {
+        "startNumber": 50,
+        "endNumber": 149,
+        "productPrice": 0.1206
+      },
+      {
+        "startNumber": 150,
+        "endNumber": 499,
+        "productPrice": 0.108
+      },
+      {
+        "startNumber": 500,
+        "endNumber": 2499,
+        "productPrice": 0.0784
+      },
+      {
+        "startNumber": 2500,
+        "endNumber": 4999,
+        "productPrice": 0.0709
+      },
+      {
+        "startNumber": 5000,
+        "endNumber": -1,
+        "productPrice": 0.0671
+      }
+    ]
+  },
+  "_provenance": {
+    "checkedDate": "2026-11-09",
+    "meaning": "timestamped JLCPCB sourcing observation only; recheck quote before buying",
+    "source": "https://jlcpcb.com/parts"
+  }
+}

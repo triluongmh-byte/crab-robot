@@ -1,17 +1,10 @@
 {
   "family": "esp32",
   "tool": "arduino-cli",
-  "fqbn": "esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi,PartitionScheme=app3M_fat9M_16MB,CDCOnBoot=cdc,USBMode=hwcdc",
+  "fqbn": "esp32:esp32:esp32s3:USBMode=hwcdc,CDCOnBoot=cdc,FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=opi,DebugLevel=none",
   "sketch": "crab",
   "build": "../build/firmware/esp32",
-  "usbVid": [
-    "0x303a"
-  ],
+  "usbVid": ["0x303a"],
   "baud": 115200,
-  "compileArgs": [
-    "--libraries",
-    "/Users/macbookpro/.cache/autonomous-circuit/firmware/sketchbook/libraries",
-    "--build-property",
-    "compiler.cpp.extra_flags=-include \"{sketch_path}/TftSetup.h\""
-  ]
+  "compileArgs": ["--jobs", "0"]
 }

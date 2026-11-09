@@ -1,0 +1,286 @@
+[
+ {
+  "title": "Bước 1 — Đặt 4 tán M3 vào đáy",
+  "show": [
+   "base",
+   "nut_C*"
+  ],
+  "focus": [
+   "base"
+  ],
+  "hw": [
+   {
+    "ids": [
+     "C1",
+     "C2",
+     "C3",
+     "C4"
+    ],
+    "what": "tán M3 (vít M3x20 bắt ở Bước 3)",
+    "count": 4,
+    "entry": "đẩy ngang vào khe ở hai hông thân, gần 4 góc thanh đè",
+    "nutOnly": true
+   }
+  ],
+  "action": "Đẩy tán bằng đầu tua vít cho tới khi lỗ tán thẳng lỗ vít (nhìn từ trên xuống thấy lỗ tròn). Tán phải nằm lọt, không rơi ra khi lật nhẹ. 4 tán của board thả vào hốc lục giác ở Bước 6.",
+  "camera": "iso"
+ },
+ {
+  "title": "Bước 2 — Đặt 4 servo hông vào hốc",
+  "show": [
+   "base",
+   "nut_*",
+   "hip_servo_*"
+  ],
+  "focus": [
+   "hip_servo_*"
+  ],
+  "hw": [],
+  "action": "Trục servo quay lên, nằm ở phía ngoài (gần góc thân). Thả servo thẳng xuống hốc, hai tai nằm lên gờ. Dây servo luồn vào rãnh nhỏ dưới đáy hốc phía trong, để chờ dưới chỗ đặt board. Không cần vít ở bước này.",
+  "camera": "iso"
+ },
+ {
+  "title": "Bước 3 — Bắt 2 thanh đè hông",
+  "show": [
+   "base",
+   "nut_*",
+   "hip_servo_*",
+   "cap_front",
+   "cap_rear",
+   "hw_C1",
+   "hw_C2",
+   "hw_C3",
+   "hw_C4"
+  ],
+  "focus": [
+   "cap_front",
+   "cap_rear",
+   "hw_C*"
+  ],
+  "hw": [
+   {
+    "ids": [
+     "C1",
+     "C2",
+     "C3",
+     "C4"
+    ],
+    "what": "vít M3x20 + tán M3 (đã đặt ở Bước 1)",
+    "count": 4,
+    "entry": "từ trên xuống, đầu vít nằm trên thanh đè"
+   }
+  ],
+  "action": "Đặt thanh đè lên hai servo cùng đầu (trước rồi sau): tháp bánh răng servo ló qua ô của thanh đè. Vặn 2 vít mỗi thanh đến khi thanh ép chặt tai servo; không siết quá (nhựa PETG).",
+  "camera": "iso"
+ },
+ {
+  "title": "Bước 4 — Ráp 4 chân (ngoài thân)",
+  "show": [
+   "thigh_*",
+   "foot_*",
+   "knee_servo_*",
+   "hw_H*-arm",
+   "hw_K*-tab1",
+   "hw_K*-tab2",
+   "hw_K*-arm"
+  ],
+  "focus": [
+   "thigh_FL",
+   "foot_FL",
+   "knee_servo_FL"
+  ],
+  "explode": 18,
+  "hw": [
+   {
+    "ids": [
+     "HFL-arm",
+     "HFR-arm",
+     "HRL-arm",
+     "HRR-arm"
+    ],
+    "what": "vít tự ren nhỏ trong túi SG90 (horn hông → đùi)",
+    "count": 4,
+    "entry": "từ dưới lên, qua lỗ tay horn"
+   },
+   {
+    "ids": [
+     "KFL-tab1",
+     "KFL-tab2",
+     "KFR-tab1",
+     "KFR-tab2",
+     "KRL-tab1",
+     "KRL-tab2",
+     "KRR-tab1",
+     "KRR-tab2"
+    ],
+    "what": "vít bắt tai trong túi SG90 (servo gối → đùi)",
+    "count": 8,
+    "entry": "qua lỗ tai servo vào tấm đùi"
+   },
+   {
+    "ids": [
+     "KFL-arm",
+     "KFR-arm",
+     "KRL-arm",
+     "KRR-arm"
+    ],
+    "what": "vít tự ren nhỏ trong túi SG90 (horn gối → cẳng)",
+    "count": 4,
+    "entry": "từ phía horn, qua lỗ tay horn"
+   }
+  ],
+  "action": "Ép horn 1 tay vào rãnh dưới mỗi đùi (tay horn chạy dọc đùi) và vào rãnh mỗi cẳng (tay horn chĩa xuống), bắt 1 vít nhỏ qua lỗ tay horn. Luồn servo gối qua ô tấm đùi, tai servo nằm phía horn, bắt 2 vít tai. 4 chân là ảnh gương: chân trái và phải khác nhau, đừng lẫn (tên in trên part). Chưa gắn chân vào thân.",
+  "camera": "iso"
+ },
+ {
+  "title": "Bước 5 — Pin dự phòng, đầu chuyển và cáp USB",
+  "show": [
+   "base",
+   "hip_servo_*",
+   "cap_front",
+   "cap_rear",
+   "hw_C*",
+   "nut_*",
+   "bank",
+   "adapter",
+   "usbplug",
+   "wire:W1",
+   "wire:W2"
+  ],
+  "focus": [
+   "bank",
+   "adapter",
+   "usbplug"
+  ],
+  "hw": [],
+  "action": "Cắm đầu chuyển terminal vào cổng 2 và đầu USB-A vuông góc của cáp USB-C vào cổng 1 của pin. Đẩy pin vào đường hầm từ phía trước, đầu cắm vào khoang sau. Đầu USB-C để chờ ở mặt sau: sẽ luồn qua đường hầm giữa 2 servo hông sau rồi cắm vào board ở Bước 6. 2 cặp dây nguồn từ terminal đi lên qua khe đứng phía sau. Quấn đai dán quanh thân ở dải giữa 2 gờ để giữ pin.",
+  "camera": "iso"
+ },
+ {
+  "title": "Bước 6 — Board, cắm servo và dây",
+  "show": [
+   "base",
+   "hip_servo_*",
+   "cap_front",
+   "cap_rear",
+   "hw_C*",
+   "nut_*",
+   "bank",
+   "adapter",
+   "usbplug",
+   "board",
+   "part_*",
+   "hw_B*",
+   "led",
+   "usbc",
+   "wire:*",
+   "thigh_*",
+   "foot_*",
+   "knee_servo_*"
+  ],
+  "focus": [
+   "board",
+   "hw_B*"
+  ],
+  "legsAside": true,
+  "hw": [
+   {
+    "ids": [
+     "B1",
+     "B2",
+     "B3",
+     "B4"
+    ],
+    "what": "vít M3x6 + tán M3 (thả tán vào hốc lục giác trên khối đỡ)",
+    "count": 4,
+    "entry": "thả tán từ trên xuống hốc, rồi vặn vít từ trên board"
+   }
+  ],
+  "action": "CẢNH BÁO: board đã công bố (88 × 62 mm, 4 góc vuông) chưa hạ vào thân được, xem case/README.md và reports/assembly-access.json. Bước dưới đây là cho bản board đã sửa. Luồn dây servo hông dưới chỗ đặt board và để chờ ở khe mép board. Thả 4 tán M3 vào 4 hốc lục giác trên khối đỡ. Hạ board xuống, vặn 4 vít M3x6. Nên nối dây vào terminal J12 trên bàn trước khi đặt board (đầu dây vào từ phía +X, chỉ còn khoảng 3 mm tới vách). Cắm USB-C từ phía sau qua đường hầm, cắm 8 servo vào CH0–CH7 (nâu = GND), dây LED vào J11, dây màn hình 8 sợi vào J10.",
+  "camera": "top"
+ },
+ {
+  "title": "Bước 7 — Đóng nắp (kèm màn hình và thanh LED)",
+  "show": [
+   "base",
+   "hip_servo_*",
+   "cap_front",
+   "cap_rear",
+   "hw_C*",
+   "nut_*",
+   "bank",
+   "adapter",
+   "usbplug",
+   "board",
+   "part_*",
+   "hw_B*",
+   "led",
+   "display",
+   "usbc",
+   "lid",
+   "hw_L*",
+   "thigh_*",
+   "foot_*",
+   "knee_servo_*"
+  ],
+  "focus": [
+   "lid",
+   "display",
+   "led",
+   "hw_L*"
+  ],
+  "legsAside": true,
+  "hw": [
+   {
+    "ids": [
+     "L1",
+     "L2",
+     "L3"
+    ],
+    "what": "vít M3x8 (tự ăn ren vào lỗ dẫn Ø2.7, không có tán)",
+    "count": 3,
+    "entry": "từ trên nắp xuống, vào 3 pad ở cuối ray"
+   }
+  ],
+  "action": "Trên bàn, lật khung nắp úp. Đặt màn hình Waveshare vào cửa sổ (kính lọt lên, viền mạch tì vào gờ dưới nắp, đầu cắm phía sau màn hình). Rút 2 dây rút dọc lưng màn hình, luồn qua 2 cặp khe ở 2 đầu màn hình. Đặt thanh LED vào rãnh tán sáng giữa nắp, rút 1 dây rút dọc lưng thanh qua khe ở 2 đầu rãnh. Lật nắp đặt lên thân, không kẹp dây màn hình. Vặn 3 vít M3x8. Ô lớn bên phải để hở giắc servo và dây.",
+  "camera": "iso"
+ },
+ {
+  "title": "Bước 8 — Gắn chân ở góc giữa (sau trang Ráp)",
+  "show": [
+   "*"
+  ],
+  "focus": [
+   "thigh_*",
+   "foot_*",
+   "hw_H*-ctr",
+   "hw_K*-ctr"
+  ],
+  "hw": [
+   {
+    "ids": [
+     "HFL-ctr",
+     "HFR-ctr",
+     "HRL-ctr",
+     "HRR-ctr"
+    ],
+    "what": "vít tâm horn trong túi SG90 (đùi → servo hông)",
+    "count": 4,
+    "entry": "từ trên xuống qua lỗ Ø6 của đùi"
+   },
+   {
+    "ids": [
+     "KFL-ctr",
+     "KFR-ctr",
+     "KRL-ctr",
+     "KRR-ctr"
+    ],
+    "what": "vít tâm horn trong túi SG90 (cẳng → servo gối)",
+    "count": 4,
+    "entry": "từ ngoài vào qua lỗ Ø6 của cẳng"
+   }
+  ],
+  "action": "Bật pin, mở trang Ráp trên điện thoại, bấm 'Đưa 8 servo về giữa'. Cắm đùi lên trục servo hông sao cho đùi chĩa chéo 45° ra ngoài (như hình từ trên), cắm cẳng lên trục servo gối sao cho cẳng thẳng đứng. Vặn vít tâm. Lệch nhỏ thì chỉnh bằng nút +/− trên trang Ráp, không bẻ chân.",
+  "camera": "front"
+ }
+]

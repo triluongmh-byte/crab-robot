@@ -1,0 +1,269 @@
+{
+  "status": "reviewed-final-board",
+  "releaseNoteSha256": "122b5b3d406fc1cc148b6bf5abaf6c6fc7315e933a95e5565c1b60ee86d35e08",
+  "boardInputSha256": {
+    "build/board/main.net": "19ee419a0723f07a8e396c5f8cf73c36f2d038b88a8347078ccf316e0624fa58",
+    "design/main.kicad_pcb": "f48c2f225963f402bb60010f2bcf6a25bb6f146a4766a034697652d7ca8faee2"
+  },
+  "firmwareHardwareSha256": "088bfce5f8f03abdbaeb8960e39aef54c52bb84e6d92718683ee0e6d1765e5f0",
+  "firmwareDisplaySha256": {
+    "firmware/crab/display.h": "200e59a44898567b1baf18f4cd995fdfda9ed8dcc63cc344fb094a0bc1eabdb1",
+    "firmware/crab/waveshare_panel.h": "542a25e0fc05b171d21e31cf4287f9aab41eae10a5bcb288908379a69404801e"
+  },
+  "connections": {
+    "SDA": [
+      "R7.2",
+      "U1.11",
+      "U3.27"
+    ],
+    "SCL": [
+      "R8.2",
+      "U1.10",
+      "U3.26"
+    ],
+    "PCA_OE": [
+      "R9.2",
+      "U1.23",
+      "U3.23"
+    ],
+    "BOOT": [
+      "R6.2",
+      "SW1.1",
+      "U1.27"
+    ],
+    "USB_DM": [
+      "R3.1",
+      "U1.13"
+    ],
+    "USB_DP": [
+      "R4.1",
+      "U1.14"
+    ],
+    "LED_DIN": [
+      "J11.1",
+      "U1.39"
+    ],
+    "LCD_BL": [
+      "J10.1",
+      "R12.1",
+      "U1.31"
+    ],
+    "LCD_RST": [
+      "J10.2",
+      "R10.1",
+      "U1.5"
+    ],
+    "LCD_CS": [
+      "J10.4",
+      "R11.2",
+      "U1.6"
+    ],
+    "LCD_DC": [
+      "J10.3",
+      "U1.7"
+    ],
+    "LCD_SCLK": [
+      "J10.5",
+      "U1.12"
+    ],
+    "LCD_MOSI": [
+      "J10.6",
+      "U1.32"
+    ],
+    "PB1_5V": [
+      "C2.1",
+      "C3.1",
+      "J1.A4",
+      "J1.A9",
+      "J1.B4",
+      "J1.B9",
+      "TP1.1",
+      "U2.3"
+    ],
+    "SERVO_5V": [
+      "C11.1",
+      "J11.2",
+      "J12.1",
+      "J2.2",
+      "J3.2",
+      "J4.2",
+      "J5.2",
+      "J6.2",
+      "J7.2",
+      "J8.2",
+      "J9.2",
+      "TP2.1"
+    ],
+    "3V3": [
+      "C10.1",
+      "C4.1",
+      "C5.1",
+      "C6.1",
+      "C7.1",
+      "C8.1",
+      "C9.1",
+      "J10.8",
+      "R11.1",
+      "R5.1",
+      "R6.1",
+      "R7.1",
+      "R8.1",
+      "R9.1",
+      "TP3.1",
+      "U1.2",
+      "U2.2",
+      "U3.28"
+    ],
+    "GND": [
+      "C1.2",
+      "C10.2",
+      "C11.2",
+      "C2.2",
+      "C3.2",
+      "C4.2",
+      "C5.2",
+      "C6.2",
+      "C7.2",
+      "C8.2",
+      "C9.2",
+      "J1.A1",
+      "J1.A12",
+      "J1.B1",
+      "J1.B12",
+      "J1.SH",
+      "J10.7",
+      "J11.3",
+      "J12.2",
+      "J2.1",
+      "J3.1",
+      "J4.1",
+      "J5.1",
+      "J6.1",
+      "J7.1",
+      "J8.1",
+      "J9.1",
+      "R1.2",
+      "R10.2",
+      "R12.2",
+      "R2.2",
+      "SW1.2",
+      "SW2.2",
+      "TP4.1",
+      "U1.1",
+      "U1.40",
+      "U1.41",
+      "U2.1",
+      "U3.1",
+      "U3.14",
+      "U3.2",
+      "U3.24",
+      "U3.25",
+      "U3.3",
+      "U3.4",
+      "U3.5"
+    ],
+    "SERVO_CH0": [
+      "J2.3",
+      "U3.6"
+    ],
+    "SERVO_CH1": [
+      "J3.3",
+      "U3.7"
+    ],
+    "SERVO_CH2": [
+      "J4.3",
+      "U3.8"
+    ],
+    "SERVO_CH3": [
+      "J5.3",
+      "U3.9"
+    ],
+    "SERVO_CH4": [
+      "J6.3",
+      "U3.10"
+    ],
+    "SERVO_CH5": [
+      "J7.3",
+      "U3.11"
+    ],
+    "SERVO_CH6": [
+      "J8.3",
+      "U3.12"
+    ],
+    "SERVO_CH7": [
+      "J9.3",
+      "U3.13"
+    ]
+  },
+  "signalNets": {
+    "SDA": "I2C_SDA",
+    "SCL": "I2C_SCL",
+    "PCA_OE": "SERVO_OE",
+    "BOOT": "BTN_BOOT",
+    "USB_DM": "USB_DM_MCU",
+    "USB_DP": "USB_DP_MCU",
+    "LED_DIN": "LED_DIN",
+    "LCD_BL": "LCD_BL",
+    "LCD_RST": "LCD_RES",
+    "LCD_CS": "LCD_CS",
+    "LCD_DC": "LCD_DC",
+    "LCD_SCLK": "LCD_SCLK",
+    "LCD_MOSI": "LCD_MOSI",
+    "PB1_5V": "PB1_5V",
+    "SERVO_5V": "SERVO_5V",
+    "3V3": "3V3",
+    "GND": "GND",
+    "SERVO_CH0": "SERVO_PWM_0",
+    "SERVO_CH1": "SERVO_PWM_1",
+    "SERVO_CH2": "SERVO_PWM_2",
+    "SERVO_CH3": "SERVO_PWM_3",
+    "SERVO_CH4": "SERVO_PWM_4",
+    "SERVO_CH5": "SERVO_PWM_5",
+    "SERVO_CH6": "SERVO_PWM_6",
+    "SERVO_CH7": "SERVO_PWM_7"
+  },
+  "displayManufacturerEvidence": "firmware/vendor/LCD_1in9.c",
+  "oeResetPullupEvidence": "engineering/firmware-interface.md",
+  "evidenceSha256": {
+    "engineering/firmware-interface.md": "7814205cb90e8037b26cd7220c45781b5ac1fd8c02f40e9282370d147455e1a6",
+    "engineering/DEVIATIONS.md": "0c91065d80608408dfb9abe10a0e370d85dd0facaa02329ad0cab3a8c8c2b2e3",
+    "engineering/sources/integrated/waveshare.pdf": "29aa980ba4c0905eef87a095224a7da7bc667b00c3c65110db31101fc73b000d",
+    "firmware/vendor/LCD_1in9.c": "b191a3e2d0155c3cd51f678b97095fd0e00ddc19d1449b2adc9ced9dfe45a506",
+    "firmware/vendor/LCD_1inch9.py": "e7feb77a2979b560402137ab3142635a48f71352a77496c0e3b6fd0ff659add5",
+    "firmware/vendor/waveshare-source.json": "254aad6d082938c7d5e180b577438bef42edd8accd0c52a1fc8f4e225d7f638f",
+    "case/DEVIATIONS.md": "4177c74ee8d11eeb29bcff403835aefd6aa14ba26c757ce23f2ea4468729333e"
+  },
+  "display": {
+    "part": "Waveshare 23822 ST7789V2",
+    "bus": "SPI",
+    "clockHz": 10000000,
+    "mode": 0,
+    "width": 320,
+    "height": 170,
+    "gap": [
+      0,
+      35
+    ],
+    "vendorLandscapeMADCTL": "0x70",
+    "caseRotationAddedDeg": 180,
+    "finalMADCTL": "0xb0"
+  },
+  "gpio15": "NC, U1.8; never configured by integrated application",
+  "usbSeriesResistors": {
+    "USB_DM": [
+      "U1.13",
+      "R3.1",
+      "R3.2",
+      "J1.A7",
+      "J1.B7"
+    ],
+    "USB_DP": [
+      "U1.14",
+      "R4.1",
+      "R4.2",
+      "J1.A6",
+      "J1.B6"
+    ]
+  },
+  "hardwareTested": false
+}

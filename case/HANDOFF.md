@@ -1,41 +1,33 @@
-# Case HANDOFF (r001-v1). Read this first.
-Python for CAD: `$KICAD_CASE_PYTHON`. Everything is modelled assembled in the contract body frame
-(origin at the footprint centre, z=0 under the bottom, +X front, +Y left). Print turns live in `printRotateDeg`.
-Full pipeline: `tools/case/run_all.sh` (full) / `tools/case/run_all.sh --coarse`. Each step skips itself when unchanged.
+# Case HANDOFF (A1V4-r3: integrated board on the skeleton) — read first
 
-## Files and key features
-- `case/geometry.py`: every solid and number.
-  - Constants L14-69 (LID_* L37-41, LILY_Z0/Z1, HEADER_ROWS, TRENCH_Y L42-45): contract numbers, SG90 nominal, screw/nut positions, leg targets.
-  - `LEGS` L65-70: per-leg sign, hip shaft, angle, PCA channels.
-  - `femur_local` L154-177: hip horn groove, knee SG90 box. `_tibia_pre`/`tibia_local` L180-206: knee horn groove.
-  - `_hip_pocket_quadrant` L240-261: pocket walls, nut slots, cable gaps. `bottom` L263-329: tunnel, shelf, cradle rib to z 37.5, +X end stop y 11.5-21 (D5), Dupont trenches (D4), PCA rim, LED bridge, strap slots.
-  - `clamp_bar` L331-348 (lid-boss pockets), `lid` L350-378 (window, poke holes, 0.8 mm diffuser, M3x20 boss blocks + counterbores D6, 1.8 mm LILYGO/PCA pockets D4).
-  - `lilygo_ref`/`modules_ref`/`keepouts` L380-411 (Dupont wire + PCA lead keep-outs): device envelopes and plug zones. `fasteners` L424+: S01–S08 instance map.
-- `case/build.py`: `PARTS` table L18-37 (names, roles, print rotations), `tibia_rotation` L40, `main` L94 (cached,
-  parallel export to case/out, parts.json, `verification.nativePCBCheckerApplies=false`), `write_fastener_map` L131.
-  Fast: `"$KICAD_CASE_PYTHON" case/build.py` (about 8 s, skipped when unchanged).
-- `case/coupon.py`: C01 TEST ONLY (pocket + M3/nut + horn groove + slimmest post). `case/refs.py`: servos, horns, modules, hardware.
-- `tools/case/mech_check.py`: `static_pairs` L51 (part/device/keepout/screw interference), `sweep_sample` L82
-  (hip × knee ±30°, all legs in phase), `mirror_report` L124 (STEP mirror error), `sections` L171, `fastener_report` L201, gates in `main` L213+: body height <= 47, nut slot paths open (probe of the P01 STEP), lid boss joint >= 30 mm².
-  Fast: `... mech_check.py --coarse` (about 25 s). Full: 5° (about 140 s). Writes `case/reports/mechanical.json`.
-- `tools/case/plates.py`: Bambu 3MF writer (`write_3mf` L146), named plates from `PLAN` L28, CLI slice (`slice_project` L195),
-  limits and report. Reads `print/events.jsonl` (`ledger` L57). Layout only: `--no-slice` (1 s). Full: about 15 s.
-- `tools/case/render_overview.py` + `overview_template.html` → `case/overview.html` (WebGL, Đủ bộ/Bước 1-9, Vít/tán, Chi tiết).
-  Steps are the `steps` list in `render_overview.py`. Fast: `"$KICAD_CASE_PYTHON" tools/case/render_overview.py` (about 4 s).
-- Final gate: `"$KICAD_HARNESS_PYTHON" -m kicadpy.case check-print .` → `case/reports/print-check.json`.
-- Docs: README.md (numbers, servo signs), CHECKLIST-RAP.md, BOM.md, DEVIATIONS.md, PRINTED-INVENTORY.md, fastener_map.csv.
+Py = `"$KICAD_CASE_PYTHON"`, export `MPLCONFIGDIR=build/case/mpl`. All in the contract robot frame (mm, +X front).
+Full rebuild + checks: `Py case/build.py` (4 min cold, cached when inputs are unchanged, all cores).
+Fast: `Py case/build.py --only-parts --parts=base,lid` (8 s); `Py tools/case/mech_check.py --coarse --force` (60 s); `Py tools/case/make_print.py` (needs Bambu CLI); frozen check `Py tools/case/plate2_freeze.py` (<1 s); fit of a board file `python3 tools/case/board_fit.py <enclosure.json> --zb 25.6` (<1 s).
 
-## Current results
-12 printed parts, 8 M3 screws (4× M3×12 bar, 4× M3×20 lid+bar; heads sit in lid counterbores at z 44, top z 47.0) + 8 nuts. 2 plates: 4h27 and 2h30, 6.96 h and 186.9 g in total (Bambu CLI).
-Mirror error 0 mm / 0°. Sweep ±30° at 5° steps, no collision, minimum clearance 3.3 mm (femur to lid).
-Knee neutral: r = 30, z = 40, shaft z = 45.5. Foot r = 58, bottom z = −27.
+## Status — NOT ASSEMBLABLE yet (case/reports/assembly-access.json)
+Seated-pose checks and the native check pass; the board's fab.ready is true. But the published 88x62 board cannot be installed: its corners are under the frozen cap-screw corner blocks and J1's nose hits the rear wall; only H1 has a straight tool path. Needs a board revision (DEVIATIONS D18), proven by `Py tools/case/assembly_access.py`: notch 4 corners (|x|>39.7, |y|>26.2), holes H1 (-36,13), H2 (36,24), H3 (-36,-24), H4 (36,-24), J1 nose at x >= -43.7. Then repin the contract with `python3 tools/case/board_import.py <enclosure.json>` and run the full build.
+Frames: `case/robot/` = sealed robot-frame exports (build, checks, print plates, overview read this); `case/out/` = rigid board-frame copies (what the tile's native checker and print validator read), made by `tools/case/export_board_frame.py`. Native check: `Py tools/case/case_check.py` runs the unmodified `kicadpy.case check .` on case/out against the current boards/main.enclosure.json (report in case/reports/case-check.json; re-run after any change to case/out or the contract). Key decisions: DEVIATIONS D11–D19 (D19: base slit for the U1 contract box, board at z 22.8, deck wells/grooves).
 
-## Open assumptions (GIẢ ĐỊNH)
-- LILYGO z 22.8-45.8 in a lid pocket; shell underside z 37.5 and header rows y 5-9.5 / 28.5-33 are GIẢ ĐỊNH (D4).
-- SG90, PCA, LED and pack sizes are nominal and unmeasured. The coupon checks the SG90 pocket and horn groove.
-- Horn outline: single-arm SG90 horn, hub r 3.8, arm 17.5 mm tapering 6 → 4.2, 1.8 thick (groove 2.2 deep, +0.2 clearance).
-- The USB-C L-plug head fits x −40..−33, z 32..40, with the cable dropping through the shelf hole at x −47..−40.6.
-- PCA retention is rim + lid (D1). Pack retention is a strap through the floor slots at x 50..54 plus a 1.2 mm groove under the shelf.
-- Wire paths in the overview are illustrative. The real wiring is `firmware/WIRING.md`.
-- Plate names use U+2215 '∕' instead of '/': Bambu Studio drops a plate name containing '/' (tested via CLI round trip; plates.py now fails if names are lost).
-- Firmware owns the knee sign fix (lead finding): gait '+knee = lift' needs FL -1, FR +1, RL +1, RR -1. The case report (kneeLargerPulse) is correct and unchanged.
+## Do not change: plate 2 is frozen
+`case/frozen-plate2-A1V4-r1.json` holds STL/STEP/3MF-mesh hashes of 2 caps + 4 thighs + 4 feet and the test coupons. `build.py` never rebuilds them and stops if their bytes differ. `case/ref/baseline-A1V4-r1/base.step` is the r1 base used by the zone diff in mech_check (belly z ≤ 18.5 and hip blocks |x| ≥ 40 must stay equal). Plate 2 is printing by owner report only; never record it from a printer status.
+
+## Files and key places
+- `case/board_placement.json` — board source file, placement (dx, dy, rot, zBottom 22.8), height/box overrides with evidence, display placement (cx −9.3, cy 20.35, ledge 44.0), plug assumptions.
+- `case/ref/board-published.enclosure.json` — pinned copy of the board contract. `waveshare-23822-display.step` for the display.
+- `case/model.py` — loader lines 40–100 (`BOARD_*`, `board_xy`, `DISP`, `LID_SCREWS`). `SLOT_*`, `USB_TUNNEL`, `disp_back_boxes`; `_seat_block`, `board_blocks`, `board_screw_cuts` (seat, hex nut well, head relief), `lid_pads`, `lid_pad_cuts`, `lid` (LED tie slots, −Y opening, RESET/BOOT notch, display pocket + window + tie slots, J12 screw holes), `base`, `internal_structures`, `internal_cuts` (board slots, USB tunnel).
+- `case/hardware.py` — screw/nut instances C1–4, B1–4 (M3x6, board, nut in hex well), L1–3 (M3x8, self-tap Ø2.7 pilot, no nut), SG90 bag screws. 11 M3, 8 nuts.
+- `case/build.py` — `electronics_items`, `FROZEN`, `shape_for`, `main`.
+- `case/assembly_steps.json` — Bước 1–8 text.
+- `tools/case/mech_check.py` → reports/mechanical.json, sections.csv. `_rays`, `MEMBERS`, `interface_checks`, `frozen_zone_job`.
+- `tools/case/board_fit.py` → box fit of the board contract against the current base (`Py tools/case/board_fit.py <contract>`, < 2 s; reports/board-fit.json).
+- `tools/case/export_board_frame.py`, `tools/case/case_check.py`, `tools/case/assembly_access.py` (insertion + screw tool-path sweep, also run from mech_check) — see Status.
+- `tools/case/print_check.py` → print-check.json via `check-print` on an identical scratch copy.
+- `tools/case/make_print.py`, `plate2_freeze.py`, `render_overview.py` + `overview_template.html`, `export_images.sh`, `shoot_overview.sh`, `quick_views.py`, `write_fastener_map.py`.
+
+## Current results (full sampling, published board) — refreshed by the last full build
+- Native case check on the published board (board frame, U1 false courtyard removed via interfaces.json): see case-check.json. mechanical.json passed, ±30° sweep 252 poses, 0 collisions, min leg-to-body 0.23 mm; body 125 × 75 × 46.5; 12 parts, 11 M3; slicer 6.11 h, 158.4 g (plate 1 4.19 h, plate 2 frozen and equal to r1).
+
+## Open assumptions
+- Skeleton strength and fit unproven until the owner tests them. Board plugs modelled 16.5 mm above the board, USB-C plug ≤ 11.4 mm wide (GIẢ ĐỊNH). Heights of C11 etc. come from the board team's table.
+- Display module (turned 180° at x −9.3, y 20.35) is case-owned, retained by 2 ties; firmware must flip the panel orientation (D15). Sign table unchanged (hips +1; knees FL +1, FR −1, RL −1, RR +1).
+- BOM.md/CHECKLIST-RAP.md/README.md live in case/ for the lead to integrate.

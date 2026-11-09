@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "sourceCommit": "2ef9e2c",
+  "parts": {
+    "cap_front": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:22',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 1"
+      ],
+      "stlSha256": "a76cb67c4cc9ac97d3b52ffa3d20ee2876c1502088661851068e4225b24a1d39",
+      "stepSha256": "3683c97405395ee5eaf892715a6ae916554effc458c81480b8789f8aaab95e46"
+    },
+    "cap_rear": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:22',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 1"
+      ],
+      "stlSha256": "ed98dd738d4ce92b72522248a8a8084f6d0f1526215a3bc0e8870eadf841ba5b",
+      "stepSha256": "44aa7f29434e8069dc017566e6fd73f845005b56e44491e48bd342f3563548ce"
+    },
+    "thigh_FL": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:23',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 1"
+      ],
+      "stlSha256": "ccc21abe2df60267f5f985c73a58039056e2d3ee6b55145cc9244b7bc7222887",
+      "stepSha256": "73a0d97e45ec4bd18aac1103e47905e27652453633b415395e7c5344cf5c9410"
+    },
+    "thigh_FR": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:23',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 1"
+      ],
+      "stlSha256": "c20f3f61eadedcc0410f504c5d9377605a70cf1968f2e47f80eb419a694d043b",
+      "stepSha256": "8a496c648a63261b71c2b5e6e69014e7088250586f3db9dfc4203f1a2db9abe0"
+    },
+    "thigh_RL": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:22',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 1"
+      ],
+      "stlSha256": "7b6f592bf25df6d4f6a4029b93546071d2bb677510de91849a16f6cf70a8f278",
+      "stepSha256": "9756753c2c7654ae8293ee8e6ce0d4cb783b011471c5400a477dfae24ded2ce4"
+    },
+    "thigh_RR": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:22',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 1"
+      ],
+      "stlSha256": "b3e7a433ac0a191f49aa50065ee0fbc34ed1e64fba9d08c8a1562d680031579f",
+      "stepSha256": "c81a55d0308705dd51274eb98b9d6b81168ceb3a296e39889e98a01508ef9303"
+    },
+    "foot_FL": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:22',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 1"
+      ],
+      "stlSha256": "cacd4c57646ad121535cc4e372d3dd6ab9cb541646a55e4426cb1e90660e455d",
+      "stepSha256": "19ba7449562e5c8cb01a5cacf609c186289ae02d3ef1d64234f3d6d0fe3d6c85"
+    },
+    "foot_FR": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:22',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 1"
+      ],
+      "stlSha256": "b278a41a4c9df6bfe585cf2530b347a85cd95824aa42fb87a401af38c7777796",
+      "stepSha256": "989a4318e54b4df36502f90c9f0920d42ba6761b6f682c6e8ed4d0ef28dc259f"
+    },
+    "foot_RL": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:23',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 2"
+      ],
+      "stlSha256": "54c45cf3c8b16163da2d299770663d10a535bc2c5c1885ef44ed53d8481b2009",
+      "stepSha256": "8832cccbf50600106dd60f944429ad5736adf62cb0e3d3fc343ba892a1d4ca93"
+    },
+    "foot_RR": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:23',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 2"
+      ],
+      "stlSha256": "b5d8ad96d1441936cb04f33ffd04b7bbe9c66e08cc4ad62808841e54392edd18",
+      "stepSha256": "8c53347320e29bbda9e07838b0d99edf886fe78081dfb4769c3c7ba2d34173ed"
+    },
+    "coupon_TEST_ONLY": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:23',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 2"
+      ],
+      "stlSha256": "9ba4b9fb7c1583d4be660b0c333523922d862d3f1fc2d4866d5839ed7b0a32a7",
+      "stepSha256": "c7c52b47987a279ebb6629e0ae6b8fe2f6db2ed78559d77a609b8a31d3242652"
+    },
+    "MATING_TEST_leg_FL": {
+      "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:23',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+      "productNames": [
+        "Open CASCADE STEP translator 7.8 2",
+        "Open CASCADE STEP translator 7.8 2.1",
+        "Open CASCADE STEP translator 7.8 2.2"
+      ],
+      "stlSha256": "0c49b344726b934e66a84e5026a0535d8084f09090296769f26b8e7548b5ec3e",
+      "stepSha256": "a5240a631ec7d70382d59798e2f8e39c1fdb646bbe7bb483f32d6ffd94337dd1"
+    }
+  },
+  "sourceFiles": {
+    "model.py": "343a476466c0ae908e8d6ea0d35b73fd807449077dd86f5d00ff23962aa6a6b5",
+    "hardware.py": "158d30462f7dad4ceeb06a36d5a5b0f559512471f281a4738011fb54f72f02df",
+    "build.py": "ce8e61ae367195193ba6afb842a24ce8d4aa8d63712a0b536eb6f64b84bddb73"
+  },
+  "baselineBase": {
+    "fileNameHeader": "FILE_NAME('Open CASCADE Shape Model','2026-11-06T22:16:24',('Author'),(\n    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'\n  ,'Unknown');\n",
+    "productNames": [
+      "Open CASCADE STEP translator 7.8 1"
+    ],
+    "stepSha256": "4b8a6524ed7ee86ea0da7ccd54363d85887f79837d51ba264ad6e2b5373d5cc6"
+  }
+}

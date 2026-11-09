@@ -1,34 +1,56 @@
-# Board handoff — 2026-11-06
-Contract SHA256: 65b9793b07d82edc0defd9900ba1cfbee13dc730266cc0b675d897c87a75d9ea.
-Scope is only an isolated unpowered dummy PCB, never ordered or put in the robot.
-No lead release notes were supplied. No deviations, cross-team pin/rail changes or user blockers.
-
-## Owned files and features
-- design/main.kicad_sch + Dummy.kicad_sym: 4 passive single-pad symbols and 2 pinless mounting holes; global labels DUMMY_A/B. Generated from tools/board/spec.json.
-- design/main.kicad_pcb: 30×20×1.6 mm, 2 copper layers; holes (±10,0), Ø3.2 NPTH; four 2×3 mm front solder lands; two 8 mm long, 0.5 mm wide front tracks. Warning silk and title block match contract.
-- design/main.kicad_pro: normal native minimum rules and Default class. design/main.kicad_dru lines 1–7 explicitly enforce 0.25 mm track / 0.20 clearance / 0.50 edge floor.
-- design/Dummy.pretty, fp-lib-table, sym-lib-table: project-local footprints and flattened symbols; no external library dependency at review time.
-- product.json: preserves shared requirements, adds dummy board geometry; hardwareTested=false.
-- parts.json: empty purchased-part inventory; pads and holes are substrate features.
-- manufacturing.json: exact source hashes, seven evidence areas, untouched native default ignored-check list; zero fitted components.
-- engineering/{power,protection,pinout,thermal,assembly,fabricator,bringup}.md: scoped evidence and no-power handling; assembly documents local library provenance and default ignored categories.
-- engineering/DEVIATIONS.md: none. This file: role map and fastest checks.
-- boards/main.board.json and boards/main_review/: publisher-owned current schematic/PCB/GLB, native reports and Gerber/drill packet. Never edit them.
-
-## Tools and fastest checks
-- tools/board/prepare.py lines 1–23: initial spec, rules, product/parts setup. Initial generation only; do not rerun to repair existing copper.
-- tools/board/build_pcb.py lines 1–59: initial library, placement, outline, silk, stackup. Initial generation only.
-- tools/board/route.py lines 1–18: first-pass DSN/SES candidate; finish_routes.py lines 1–11 changes widths only and preserves tracks/UUIDs.
-- tools/board/measure.py lines 1–44: exact native outline/hole/layer/pad/net/width/warning audit, hash-cache unchanged geometry; run with KiCad Python.
-- tools/board/check.py check() lines 16–30: author/netlist/native-geometry/netlist-export/STEP checks. Thread pool uses os.cpu_count(); cached passes require unchanged inputs and existing outputs.
-- Fast suite: "$KICAD_HARNESS_PYTHON" tools/board/check.py
-- tools/board/review.py lines 1–24: bind seven evidence notes and design hashes; run after native/product/parts changes before publication.
-- Final publication: "$KICAD_HARNESS_PYTHON" tools/board/review.py then "$KICAD_HARNESS_PYTHON" -m kicadpy.publish --manufacturing design/main.kicad_pro
-- Exact native/packet result: "$KICAD_HARNESS_PYTHON" -m kicadpy.verify gate .
-- Freshness: "$KICAD_HARNESS_PYTHON" -m kicadpy.verify stale .
-- build/board/{author,netlist,geometry,netlist-export,step}-check.json: full suite results; main.net: actual XML netlist; geometry.json: measured geometry; main.step: bare-board solid.
-
-- tools/board/fix_silk.py: local reference-ink repair, no copper changes. References and warnings now all use 0.15 mm strokes.
-
-## Status and assumptions
-Author check, parity (4 pins, 0 differences, 0 hollow), exact geometry and native XML/STEP exports pass. Final severity-all native and packet results are in the publisher's current reports, not the earlier draft. The draft's missing links/footprint fields/thin silk were repaired together. Final tracks measured 0.5 mm × 8 mm each, no vias or zones. Geometry is exact; no physical fit, current, temperature or robot behavior was tested. Integration readiness remains the lead/tester's decision. Robot wiring and firmware belong to the other teams; this schematic intentionally does not represent them.
+# Board handoff — integrated I0, 2026-11-09
+- Contract SHA7841b7b2e92a0d3f69db70868c7a9649da0c6cd1cfc6d94478ec13886894c1be.
+- Effective release4 SHA122b5b3d…; contract/notes unchanged; no other domain edited.
+- design/main.kicad_sch/.pcb/.pro: authored native circuit, accepted copper/rules.
+- design/spec.json + Integrated.kicad_sym: author net table and flattened symbols.
+- design/Local.pretty/.3dshapes + lib tables: local actual packages and models.
+- product.json: effective88×62×1.6mm2layer1oz board, separate5V rail requirements.
+- parts.json: exact40populated refs;29factory SMT /11manual THT;15SMT codes.
+- manufacturing.json: source/evidence hashes, seven reviews, measured rotations.
+- engineering/power,protection,pinout,thermal,assembly,fabricator,bringup.md:
+  calculations, source tables, reset state,37named PCB joints and physical tests.
+- engineering/sources.md + sources/integrated/: primary docs/vendorSTEP/provenance.
+- factory-pads.json is static measurement INPUT; sourcing-snapshot.json dated stock.
+- 3D-MODELS.md discloses USB/switch measured clearance envelopes (not detailedSTEP).
+- MUA-THEM-PCB.md: Vietnamese final buy/service list; PCA bought, receipt unconfirmed.
+- firmware-interface.md: GPIO18SDA/17SCL/1LED/0BOOT preserved; NEWGPIO21 /OE.
+- SPI screen:8SCLK/39MOSI,5RES/6CS/7DC/38BL;15NC;9,40–42,45–48NC.
+- PCA0x40, CH0..7hipFL,kneeFL,hipFR,kneeFR,hipRL,kneeRL,hipRR,kneeRR.
+- R9pulls/OE high in reset/blankflash; firmwareFULL_OFF before enable low.
+- No firmware written/remapped/rebuilt by board team; firmware team owns target.
+- board-interface.json + case-interface.md: actual pins/frames/mounts/access/hashes.
+- build/board/integrated.step: actual KiCad export normalized topCuZ0,+Yup.
+- Screen officialSTEP: engineering/sources/integrated/waveshare-display.step.
+- Populated PCB envelope[-45.8,-31,-3.455]..[44,31,13.845]mm; PCB88×62.
+- H1(-40,13),H2(39,26),H3(-39,-26),H4(39,-26) in board-localYup;Ø3.2.
+- Four available holes need not all use screws; case owns≤12M3 total/placement.
+- No robot-body fit/printed-part/physical motion claim. Screen is8-wire harness.
+- tools/board/build.py L1–13: release outputs FROM authored native, preserves copper.
+- tools/board/check.py geometry L11–43/netlist L44–47/main L48–55:
+  independent pads/rails/outline + realXML/nativeparity; hash-cached/allCPU.
+- Fast audit: "$KICAD_HARNESS_PYTHON" tools/board/check.py
+- export.py main L8–20 + export_geometry.py L10–26: nativeSTEP and measuredJSON;
+  "$KICAD_HARNESS_PYTHON" tools/board/export.py (cached, parallel foregroundCLI).
+- models.py L1–24: optional missing-model envelopes; KICAD_CASE_PYTHON runtime.
+- review.py L1–39: final evidence hashes/assembly rotations from rotation.log.
+- native.py L1–24: focused ERC/DRC only, cached; use relevant check during repairs.
+- integrated.py L1–170/integrated_pcb.py L1–62 are PLACEMENT-DRAFT generators.
+  Do not run on accepted copper; main.* native files are release-build inputs.
+- route/finish/repair*.py record construction/local repairs, not release entrypoint.
+- verify_module_orientation.py main L6–36: all41logical pad numbers resolves raw
+  U1 rotation warning; run hostPython tools/board/verify_module_orientation.py.
+- repair_entry_width.py L1–19: PB1 feeder13tracks widened0.6mm, other copper kept;
+  local DRC pass; only rerun for that scoped repair, not release regeneration.
+- Full release: "$KICAD_HARNESS_PYTHON" tools/board/build.py
+- Final gate: "$KICAD_HARNESS_PYTHON" -m kicadpy.verify gate .
+- Publisher owns boards/main.board.json/main_review previews/reports/fab packet.
+- Native focused ERC/DRC and independent pad/rail/parity audit passed before packet.
+- Final publisher gate: fab.ready=true; sidecar0errors/0warnings, native0findings,
+  manufacturing0findings. See build/board/final-publish.log; not teamReady.
+- Tool limit: native power heuristic missesPB1_5V name; independent exact-net cap
+  sum verifies4.8uFnominal/5.28worst<10. Checker unmodified; see power.md.
+- Open physical assumptions: bank transients, WS2812DIN3.3V, displaymodule revision,
+  assembled thermal/USB/QR, soldering/wire quality. hardwareTested=false.
+- Supplier docs/model inputs may be omitted from git where publishing rules require;
+  primary URLs retained; native local models and checked sources are build inputs.
+- No user blocker, push/commit/order/upload/print/flash/hardware action performed.

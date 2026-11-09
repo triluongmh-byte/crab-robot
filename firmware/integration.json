@@ -1,90 +1,209 @@
 {
-  "contractSha256": "65b9793b07d82edc0defd9900ba1cfbee13dc730266cc0b675d897c87a75d9ea",
+  "stage": "firmware",
+  "contractSha256": "7841b7b2e92a0d3f69db70868c7a9649da0c6cd1cfc6d94478ec13886894c1be",
   "hardwareTested": false,
-  "assemblyVariant": "handwired; dummy PCB excluded",
-  "pins": {
-    "SDA": 18,
-    "SCL": 17,
-    "LED_DIN": 21,
-    "BOOT": 0,
-    "LCD_POWER_ON": 15,
-    "LCD_BL": 38
+  "readyForIndependentTest": true,
+  "wholeProductReadiness": "Firmware host/build/netlist checks only; case integration and physical robot validation remain separate.",
+  "target": "LILYGO baseline and final integrated ESP32-S3-WROOM-1-N16R8 / Waveshare 23822 SPI",
+  "pca9685": {
+    "address": "0x40",
+    "frequencyHz": 50,
+    "channels": [
+      "HIP_FL",
+      "KNEE_FL",
+      "HIP_FR",
+      "KNEE_FR",
+      "HIP_RL",
+      "KNEE_RL",
+      "HIP_RR",
+      "KNEE_RR"
+    ],
+    "unusedChannels": "8-15 full off",
+    "servoDirectionSigns": [
+      1,
+      1,
+      1,
+      -1,
+      1,
+      -1,
+      1,
+      1
+    ]
   },
-  "logicRailV": 3.3,
-  "servoRailV": 5,
-  "pcaAddress": "0x40",
-  "pwmHz": 50,
-  "jointOrder": [
-    "FL_HIP",
-    "FL_KNEE",
-    "FR_HIP",
-    "FR_KNEE",
-    "RL_HIP",
-    "RL_KNEE",
-    "RR_HIP",
-    "RR_KNEE"
-  ],
-  "directionSigns": [
-    1,
-    -1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    -1
-  ],
-  "startupOrder": [
-    0,
-    2,
-    4,
-    6,
-    1,
-    3,
-    5,
-    7
-  ],
-  "startupIntervalMs": 300,
-  "heartbeatTimeoutMs": 600,
-  "neutralServoDegrees": 90,
-  "neutralPulseUs": 1500,
-  "pulseUsPerDegree": 10,
-  "maximumServoDeltaDegrees": 25,
-  "trimLimitDegrees": 15,
-  "gait": {
-    "type": "Kame32 oscillator-derived one-leg crawl",
-    "periodMs": 8000,
-    "hipAmplitudeDegrees": 12,
-    "kneeLiftDegrees": 16,
-    "sideways": true,
-    "physicalLocomotionVerified": false
-  },
-  "caseReconciliationRequired": [
-    "Recheck sign parity if the case shaft geometry changes; current knee lift and hip CCW signs agree with mechanical.json",
-    "Confirm neutral45-degree radial horn pose and mechanical mirror error independent of trim",
-    "Check gait against actual joint collision range; firmware caps total commanded angle including trim to±25 degrees",
-    "QR 148x148px, portrait170x320 display; closed lid must expose scan area; BOOT and USB need access"
-  ],
-  "boardOutputAvailableAtBuild": true,
-  "rootDocumentationMerge": [
-    "Merge firmware/CHECKLIST-RAP.md into root CHECKLIST-RAP.md",
-    "Use LED remedy in firmware/DEVIATIONS.md; do not advise3.3V WS2812 supply",
-    "Explain Flash and slow-current gait without claiming physical motion tests"
-  ],
-  "directionSignConvention": {
-    "hipPositive": "CCW seen from above",
-    "kneePositive": "foot UP (gait swing lift)",
-    "pulseConversion": "angle = 90 + trim + directionSign * gaitAngle; positive pulseUsPerDegree"
-  },
-  "caseReconciliation": {
-    "report": "case/reports/mechanical.json",
-    "kneeLargerPulse": {
-      "FL": "foot DOWN",
-      "FR": "foot UP",
-      "RL": "foot UP",
-      "RR": "foot DOWN"
+  "caseInterface": {
+    "coordinateFrame": "+X forward (bank slide-out), +Y left, +Z up",
+    "radialHipNeutralDeg": [
+      45,
+      -45,
+      135,
+      -135
+    ],
+    "kneeNeutral": "1500 us + offsets; case D4 foot tip is 15 mm outward and 64.6 mm below knee; positive=foot inward/down near neutral",
+    "gaitRangeDeg": {
+      "hip": [
+        -12,
+        12
+      ],
+      "knee": [
+        -15,
+        0
+      ]
     },
-    "kneeLiftSignsConfirmedAgainstReport": true,
-    "hardwareTested": false
+    "mechanicalTargetRangeDeg": [
+      -25,
+      25
+    ],
+    "softCommandRangeDeg": [
+      -30,
+      30
+    ],
+    "trimRangeDeg": [
+      -12,
+      12
+    ],
+    "rawCentreUs": 1500,
+    "needsReconciliation": [
+      "Physical checklist: confirm all hip axes +Z and knee lift on real SG90s; CAD direction signs resolved against case D7",
+      "Check final closed case against firmware gait envelopes and any persisted trim",
+      "Verify QR window and BOOT/USB access",
+      "Note4 integrated PCB must be placed by case from its final STEP; earlier carrier no-fit statement superseded"
+    ],
+    "directionSignResolution": {
+      "status": "resolved against case D7 and lead integration review; hardware untested",
+      "evidence": {
+        "case/DEVIATIONS.md": "547c5b30137ecbde54566c22de4b0fc4463437169b57aaf039b78ad86a22842a",
+        "case/model.py": "343a476466c0ae908e8d6ea0d35b73fd807449077dd86f5d00ff23962aa6a6b5"
+      },
+      "hipSignsFL_FR_RL_RR": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "kneeSignsFL_FR_RL_RR": [
+        1,
+        -1,
+        -1,
+        1
+      ],
+      "reason": "FR and RL each mirror FL once; RR mirrors twice. Negative knee command must lift all four feet.",
+      "regression": "firmware/tests/test_core.cpp::test_case_knee_lift verifies emitted pulses raise every foot 5.5..6.5 mm for knee -15 deg, using case D4 geometry and D7 mirror parity."
+    }
+  },
+  "boardOutputsAvailableInWorker": true,
+  "caseOutputsAvailableInWorker": true,
+  "physicalChecklistForCaseLead": [
+    "Ráp: kê thân, giữa thô, gắn horn; xác nhận đúng 8 khớp theo CH0-7, tâm không che chân in lệch",
+    "QR hiện rõ qua cửa nắp; nếu captive portal không tự mở, vào 192.168.4.1",
+    "Nguồn servo bật lần lượt; cua đứng yên; thử hướng khi chân nhấc khỏi bàn trước, rồi thử trên sàn",
+    "Giữ/thả và rời trang phải dừng; mất kết nối hủy bước trong khoảng 0.5s rồi về đứng êm; bấm lại mới đi",
+    "Pin ngắt: giảm tốc rồi đổi pin; dây ấm: ngắt nguồn, dùng dây dày hơn",
+    "LED chớp: giảm LED_BRIGHTNESS, rút ngắn DIN, hoặc đổi thanh nhận dữ liệu 3.3V",
+    "Giữ BOOT8s khi đã chạy xóa Wi-Fi giữ tâm; rút nguồn cổng2 trước reset/nạp",
+    "Kê thân: xác nhận cặp trước trái + sau phải nhấc cùng nhau, rồi cặp trước phải + sau trái; không nhấc hai chân cùng bên. Sau đó thử cân bằng và 8 hướng trên sàn theo checklist.",
+    "Board integrated variant: use final board connector labels; no external LILYGO/PCA or Dupont GND bridge",
+    "Verify display QR/window/BOOT/native USB and reset OE inhibition on assembled integrated board; never infer from host pass"
+  ],
+  "userBlockers": [],
+  "gaitTiming": {
+    "pattern": "diagonal trot",
+    "legOrder": [
+      "FL",
+      "FR",
+      "RL",
+      "RR"
+    ],
+    "phaseDeg": [
+      0,
+      180,
+      180,
+      0
+    ],
+    "liftedPairs": [
+      "FL+RR",
+      "FR+RL"
+    ],
+    "unilateralSupportSamples": 0,
+    "samplesPerDirection": 720,
+    "physicalStabilityVerified": false
+  },
+  "releaseNoteSha256": "122b5b3d406fc1cc148b6bf5abaf6c6fc7315e933a95e5565c1b60ee86d35e08",
+  "oldCarrierOutputsPresent": false,
+  "targets": {
+    "lilygo": {
+      "recipe": "firmware/flash.json",
+      "buildManifest": "firmware/BUILD.json",
+      "pins": {
+        "SDA": 18,
+        "SCL": 17,
+        "LED_DIN": 1,
+        "BOOT": 0,
+        "LCD_POWER": 15,
+        "LCD_BL": 38,
+        "LCD_RST": 5,
+        "LCD_CS": 6,
+        "LCD_DC": 7,
+        "LCD_WR": 8,
+        "LCD_RD": 9,
+        "LCD_DATA": [
+          39,
+          40,
+          41,
+          42,
+          45,
+          46,
+          47,
+          48
+        ]
+      }
+    },
+    "integrated": {
+      "recipe": "firmware/flash-integrated.json",
+      "buildManifest": "firmware/BUILD-integrated.json",
+      "pins": {
+        "SDA": 18,
+        "SCL": 17,
+        "LED_DIN": 1,
+        "BOOT": 0,
+        "LCD_BL": 38,
+        "LCD_RST": 5,
+        "LCD_CS": 6,
+        "LCD_DC": 7,
+        "PCA_OE": 21,
+        "USB_DM": 19,
+        "USB_DP": 20,
+        "LCD_SCLK": 8,
+        "LCD_MOSI": 39
+      },
+      "display": {
+        "part": "Waveshare 23822 ST7789V2",
+        "bus": "SPI",
+        "clockHz": 10000000,
+        "mode": 0,
+        "width": 320,
+        "height": 170,
+        "gap": [
+          0,
+          35
+        ],
+        "vendorLandscapeMADCTL": "0x70",
+        "caseRotationAddedDeg": 180,
+        "finalMADCTL": "0xb0"
+      }
+    }
+  },
+  "integratedInterface": {
+    "status": "reconciled",
+    "baseline": "Final build/board/main.net and design/main.kicad_pcb; engineering/firmware-interface.md; case D15",
+    "confirmedAgainstFinalNetlist": true,
+    "readyForFlashing": false,
+    "flashAuthorization": "No authorization for integrated board; previous authorization only LILYGO",
+    "hardwareTested": false,
+    "changes": [
+      "PCA OE GPIO21; GPIO15 unconnected",
+      "Waveshare SPI SCLK8/MOSI39, CS6/DC7/RES5/BL38",
+      "Vendor landscape plus 180-degree case D15 rotation"
+    ],
+    "report": "BOARD-RECONCILIATION.json"
   }
 }

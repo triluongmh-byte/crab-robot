@@ -1,5 +1,486 @@
 {
   "schemaVersion": 1,
-  "parts": [],
-  "description": "Bare dummy PCB only: integral copper pads and NPTH holes, no purchased or fitted components; no stock claim."
+  "parts": [
+    {
+      "manufacturer": "Espressif Systems",
+      "mpn": "ESP32-S3-WROOM-1-N16R8",
+      "lcsc": "C2913202",
+      "assembly": "factory",
+      "native_footprint": "Local:ESP32-S3-WROOM-1",
+      "refdes": [
+        "U1"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C2913202.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Texas Instruments",
+      "mpn": "TLV1117LV33DCYR",
+      "lcsc": "C15578",
+      "assembly": "factory",
+      "native_footprint": "Local:SOT-223-3_TabPin2",
+      "refdes": [
+        "U2"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C15578.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "NXP",
+      "mpn": "PCA9685PW,118",
+      "lcsc": "C2678753",
+      "assembly": "factory",
+      "native_footprint": "Local:TSSOP-28_4.4x9.7mm_P0.65mm",
+      "refdes": [
+        "U3"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C2678753.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Korean Hroparts Elec",
+      "mpn": "TYPE-C-31-M-12",
+      "lcsc": "C165948",
+      "assembly": "factory",
+      "native_footprint": "Local:USB_C_Receptacle_HRO_TYPE-C-31-M-12",
+      "refdes": [
+        "J1"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C165948.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL(Uniroyal Elec)",
+      "mpn": "0402WGF5101TCE",
+      "lcsc": "C25905",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R1"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25905.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL(Uniroyal Elec)",
+      "mpn": "0402WGF5101TCE",
+      "lcsc": "C25905",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R2"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25905.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL",
+      "mpn": "0402WGF220JTCE",
+      "lcsc": "C25092",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R3"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25092.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL",
+      "mpn": "0402WGF220JTCE",
+      "lcsc": "C25092",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R4"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25092.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL(Uniroyal Elec)",
+      "mpn": "0402WGF1002TCE",
+      "lcsc": "C25744",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R5"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25744.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samsung Electro-Mechanics",
+      "mpn": "CL05A105KA5NQNC",
+      "lcsc": "C52923",
+      "assembly": "factory",
+      "native_footprint": "Local:C_0402_1005Metric",
+      "refdes": [
+        "C1"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C52923.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL(Uniroyal Elec)",
+      "mpn": "0402WGF1002TCE",
+      "lcsc": "C25744",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R6"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25744.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samsung Electro-Mechanics",
+      "mpn": "CL21A475KOFNNNE",
+      "lcsc": "C1746",
+      "assembly": "factory",
+      "native_footprint": "Local:C_0805_2012Metric",
+      "refdes": [
+        "C2"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C1746.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samsung Electro-Mechanics",
+      "mpn": "CL05B104KO5NNNC",
+      "lcsc": "C1525",
+      "assembly": "factory",
+      "native_footprint": "Local:C_0402_1005Metric",
+      "refdes": [
+        "C3"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C1525.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samsung Electro-Mechanics",
+      "mpn": "CL21A106KAYNNNE",
+      "lcsc": "C15850",
+      "assembly": "factory",
+      "native_footprint": "Local:C_0805_2012Metric",
+      "refdes": [
+        "C4"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C15850.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samsung Electro-Mechanics",
+      "mpn": "CL21A106KAYNNNE",
+      "lcsc": "C15850",
+      "assembly": "factory",
+      "native_footprint": "Local:C_0805_2012Metric",
+      "refdes": [
+        "C5"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C15850.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samsung Electro-Mechanics",
+      "mpn": "CL05B104KO5NNNC",
+      "lcsc": "C1525",
+      "assembly": "factory",
+      "native_footprint": "Local:C_0402_1005Metric",
+      "refdes": [
+        "C6"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C1525.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samsung Electro-Mechanics",
+      "mpn": "CL21A106KAYNNNE",
+      "lcsc": "C15850",
+      "assembly": "factory",
+      "native_footprint": "Local:C_0805_2012Metric",
+      "refdes": [
+        "C7"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C15850.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samsung Electro-Mechanics",
+      "mpn": "CL05B104KO5NNNC",
+      "lcsc": "C1525",
+      "assembly": "factory",
+      "native_footprint": "Local:C_0402_1005Metric",
+      "refdes": [
+        "C8"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C1525.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samsung Electro-Mechanics",
+      "mpn": "CL05A105KA5NQNC",
+      "lcsc": "C52923",
+      "assembly": "factory",
+      "native_footprint": "Local:C_0402_1005Metric",
+      "refdes": [
+        "C9"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C52923.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL(Uniroyal Elec)",
+      "mpn": "0402WGF4701TCE",
+      "lcsc": "C25900",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R7"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25900.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL(Uniroyal Elec)",
+      "mpn": "0402WGF4701TCE",
+      "lcsc": "C25900",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R8"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25900.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL(Uniroyal Elec)",
+      "mpn": "0402WGF1002TCE",
+      "lcsc": "C25744",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R9"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25744.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samtec",
+      "mpn": "TSW-103-07-G-S",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:PinHeader_1x03_P2.54mm_Vertical",
+      "refdes": [
+        "J2"
+      ],
+      "source": "https://www.samtec.com/products/tsw-103-07-g-s",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samtec",
+      "mpn": "TSW-103-07-G-S",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:PinHeader_1x03_P2.54mm_Vertical",
+      "refdes": [
+        "J3"
+      ],
+      "source": "https://www.samtec.com/products/tsw-103-07-g-s",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samtec",
+      "mpn": "TSW-103-07-G-S",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:PinHeader_1x03_P2.54mm_Vertical",
+      "refdes": [
+        "J4"
+      ],
+      "source": "https://www.samtec.com/products/tsw-103-07-g-s",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samtec",
+      "mpn": "TSW-103-07-G-S",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:PinHeader_1x03_P2.54mm_Vertical",
+      "refdes": [
+        "J5"
+      ],
+      "source": "https://www.samtec.com/products/tsw-103-07-g-s",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samtec",
+      "mpn": "TSW-103-07-G-S",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:PinHeader_1x03_P2.54mm_Vertical",
+      "refdes": [
+        "J6"
+      ],
+      "source": "https://www.samtec.com/products/tsw-103-07-g-s",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samtec",
+      "mpn": "TSW-103-07-G-S",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:PinHeader_1x03_P2.54mm_Vertical",
+      "refdes": [
+        "J7"
+      ],
+      "source": "https://www.samtec.com/products/tsw-103-07-g-s",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samtec",
+      "mpn": "TSW-103-07-G-S",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:PinHeader_1x03_P2.54mm_Vertical",
+      "refdes": [
+        "J8"
+      ],
+      "source": "https://www.samtec.com/products/tsw-103-07-g-s",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samtec",
+      "mpn": "TSW-103-07-G-S",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:PinHeader_1x03_P2.54mm_Vertical",
+      "refdes": [
+        "J9"
+      ],
+      "source": "https://www.samtec.com/products/tsw-103-07-g-s",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samtec",
+      "mpn": "TSW-108-07-G-S",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:PinHeader_1x08_P2.54mm_Vertical",
+      "refdes": [
+        "J10"
+      ],
+      "source": "https://www.samtec.com/products/tsw-108-07-g-s",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL(Uniroyal Elec)",
+      "mpn": "0402WGF1002TCE",
+      "lcsc": "C25744",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R10"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25744.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL(Uniroyal Elec)",
+      "mpn": "0402WGF1002TCE",
+      "lcsc": "C25744",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R11"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25744.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "UNI-ROYAL(Uniroyal Elec)",
+      "mpn": "0402WGF3300TCE",
+      "lcsc": "C25104",
+      "assembly": "factory",
+      "native_footprint": "Local:R_0402_1005Metric",
+      "refdes": [
+        "R12"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C25104.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samsung Electro-Mechanics",
+      "mpn": "CL05B104KO5NNNC",
+      "lcsc": "C1525",
+      "assembly": "factory",
+      "native_footprint": "Local:C_0402_1005Metric",
+      "refdes": [
+        "C10"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C1525.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Samtec",
+      "mpn": "TSW-103-07-G-S",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:PinHeader_1x03_P2.54mm_Vertical",
+      "refdes": [
+        "J11"
+      ],
+      "source": "https://www.samtec.com/products/tsw-103-07-g-s",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "Phoenix Contact",
+      "mpn": "1715721 / MKDS 1,5/ 2-5,08",
+      "lcsc": null,
+      "assembly": "manual",
+      "native_footprint": "Local:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal",
+      "refdes": [
+        "J12"
+      ],
+      "source": "https://www.phoenixcontact.com/en-gb/products/printed-circuit-board-terminal-mkds-15-2-508-1715721",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "DMBJ",
+      "mpn": "RVT1C102M1010",
+      "lcsc": "C970714",
+      "assembly": "factory",
+      "native_footprint": "Local:CP_Elec_10x10",
+      "refdes": [
+        "C11"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C970714.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "XKB Connection",
+      "mpn": "TS-1187A-B-A-B",
+      "lcsc": "C318884",
+      "assembly": "factory",
+      "native_footprint": "Local:SW_Push_1P1T_XKB_TS-1187A",
+      "refdes": [
+        "SW1"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C318884.html",
+      "checkedDate": "2026-11-09"
+    },
+    {
+      "manufacturer": "XKB Connection",
+      "mpn": "TS-1187A-B-A-B",
+      "lcsc": "C318884",
+      "assembly": "factory",
+      "native_footprint": "Local:SW_Push_1P1T_XKB_TS-1187A",
+      "refdes": [
+        "SW2"
+      ],
+      "source": "https://www.lcsc.com/product-detail/C318884.html",
+      "checkedDate": "2026-11-09"
+    }
+  ],
+  "note": "Integrated note4 V0; factory SMT, named manual THT. External Waveshare23822 screen not on PCB BOM."
 }

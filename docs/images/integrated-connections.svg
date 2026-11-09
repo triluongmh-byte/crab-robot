@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="830" viewBox="0 0 1100 830" role="img" aria-labelledby="title desc">
+<title id="title">Integrated Crab Robot controller connections</title><desc id="desc">One custom PCB contains ESP32-S3, PCA9685, logic supply and connectors. A separate SPI LCD connects to J10; the LED bar connects to J11; eight SG90 servos connect to J2 through J9. Power-bank port 1 feeds J1 USB-C. Port 2 feeds J12 servo power through the USB terminal adapter. The positive power rails remain separate.</desc>
+<rect width="1100" height="830" rx="18" fill="#f3f7fa"/>
+<g font-family="Arial, sans-serif" fill="#193045">
+<text x="40" y="48" font-size="28" font-weight="bold">Integrated Crab Robot controller</text>
+<text x="40" y="80" font-size="18">ESP32-S3 and PCA9685 are soldered onto one PCB.</text>
+<rect x="40" y="140" width="590" height="490" rx="20" fill="#dfedf3" stroke="#526f83" stroke-width="3"/>
+<text x="75" y="182" font-size="25" font-weight="bold">ONE CONTROLLER PCB</text>
+<text x="75" y="212" font-size="16">Factory SMT + specified through-hole connector assembly</text>
+<rect x="80" y="250" width="230" height="110" rx="12" fill="white" stroke="#526f83" stroke-width="2"/>
+<text x="100" y="290" font-size="22" font-weight="bold">ESP32-S3</text><text x="100" y="324" font-size="18">Wi-Fi / web / QR</text>
+<rect x="350" y="250" width="230" height="110" rx="12" fill="white" stroke="#526f83" stroke-width="2"/>
+<text x="370" y="290" font-size="22" font-weight="bold">PCA9685</text><text x="370" y="324" font-size="18">8 servo channels</text>
+<path d="M310 305H350" fill="none" stroke="#2379b2" stroke-width="4"/>
+<rect x="80" y="390" width="500" height="80" rx="12" fill="white" stroke="#526f83" stroke-width="2"/>
+<text x="100" y="423" font-size="20" font-weight="bold">3.3V logic supply • BOOT / RESET</text><text x="100" y="451" font-size="17">Native USB-C programming; no external dev board</text>
+<text x="80" y="518" font-size="19" font-weight="bold">J1 USB-C — logic power / flashing</text>
+<text x="80" y="552" font-size="19" font-weight="bold">J12 terminal — servo 5V / GND</text>
+<text x="80" y="592" font-size="16">USB 5V and servo 5V stay separate; ground is common.</text>
+<rect x="820" y="145" width="240" height="130" rx="12" fill="white" stroke="#526f83" stroke-width="2"/>
+<text x="840" y="180" font-size="21" font-weight="bold">1.9-inch SPI LCD</text><text x="840" y="215" font-size="17">Separate display module</text><text x="840" y="247" font-size="17">ST7789V2 • 170×320</text>
+<path d="M630 215H810" fill="none" stroke="#2379b2" stroke-width="5"/><polygon points="800,209 810,215 800,221" fill="#2379b2"/>
+<text x="648" y="198" font-size="16">J10 • 8 wires</text>
+<rect x="820" y="350" width="240" height="100" rx="12" fill="white" stroke="#526f83" stroke-width="2"/>
+<text x="840" y="387" font-size="22" font-weight="bold">WS2812 ×8 bar</text><text x="840" y="423" font-size="17">DIN / 5V / GND</text>
+<path d="M630 400H810" fill="none" stroke="#2379b2" stroke-width="5"/><polygon points="800,394 810,400 800,406" fill="#2379b2"/>
+<text x="648" y="383" font-size="16">J11 • 3 wires</text>
+<rect x="820" y="540" width="240" height="110" rx="12" fill="white" stroke="#526f83" stroke-width="2"/>
+<text x="840" y="578" font-size="22" font-weight="bold">8 SG90 servos</text><text x="840" y="612" font-size="17">CH0–CH7 • hip/knee pairs</text>
+<path d="M630 585H810" fill="none" stroke="#2379b2" stroke-width="5"/><polygon points="800,579 810,585 800,591" fill="#2379b2"/>
+<text x="648" y="568" font-size="16">J2–J9</text>
+<rect x="40" y="690" width="590" height="85" rx="12" fill="white" stroke="#526f83" stroke-width="2"/>
+<text x="60" y="723" font-size="20" font-weight="bold">5V power bank — two outputs</text><text x="60" y="754" font-size="16">Port 1 → J1 USB-C • Port 2 → USB terminal adapter → J12</text>
+<path d="M180 690V640" fill="none" stroke="#2379b2" stroke-width="5"/><polygon points="174,650 180,640 186,650" fill="#2379b2"/>
+<path d="M470 690V640" fill="none" stroke="#bd483d" stroke-width="5"/><polygon points="464,650 470,640 476,650" fill="#bd483d"/>
+<text x="40" y="810" font-size="16">Functional cable diagram, not PCB placement. Disconnect both supplies before changing connections.</text>
+</g></svg>

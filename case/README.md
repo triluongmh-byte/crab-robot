@@ -1,58 +1,28 @@
-# Robot Cua A1 V4: thân, chân và file in (bản r001-v1)
+# Integrated skeleton case — work in progress
 
-**Chưa in, chưa ráp, chưa thử phần cứng.** Mọi kết quả bên dưới là kiểm trên CAD và slicer.
+**Do not print the current new plate 1 or order the current PCB.** The board fits the final seated pose but cannot be inserted, and three PCB screws are blocked. D18 in [DEVIATIONS.md](DEVIATIONS.md) specifies the required PCB revision; its virtual fit result is not an actual revised board. The temporary U1 clearance slit and thin nut-seat floor also need revisiting with the board's real module envelope.
 
-- Tổng quan 3D để ráp (mở trên điện thoại được): [overview.html](overview.html). Menu **Đủ bộ → Bước 1…9**.
-- Đấu dây: [../firmware/WIRING.md](../firmware/WIRING.md) (nhóm firmware viết).
-- Kiểm khi ráp: [CHECKLIST-RAP.md](CHECKLIST-RAP.md). Đồ cần mua: [BOM.md](BOM.md). Bản đồ vít: [fastener_map.csv](fastener_map.csv).
-- Đồ đã in thật: [PRINTED-INVENTORY.md](PRINTED-INVENTORY.md). Thay đổi so với hợp đồng: [DEVIATIONS.md](DEVIATIONS.md).
+The body is a skeleton exposing the PCB and cables. The new base/lid retain the integrated controller and a separate Waveshare 23822 display. The two clamp bars, four thighs and four feet on plate 2 remain frozen at r1, including their mesh bytes, print rotations and placements. The owner reported plate 2 printing; completion and fit have not been confirmed.
 
-## Số thật (đo trên file xuất ra)
-| Mục | Giới hạn | Thực tế |
-|---|---|---|
-| Thân (không tính chân) | 126 × 75 × 47 mm | 126 × 75 × 47,0 mm (đầu vít M3×20 chìm trong lỗ khoét của nắp; chỉ đỉnh servo hông, horn và chân nhô lên trên nắp, đúng như hợp đồng) |
-| Part in | ≤ 12 | 12 (P01–P12) |
-| Vít M3 | ≤ 12 | 8 (4× M3×12 + 4× M3×20) + 8 tán M3 |
-| Plate | ≤ 2, mỗi plate ≤ 4h30 | 2: 4h27 và 2h30 (Bambu Studio slice) |
-| Tổng in / nhựa | ≤ 8 h / ≤ 220 g | 7,0 h / 186,9 g PETG |
-| Cả robot | < 500 g | ≈ 430 g ước tính (nhựa 190 + 8 servo 72 + pin ≤ 120 + điện tử/dây/vít ≈ 50) |
-| Góc hông / gối | ≥ ±25° | ±30° kiểm va chạm mỗi 5°, 4 chân cùng pha, khe hở nhỏ nhất 3,3 mm |
-| Lệch gương 4 chân | ≤ 0,5 mm / 1° | 0,000 mm / 0,000° (FR, RL, RR là bản gương của FL) |
+## Source and generated files
 
-Số liệu chi tiết: `reports/mechanical.json` và `print/production-check.json`.
+`model.py`, `hardware.py`, `assembly_steps.json`, `interfaces.json`, `placement-settings.json`, `print-settings.json` and the frozen r1 source archive are inputs. Run the root `../build.sh` with the documented toolchain. It recreates the old accepted frozen parts from source, rather than requiring an old generated STEP or private Git commit.
 
-## Part
-| ID | Tên | Số | Cách đặt khi in |
-|---|---|---|---|
-| P01 | Đáy: hầm pin, kệ, 4 hốc servo hông, nôi LILYGO + 2 rãnh dây Dupont, ô PCA, cầu đèn | 1 | đáy nằm xuống bàn, support cây trong hầm pin |
-| P02 | Nắp: cửa sổ màn hình, 2 lỗ chọc nút, vùng tán sáng 0,8 mm | 1 | úp mặt trên xuống bàn |
-| P03/P04 | Thanh đè trước/sau (kẹp chung 2 servo hông) | 2 | nằm phẳng |
-| P05–P08 | Đùi FL/FR/RL/RR (rãnh horn hông + hộp servo gối) | 4 | úp mặt trên xuống |
-| P09–P12 | Cẳng FL/FR/RL/RR (rãnh horn gối) | 4 | nằm nghiêng, rãnh horn hướng lên |
+Generated `robot/` contains assembly-frame CAD used for motion, printing and the overview. `out/` contains rigid board-frame copies for the unmodified native checker. Reports record these frames separately. `overview.html` is the standalone assembly viewer. `print/production.3mf` is the arranged Bambu project; `test-only.3mf` and `mating-test.3mf` contain the separate coupons. No script sends a printer job.
 
-FR và RL là bản gương của FL; RR là FL xoay 180°. Servo không lật gương được: servo gối ở FR/RL
-được lắp xoay 180° quanh trục đứng, nên trục quay nằm ở phía gương.
+## Assembly sequence after the repair passes
 
-## In
-1. **In thử trước:** `print/TEST-ONLY-coupons.3mf`, khoảng 1h21 và 26,0 g.
-   - **C01 TEST ONLY:** hốc servo hông thật, rãnh horn, 1 lỗ M3 có khe tán, trụ mảnh nhất (8 × 10,9 mm) đúng hướng in.
-     **Không lắp vào robot.**
-   - **C02/C03 MATING_TEST:** đùi FL và cẳng FL thật. Đạt thì giữ lại làm P05/P09.
-   - Cách thử: xem CHECKLIST-RAP mục T1–T6. **Chỉ in cả bộ khi đã báo 2 file thử này đạt.**
-2. **In cả bộ:** `print/production.3mf`, đúng cấu hình của chủ (PETG Basic, layer 0,20, 2 walls,
-   7% grid, support tree auto). Có 2 plate tên **MỚI∕SỬA — CẦN IN 1 — than** và **MỚI∕SỬA — CẦN IN 2 —
-   chan + thanh de**. Mỗi plate dùng 1 màu, cạnh dài part nằm theo trục X.
-   Bambu báo "bed temperature higher than filament" vì đó là cấu hình gốc của chủ. Không sửa.
+1. Test the coupon and horn/servo fit. Do not force a horn onto a misaligned shaft.
+2. Fit the four cap nuts and hip servos, leaving the clamp bars off while the controller is inserted.
+3. Have the PCB connectors assembled and inspected. Wire J12 on the bench before mounting; the wire-entry side has little clearance afterward. Route and retain the hip leads below the board without pinching them against the PCB tails.
+4. Install the **revised, insertion-verified** PCB and its four M3×6 screws/nuts. The current PCB fails this step.
+5. Install the frozen clamp bars with four M3×20 screws. Fit the separate LCD and centered LED bar on the lid using the specified ties, then close the lid with three M3×8 screws. The lid screws form their threads in the printed pilots; the current model uses eight M3 nuts in total.
+6. Follow [wiring and centering](../docs/INTEGRATED-WIRING.md). Center servos before attaching horns, keep the body supported and legs free for the first joint tests, then install legs with the SG90-supplied screws.
 
-## Hướng servo (đối chiếu firmware)
-Theo GIẢ ĐỊNH của hợp đồng (xung lớn hơn = quay ngược chiều kim đồng hồ khi nhìn từ phía trục):
-- **Hông:** cả 4 trục hướng lên, nên xung lớn hơn làm mọi chân quay ngược chiều kim đồng hồ khi
-  nhìn từ trên. Bàn chân FL đi lùi, FR đi tới, RL đi lùi, RR đi tới.
-- **Gối:** xung lớn hơn hạ bàn chân ở FL và RR, nâng bàn chân ở FR và RL. Bảng dấu khớp với
-  mặc định của hợp đồng (FL/RR cùng dấu, FR/RL ngược dấu).
-- **Tư thế neutral:** tâm servo gối cách trục hông 30 mm trên đường chéo 45°, ở z = 40. Trục gối ở
-  z = 45,5. Bàn chân cách trục hông 58 mm, đáy bàn chân ở z = −27, nên thân cách đất 27 mm.
+These lengths describe the current candidate; the repair must confirm or update them. The assembler must inspect insulation under PCB mounting hardware. Use a USB-C plug body at most 11.4 mm wide, subject to the final connector-reach check after J1 moves.
 
-## Tạo lại
-`tools/case/run_all.sh` chạy theo thứ tự: build → kiểm cơ khí → plate + slice → overview → `kicadpy.case check-print`.
-Bước nào có nguồn không đổi thì tự bỏ qua.
+## What the checks establish
+
+The native check tests the final seated pose in board coordinates. The mechanical script samples the legs and checks several real-part envelopes, wire corridors and tool paths. The new assembly-access report separately tests the actual board insertion and screw access, and currently fails. Print checks/slicer estimates do not prove skeleton strength, the 0.23 mm simulated minimum leg/body gap, physical horn fit, floor grip or walking.
+
+The first manufactured/printed assembly must check all those physical details, QR visibility with the lid fitted, antenna performance near the power bank/display, power-bank shutoff and servo loads. No physical result is claimed here. Keep already printed plate-2 parts until the owner confirms their condition; a printer job status alone is not a completed-part confirmation.

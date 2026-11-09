@@ -1,0 +1,1493 @@
+{
+  "C1525": {
+    "title": "CL05B104KO5NNNC",
+    "package": null,
+    "footprint": "C0402",
+    "manufacturer": "SAMSUNG(\u4e09\u661f)",
+    "mpn": "CL05B104KO5NNNC",
+    "pads": [
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 0.4201,
+        "y": 0.0,
+        "w": 0.5,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -0.4201,
+        "y": 0.0,
+        "w": 0.5,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1723686711
+  },
+  "C15578": {
+    "title": "TLV1117LV33DCYR",
+    "package": null,
+    "footprint": "SOT-223_L6.7-W3.5-P2.30-BR",
+    "manufacturer": "TI(\u5fb7\u5dde\u4eea\u5668)",
+    "mpn": "TLV1117LV33DCYR",
+    "pads": [
+      {
+        "number": "4",
+        "shape": "RECT",
+        "x": -4.6482,
+        "y": 0.0,
+        "w": 2.2,
+        "h": 3.5,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "3",
+        "shape": "RECT",
+        "x": 1.5494,
+        "y": -2.3,
+        "w": 1.1,
+        "h": 2.2,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 1.5494,
+        "y": 0.0,
+        "w": 1.1,
+        "h": 2.2,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": 1.5494,
+        "y": 2.3,
+        "w": 1.1,
+        "h": 2.2,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1732100709
+  },
+  "C15850": {
+    "title": "CL21A106KAYNNNE",
+    "package": null,
+    "footprint": "C0805",
+    "manufacturer": "SAMSUNG(\u4e09\u661f)",
+    "mpn": "CL21A106KAYNNNE",
+    "pads": [
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 1.0,
+        "y": 0.0,
+        "w": 1.41,
+        "h": 1.35,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -1.0,
+        "y": 0.0,
+        "w": 1.41,
+        "h": 1.35,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1722013312
+  },
+  "C165948": {
+    "title": "TYPE-C-31-M-12",
+    "package": null,
+    "footprint": "USB-C_SMD-TYPE-C-31-M-12_1",
+    "manufacturer": "\u97e9\u56fd\u97e9\u8363",
+    "mpn": "TYPE-C-31-M-12",
+    "pads": [
+      {
+        "number": "B8",
+        "shape": "RECT",
+        "x": -1.7501,
+        "y": -0.7146,
+        "w": 0.3,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "A5",
+        "shape": "RECT",
+        "x": -1.2499,
+        "y": -0.7146,
+        "w": 0.3,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "B7",
+        "shape": "RECT",
+        "x": -0.7501,
+        "y": -0.7146,
+        "w": 0.3,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "A6",
+        "shape": "RECT",
+        "x": -0.25,
+        "y": -0.7146,
+        "w": 0.3,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "A7",
+        "shape": "RECT",
+        "x": 0.2499,
+        "y": -0.7146,
+        "w": 0.3,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "B6",
+        "shape": "RECT",
+        "x": 0.75,
+        "y": -0.7146,
+        "w": 0.3,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "A8",
+        "shape": "RECT",
+        "x": 1.2497,
+        "y": -0.7146,
+        "w": 0.3,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "B5",
+        "shape": "RECT",
+        "x": 1.75,
+        "y": -0.7146,
+        "w": 0.3,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "A1B12",
+        "shape": "POLYGON",
+        "x": -3.1999,
+        "y": -0.7146,
+        "w": 0.6,
+        "h": 1.3002,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "B1A12",
+        "shape": "POLYGON",
+        "x": 3.2001,
+        "y": -0.7146,
+        "w": 0.6,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "B4A9",
+        "shape": "POLYGON",
+        "x": 2.4003,
+        "y": -0.7146,
+        "w": 0.6,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "A4B9",
+        "shape": "POLYGON",
+        "x": -2.4001,
+        "y": -0.7146,
+        "w": 0.6,
+        "h": 1.3,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "2",
+        "shape": "OVAL",
+        "x": 4.3251,
+        "y": 4.2336,
+        "w": 1.2,
+        "h": 1.8,
+        "layer": "11",
+        "rot": 0.0,
+        "hole_r": 0.4
+      },
+      {
+        "number": "1",
+        "shape": "OVAL",
+        "x": 4.3251,
+        "y": 0.0538,
+        "w": 1.2,
+        "h": 2.0,
+        "layer": "11",
+        "rot": 0.0,
+        "hole_r": 0.4
+      },
+      {
+        "number": "4",
+        "shape": "OVAL",
+        "x": -4.3251,
+        "y": 0.0538,
+        "w": 1.2,
+        "h": 2.0,
+        "layer": "11",
+        "rot": 0.0,
+        "hole_r": 0.4
+      },
+      {
+        "number": "3",
+        "shape": "OVAL",
+        "x": -4.3251,
+        "y": 4.2336,
+        "w": 1.2,
+        "h": 1.8,
+        "layer": "11",
+        "rot": 0.0,
+        "hole_r": 0.4
+      }
+    ],
+    "updated": 1757297676
+  },
+  "C1746": {
+    "title": "CL21A475KOFNNNE",
+    "package": null,
+    "footprint": "C0805",
+    "manufacturer": "SAMSUNG(\u4e09\u661f)",
+    "mpn": "CL21A475KOFNNNE",
+    "pads": [
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 1.0,
+        "y": 0.0,
+        "w": 1.41,
+        "h": 1.35,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -1.0,
+        "y": 0.0,
+        "w": 1.41,
+        "h": 1.35,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1713799636
+  },
+  "C25092": {
+    "title": "0402WGF220JTCE",
+    "package": null,
+    "footprint": "R0402",
+    "manufacturer": "UNI-ROYAL(\u539a\u58f0)",
+    "mpn": "0402WGF220JTCE",
+    "pads": [
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 0.4328,
+        "y": 0.0,
+        "w": 0.5657,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -0.4328,
+        "y": 0.0,
+        "w": 0.5657,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1700721923
+  },
+  "C25104": {
+    "title": "0402WGF3300TCE",
+    "package": null,
+    "footprint": "R0402",
+    "manufacturer": "UNI-ROYAL(\u539a\u58f0)",
+    "mpn": "0402WGF3300TCE",
+    "pads": [
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 0.4328,
+        "y": 0.0,
+        "w": 0.5657,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -0.4328,
+        "y": 0.0,
+        "w": 0.5657,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1700616910
+  },
+  "C25744": {
+    "title": "0402WGF1002TCE",
+    "package": null,
+    "footprint": "R0402",
+    "manufacturer": "UNI-ROYAL(\u539a\u58f0)",
+    "mpn": "0402WGF1002TCE",
+    "pads": [
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 0.4328,
+        "y": 0.0,
+        "w": 0.5657,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -0.4328,
+        "y": 0.0,
+        "w": 0.5657,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1743097608
+  },
+  "C25900": {
+    "title": "0402WGF4701TCE",
+    "package": null,
+    "footprint": "R0402",
+    "manufacturer": "UNI-ROYAL(\u539a\u58f0)",
+    "mpn": "0402WGF4701TCE",
+    "pads": [
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 0.4328,
+        "y": 0.0,
+        "w": 0.5657,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -0.4328,
+        "y": 0.0,
+        "w": 0.5657,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1700720460
+  },
+  "C25905": {
+    "title": "0402WGF5101TCE",
+    "package": null,
+    "footprint": "R0402",
+    "manufacturer": "UNI-ROYAL(\u539a\u58f0)",
+    "mpn": "0402WGF5101TCE",
+    "pads": [
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 0.4328,
+        "y": 0.0,
+        "w": 0.5657,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -0.4328,
+        "y": 0.0,
+        "w": 0.5657,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1700720728
+  },
+  "C2678753": {
+    "title": "PCA9685PW,118",
+    "package": null,
+    "footprint": "TSSOP-28_L9.7-W4.4-P0.65-LS6.4-TL",
+    "manufacturer": "NXP(\u6069\u667a\u6d66)",
+    "mpn": "PCA9685PW,118",
+    "pads": [
+      {
+        "number": "1",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": -4.2252,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "2",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": -3.5752,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "3",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": -2.9249,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "4",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": -2.275,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "5",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": -1.625,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "6",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": -0.975,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "7",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": -0.325,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "8",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": 0.325,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "9",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": 0.975,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "10",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": 1.625,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "11",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": 2.275,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "12",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": 2.9249,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "13",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": 3.5749,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "14",
+        "shape": "OVAL",
+        "x": -3.1999,
+        "y": 4.2252,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "15",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": 4.2252,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "16",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": 3.5749,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "17",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": 2.9249,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "18",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": 2.275,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "19",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": 1.625,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "20",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": 0.975,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "21",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": 0.325,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "22",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": -0.325,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "23",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": -0.975,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "24",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": -1.625,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "25",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": -2.275,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "26",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": -2.9249,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "27",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": -3.5749,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "28",
+        "shape": "OVAL",
+        "x": 3.1999,
+        "y": -4.2249,
+        "w": 1.8034,
+        "h": 0.4064,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1691463606
+  },
+  "C2913202": {
+    "title": "ESP32-S3-WROOM-1(N16R8)",
+    "package": null,
+    "footprint": "WIRELM-SMD_ESP32-S3-WROOM-1",
+    "manufacturer": "ESPRESSIF(\u4e50\u946b)",
+    "mpn": "ESP32-S3-WROOM-1-N16R8",
+    "pads": [
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": -10.4912,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": -9.2212,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "3",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": -7.9512,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "4",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": -6.6812,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "5",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": -5.4112,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "6",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": -4.1412,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "7",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": -2.8712,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "8",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": -1.6012,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "9",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": -0.3312,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "10",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": 0.9388,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "11",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": 2.2088,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "12",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": 3.4788,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "13",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": 4.7488,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "14",
+        "shape": "RECT",
+        "x": -8.4745,
+        "y": 6.0188,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "15",
+        "shape": "RECT",
+        "x": -6.7095,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "16",
+        "shape": "RECT",
+        "x": -5.4395,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "17",
+        "shape": "RECT",
+        "x": -4.1695,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "18",
+        "shape": "RECT",
+        "x": -2.8995,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "19",
+        "shape": "RECT",
+        "x": -1.6295,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "20",
+        "shape": "RECT",
+        "x": -0.3595,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "21",
+        "shape": "RECT",
+        "x": 0.9105,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "22",
+        "shape": "RECT",
+        "x": 2.1805,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "23",
+        "shape": "RECT",
+        "x": 3.4505,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "24",
+        "shape": "RECT",
+        "x": 4.7205,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "25",
+        "shape": "RECT",
+        "x": 5.9905,
+        "y": 7.2987,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "26",
+        "shape": "RECT",
+        "x": 7.2605,
+        "y": 7.2687,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "27",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": 6.0188,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "28",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": 4.7488,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "29",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": 3.4788,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "30",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": 2.2088,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "31",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": 0.9388,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "32",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": -0.3312,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "33",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": -1.6012,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "34",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": -2.8712,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "35",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": -4.1412,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "36",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": -5.4112,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "37",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": -6.6812,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "38",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": -7.9512,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "39",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": -9.2212,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "40",
+        "shape": "RECT",
+        "x": 9.0256,
+        "y": -10.4912,
+        "w": 1.5,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 180.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "41",
+        "shape": "RECT",
+        "x": 0.1755,
+        "y": -1.3711,
+        "w": 0.9,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "41",
+        "shape": "RECT",
+        "x": -1.2246,
+        "y": -1.3711,
+        "w": 0.9,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "41",
+        "shape": "RECT",
+        "x": -2.6246,
+        "y": -1.3711,
+        "w": 0.9,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "41",
+        "shape": "RECT",
+        "x": -2.6246,
+        "y": -4.1712,
+        "w": 0.9,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "41",
+        "shape": "RECT",
+        "x": -1.2246,
+        "y": -4.1712,
+        "w": 0.9,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "41",
+        "shape": "RECT",
+        "x": 0.1755,
+        "y": -4.1712,
+        "w": 0.9,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "41",
+        "shape": "RECT",
+        "x": 0.1755,
+        "y": -2.7711,
+        "w": 0.9,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "41",
+        "shape": "RECT",
+        "x": -2.6246,
+        "y": -2.7711,
+        "w": 0.9,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "41",
+        "shape": "RECT",
+        "x": -1.2246,
+        "y": -2.7711,
+        "w": 0.9,
+        "h": 0.9,
+        "layer": "1",
+        "rot": 90.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1744299972
+  },
+  "C318884": {
+    "title": "TS-1187A-B-A-B",
+    "package": null,
+    "footprint": "SW-SMD_4P-L5.1-W5.1-P3.70-LS6.5-TL_H1.5",
+    "manufacturer": "XKB Connection(\u4e2d\u56fd\u661f\u5764)",
+    "mpn": "TS-1187A-B-A-B",
+    "pads": [
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -3.0,
+        "y": -1.8499,
+        "w": 1.0,
+        "h": 0.75,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 3.0,
+        "y": -1.8499,
+        "w": 1.0,
+        "h": 0.75,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "3",
+        "shape": "RECT",
+        "x": -3.0,
+        "y": 1.8499,
+        "w": 1.0,
+        "h": 0.75,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "4",
+        "shape": "RECT",
+        "x": 3.0,
+        "y": 1.8499,
+        "w": 1.0,
+        "h": 0.75,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1757403670
+  },
+  "C52923": {
+    "title": "CL05A105KA5NQNC",
+    "package": null,
+    "footprint": "C0402",
+    "manufacturer": "SAMSUNG(\u4e09\u661f)",
+    "mpn": "CL05A105KA5NQNC",
+    "pads": [
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 0.4201,
+        "y": 0.0,
+        "w": 0.5,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -0.4201,
+        "y": 0.0,
+        "w": 0.5,
+        "h": 0.54,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1742924723
+  },
+  "C970714": {
+    "title": "RVT1C102M1010_C970714",
+    "package": null,
+    "footprint": "CAP-SMD_BD10.0-L10.3-W10.3-FD",
+    "manufacturer": "DMBJ(\u632f\u5b9d\u4f73)",
+    "mpn": "RVT1C102M1010 1000UF 16V",
+    "pads": [
+      {
+        "number": "1",
+        "shape": "RECT",
+        "x": -4.4999,
+        "y": 0.0,
+        "w": 4.5,
+        "h": 1.65,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      },
+      {
+        "number": "2",
+        "shape": "RECT",
+        "x": 4.4999,
+        "y": 0.0,
+        "w": 4.5,
+        "h": 1.65,
+        "layer": "1",
+        "rot": 0.0,
+        "hole_r": 0.0
+      }
+    ],
+    "updated": 1742385020
+  },
+  "_provenance": {
+    "kind": "captured supplier footprint reference input, not a pass report",
+    "checkedDate": "2026-11-09",
+    "source": "JLCEDA/EasyEDA Official Library",
+    "urls": [
+      "https://lceda.cn/",
+      "https://easyeda.com/"
+    ],
+    "api": "https://easyeda.com/api/products/{LCSC}/components?version=6.5.22"
+  }
+}

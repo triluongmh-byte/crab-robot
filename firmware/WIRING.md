@@ -1,76 +1,165 @@
-# Đấu dây Robot Cua — nhìn nhãn rồi cắm
+# Đấu dây Robot Cua — đọc nhãn, không đếm chân
 
-> **Phiên bản baseline 06/11:** source này dùng LED GPIO21. Board của chủ đã nạp firmware mới ngày 09/11 dùng GPIO1; xem [hướng dẫn hiện tại](../docs/PCA9685-VA-DAU-DAY.md) và [trạng thái](../docs/STATUS.md). Bốn dây PCA và CH0–CH7 không đổi.
+Bản ráp dùng **LILYGO T-Display-S3 non-touch, sơ đồ 29/04/2024**, 1 PCA9685, 8 SG90, thanh WS2812 8 bóng và pin dự phòng 2 cổng USB 5 V. Các bảng đấu dây thủ công bên dưới vẫn dùng cho thân robot hiện tại, lấy từ hợp đồng giao diện và `crab/config.h`. Board giả cũ không đặt mua, không lắp vào robot. Bản board tích hợp thay LILYGO/PCA có mục riêng ở [cuối tài liệu](#integrated-board). Carrier của note 3 đã bị note 4 thay thế, không dùng để ráp board mới.
 
-**Bản dùng dây trực tiếp:** LILYGO T-Display-S3 **non-touch**, PCA9685 địa chỉ **0x40**, 8 SG90, thanh KK10 8 WS2812. **BOARD GIẢ KiCad không đặt, không lắp vào robot.** Sơ đồ KiCad không phải sơ đồ dây robot; dùng tài liệu này và `crab/Config.h`.
+## Bản LILYGO đấu dây thủ công — giữ cho bộ module cũ
 
-![Sơ đồ nối dây hai cổng nguồn](wiring.svg)
+**Rút cả hai cổng pin dự phòng trước khi cắm dây.** Nhìn mặt có chữ của từng module; xoay module để đọc chữ ngay bên chân. Vị trí các chân trên clone có thể khác. Bảng dưới dùng nhãn in trên board, không dùng thứ tự trái/phải trong hình. Nếu thiếu hoặc khác nhãn, dừng ở dây đó và đối chiếu đúng module; không đoán theo vị trí.
 
-## Trước khi cắm
+![Sơ đồ dây có màu; luôn đối chiếu nhãn](assets/wiring.svg)
 
-Rút **cả hai đầu USB-A khỏi pin dự phòng**. Nhìn mặt có chữ trên module. Đọc đúng **nhãn in bên cạnh từng chân**, không đếm từ đầu giắc và không suy từ vị trí trong hình: ảnh/sơ đồ không phải thước đo hay pinout của mọi clone. LILYGO đặt màn hình hướng lên, USB-C ở đầu sau của thân; PCA đặt mặt có chữ/kênh lên trên. Hàng servo có ba đường **PWM / V+ / GND**. Không cắm khi chưa nhận ra đúng nhãn.
+## Cắm dây tín hiệu và đèn
 
-**GIẢ ĐỊNH:** board LILYGO đúng schematic ngày 29/04/2024, có sẵn chân cắm, nhãn `18`, `17`, `21`, `3V` (hoặc `3V3`) và `GND`. PCA đúng kiểu Adafruit, có VCC, V+, GND, SDA, SCL, OE; A0–A5 không nối cầu hàn (0x40). Không đổi sang board touch. Nếu chữ trên board khác, dừng phần dây đó và đối chiếu đúng mẫu trước; firmware không tự đổi chân.
+Dây Dupont cái–cái. Màu chỉ giúp nhận ra dây; **hai đầu đúng nhãn mới quyết định đúng**. Chữ `VCC` và `V+` trên PCA9685 có nghĩa khác nhau.
 
-## 1 — Nguồn, chỉ dùng pin dự phòng 5 V mua sẵn
+| Màu đề nghị | Từ nhãn trên LILYGO | Đến nhãn trên PCA9685 | Ý nghĩa |
+|---|---|---|---|
+| Xanh lá | `18` | `SDA` ở hàng đầu vào 6 chân | I²C SDA, 3,3 V |
+| Xanh dương | `17` | `SCL` ở hàng đầu vào 6 chân | I²C SCL, 3,3 V |
+| Đỏ mảnh | `3V` | `VCC` ở hàng đầu vào | Nguồn logic 3,3 V, **không phải V+** |
+| Đen | `G` hoặc `GND` | `GND` ở hàng đầu vào | Nối chung mass giữa hai module |
+| Vàng | `1` | **Không qua PCA** → `DIN` hoặc `IN` trên thanh LED | Dữ liệu đèn; nhìn mũi tên hướng vào bóng đầu |
 
-| Từ đâu — nhãn | Đến đâu — nhãn | Dây / cách làm |
+| Màu đề nghị | Từ PCA9685, hàng 6 chân phía đầu ra | Đến thanh WS2812 |
 |---|---|---|
-| Pin dự phòng, cổng USB-A **1** | USB-C LILYGO | Cáp USB-A → USB-C **có truyền dữ liệu**, ngắn, đầu gập nếu cần |
-| Pin dự phòng, cổng USB-A **2** | Terminal PCA **V+ / +** | Cáp USB-A ra hai dây: **đỏ +5 V** vào V+, siết vít terminal |
-| Cùng cáp cổng 2 | Terminal PCA **GND / −** | **Đen GND** vào GND, siết vít terminal |
+| Đỏ | `V+` | `5V` hoặc `VCC` |
+| Đen | `GND` | `GND` |
 
-Hai nguồn 5 V đến từ hai cổng riêng, không nối V+ servo vào chân 5V của LILYGO. Không dùng pin rời, không có mạch nguồn tự ráp. Không cắm thêm pin lithium vào LILYGO. Dây trần chỉ nằm trong terminal, không ló sợi đồng ra ngoài; kéo nhẹ từng dây để kiểm đã giữ chắc.
+Để trống `OE`, các chân `V+` ở hàng đầu vào và các chân tín hiệu phía đầu ra không ghi ở bảng. Không nối LED vào chân 5 V/3 V của LILYGO. Không nối `VCC` của PCA với `V+`. Không dùng GPIO16/43/44/3/4/21 hoặc chân LCD.
 
-## 2 — Bốn dây tín hiệu giữa hai module
+GIẢ ĐỊNH: PCA9685 clone có thứ tự và chức năng nhãn như Adafruit, địa chỉ mặc định `0x40` (các cầu A0…A5 để nguyên), có điện trở giữ OE ở mức bật. GIẢ ĐỊNH: LILYGO là non-touch, GPIO17/18 dùng được cho I²C. Không thêm điện trở hay mạch nguồn.
 
-| Nhãn LILYGO → nhãn PCA9685 | Màu gợi ý | Ý nghĩa |
+## Cắm 8 giắc servo
+
+Đặt robot quay đầu về phía trước (+X). **Trái/phải là của robot**, không phải người đứng đối diện. Hông là servo gắn thân; gối là servo trên chân. Dùng tem giấy ghi CH0…CH7 lên dây trước khi luồn qua chân.
+
+| Kênh PCA | Khớp | Vị trí |
 |---|---|---|
-| **18 (GPIO18) → SDA** | Xanh lá | Dữ liệu I²C 3,3 V |
-| **17 (GPIO17) → SCL** | Vàng | Nhịp I²C 3,3 V |
-| **3V / 3V3 → VCC** | Cam | Nguồn logic 3,3 V; **VCC khác V+** |
-| **GND → GND** | Đen | Dây mass chung, phải có dù hai USB cùng pin dự phòng |
+| 0 | Hông trước trái | FL |
+| 1 | Gối trước trái | FL |
+| 2 | Hông trước phải | FR |
+| 3 | Gối trước phải | FR |
+| 4 | Hông sau trái | RL |
+| 5 | Gối sau trái | RL |
+| 6 | Hông sau phải | RR |
+| 7 | Gối sau phải | RR |
 
-Dùng Dupont cái–cái. Chân **OE để trống**, theo module Adafruit có sẵn kéo xuống. Không nối VCC PCA vào 5 V; các điện trở kéo lên I²C trên module phải về VCC = 3,3 V. Không thêm điện trở/tụ rời. GPIO16 có RINT kéo lên và GPIO43 phát UART lúc ROM khởi động: **không dùng hai chân này**. Chân 0 là nút BOOT sẵn trên board; không phải dây nối ra servo.
+Mỗi giắc 3 dây: **nâu → hàng `GND`/`−`, đỏ → hàng `V+`/`+`, cam → hàng `PWM`/`S`**. Nhìn chữ trên PCA, không đoán từ mép board. Để CH8…CH15 trống; hai SG90 dự phòng để rời. Chừa một vòng dây mềm qua mỗi khớp, giữ dây khỏi horn, cạnh vỏ và khe nắp. Dây không được căng khi chân đi hết góc; kiểm việc này khi chưa cấp nguồn, không ép quay hộp số.
 
-## 3 — Tám giắc SG90 nguyên bộ
+## Cắm nguồn sau cùng
 
-Nhìn từ trên robot, **đầu cua hướng ra xa bạn**: trái là trái của cua. Hông nằm trên thân, gối nằm trên chân. Mỗi giắc 3 dây cắm vào một kênh: **nâu/đen → GND**, **đỏ → V+**, **cam/vàng → PWM**. Đối chiếu chữ trên PCA; không dựa riêng vào màu nhựa hay phía mép board.
+1. Cổng USB số 1 của pin dự phòng → cáp USB-A–USB-C **có dữ liệu** → USB-C LILYGO. LILYGO chỉ lấy nguồn từ cáp này.
+2. Cổng USB số 2 → đầu chuyển USB ra terminal. Nhãn **`+` của đầu chuyển → `V+` terminal PCA9685** bằng **hai dây đỏ song song**. Nhãn **`−` → `GND` terminal PCA9685** bằng **hai dây đen song song**. Dùng Dupont đực–đực theo GIẢ ĐỊNH của hợp đồng: kẹp phần kim loại thẳng vào hai terminal, không kẹp vỏ nhựa. Siết chặt, kéo nhẹ từng dây để chắc không tuột; không để kim loại thừa chạm cực kia.
+3. Kiểm lại bằng mắt: không có sợi/đầu kim loại chạm giữa `+` và `−`; hai dây đỏ đúng cực dương cả hai đầu; hai dây đen đúng cực âm. Dây GND chung LILYGO → PCA phải có. Không cần đồng hồ đo.
+4. Đặt thân lên giá chắc để chân không chạm bàn. Lần đầu **để cổng 2 chưa cắm**, cấp cổng 1 để xem QR và cài Wi-Fi; sau đó tắt cả hai cổng trước khi cắm nguồn servo. Khi cấp cả hai cổng, servo vào tư thế đứng lần lượt cách nhau 0,3 giây. Không giữ tay trong khớp.
 
-| Kênh PCA | Servo | Nhãn dây nên dán |
+Chọn pin dự phòng mua sẵn khoảng 5000 mAh, 2 cổng USB-A, **mỗi cổng ≥2,4 A**, tối đa 100×65×15 mm và 120 g, cổng ở đầu ngắn. Ưu tiên loại không tự ngắt khi tải nhẹ. Đây là tiêu chí mua, chưa đo pin thật. Cáp cổng 1 dùng đầu USB-A vuông góc dài ≤22 mm; adapter terminal ≤22×20×15 mm.
+
+GIẢ ĐỊNH: có sẵn hàng chân đã hàn trên LILYGO/PCA. Nếu LILYGO chỉ kèm chân rời, cần người biết hàn gắn hai hàng chân trước; đây là chỗ hàn thứ nhất. GIẢ ĐỊNH: LED có dây/giắc sẵn; nếu chỉ có pad, nhờ hàn một hàng 3 chân đúng `5V/GND/DIN` — chỗ hàn thứ hai và cuối. Không hàn khi đang cấp nguồn.
+
+## Nhìn gì ở lần bật đầu
+
+Màn hình sáng, hiện QR Wi-Fi `CuaRobot-XXXX`. Đèn trang trí tắt. Servo chỉ đứng, không tự đi. Nếu màn hình báo “Kiểm tra dây PCA9685”, rút cả nguồn rồi kiểm bốn dây logic, đúng bản non-touch và địa chỉ 0x40. Sửa xong tắt/bật lại; lỗi I²C được giữ khóa cho đến lần khởi động mới.
+
+Vào web **Ráp** → **Giữa thô 1500 µs** trước khi lắp horn. Sau khi horn khớp đúng, dùng **Tư thế đứng** và các nút +/− để chỉnh ít, rồi **Lưu tâm**, **Xong ráp**. Không lấy chỉnh tâm để bù chân in lệch gương. Chỉ thử đi khi đã thực hiện `CHECKLIST-RAP.md` của project (case/lead tích hợp).
+
+Nếu pin tự tắt: chọn tốc độ Chậm trên web, kiểm chân không mắc, rồi đổi pin có dòng mỗi cổng cao hơn nếu còn lỗi. Nếu dây nguồn ấm: tắt ngay, thay bằng dây đỏ/đen dày hơn trong BOM, không tăng độ sáng. GIẢ ĐỊNH: LED nhận DIN 3,3 V trực tiếp; nếu chớp sai, giảm `LED_BRIGHTNESS` trong `config.h` rồi build/nạp lại, rút ngắn dây DIN, hoặc đổi thanh ghi rõ nhận dữ liệu 3,3 V. Không thêm mạch.
+
+PCA9685 và WS2812 có thể giữ trạng thái khi chỉ reset LILYGO. Firmware tắt PWM và gửi màu đen khi khởi động xong, nhưng không điều khiển được khoảng thời gian reset/BOOT ROM. **Trước khi nạp hoặc reset, rút cổng 2**; không coi nút BOOT là công tắc nguồn. Giữ BOOT lúc robot đang chạy sẽ dừng lệnh đi, sau khoảng 8 giây xóa Wi-Fi, giữ nguyên tâm servo.
+
+<a id="integrated-board"></a>
+
+## Bản board tích hợp — ESP32-S3 + PCA9685 trên cùng PCB
+
+Đã đối chiếu ngày 09/11/2026 với [netlist cuối](../build/board/main.net) và
+PCB thật: [kết quả](BOARD-RECONCILIATION.json), [bảng pad có hash](board-interface.json).
+Đây là bản thay **cả LILYGO và PCA9685 rời**. PCA Shopee **đã mua, chưa xác nhận
+đã nhận**, để dự phòng. Bảng LILYGO phía trên chỉ dùng cho bộ module cũ.
+
+![Dây bản tích hợp; số chân lấy từ netlist cuối](assets/integrated-wiring.svg)
+
+### Chiều nhìn và cách cắm
+
+Rút cả hai nguồn. Nhìn PCB **từ mặt có linh kiện và chữ**, USB-C J1 ở mép trái.
+Nhìn nhãn cạnh từng giắc; pad vuông là chân 1. Đọc tên tín hiệu trước khi cắm,
+không suy thứ tự từ màu dây của nhà bán. J10 chân 1→8 tăng từ trái sang phải
+trên bản vẽ mặt linh kiện. Với servo, dãy chân 1→3 đi từ phía trong PCB ra
+mép hàng giắc: **GND/nâu → 5V/đỏ → PWM/cam**. Kiểm nhãn của đúng PCB.
+
+| Dây / màu đề nghị | Từ đâu | Đến đâu theo netlist cuối |
 |---|---|---|
-| **CH0** | Trước trái, hông | FL-H |
-| **CH1** | Trước trái, gối | FL-K |
-| **CH2** | Trước phải, hông | FR-H |
-| **CH3** | Trước phải, gối | FR-K |
-| **CH4** | Sau trái, hông | RL-H |
-| **CH5** | Sau trái, gối | RL-K |
-| **CH6** | Sau phải, hông | RR-H |
-| **CH7** | Sau phải, gối | RR-K |
+| Cáp USB-A–USB-C có dữ liệu | Cổng 1 pin dự phòng | **J1 USB-C**: PB1_5V cấp logic qua LDO 3,3 V |
+| Hai dây đỏ song song | Adapter USB cổng 2, nhãn `+` | **J12 chân 1**, `SERVO_5V` / `+` |
+| Hai dây đen song song | Adapter USB cổng 2, nhãn `−` | **J12 chân 2**, `GND` / `−` |
+| Vàng | **J11 chân 1**, `DIN` | WS2812 `DIN/IN`, mũi tên vào bóng đầu; không dùng `DOUT` |
+| Đỏ | **J11 chân 2**, `5V` | WS2812 `5V/VCC` |
+| Đen | **J11 chân 3**, `GND` | WS2812 `GND` |
 
-CH8–CH15 để trống; hai SG90 dự phòng để rời. **Vòng dây dư** qua mỗi khớp, giữ dây về phía thân, tránh horn và mép nắp; khi chưa cấp điện, xoay nhẹ trong khoảng cho phép và thấy dây không căng/kẹp. Không ép ngược hộp số servo. Dùng dây rút/đai giữ bó dây, để đầu cáp USB tháo được.
+J12 cửa dây hướng ra mép +X, khoảng trống cạnh vỏ hẹp: **vặn dây trên bàn
+trước khi lắp PCB vào thân**. Kẹp kim loại đúng terminal, kéo nhẹ từng dây,
+không để dây/sợi kim loại thừa chạm cực kia. Không nối hai cực dương 5 V.
+GND đã nối chung trên PCB; không thêm dây Dupont GND hoặc bốn dây LILYGO→PCA.
 
-## 4 — Thanh đèn: nối đầu IN
+| Giắc PCB | Kênh | Servo cắm nguyên giắc | Chân 1 / 2 / 3 |
+|---|---|---|---|
+| J2 | CH0 | Hông trước trái FL | Nâu GND / đỏ 5V / cam PWM |
+| J3 | CH1 | Gối trước trái FL | Như J2 |
+| J4 | CH2 | Hông trước phải FR | Như J2 |
+| J5 | CH3 | Gối trước phải FR | Như J2 |
+| J6 | CH4 | Hông sau trái RL | Như J2 |
+| J7 | CH5 | Gối sau trái RL | Như J2 |
+| J8 | CH6 | Hông sau phải RR | Như J2 |
+| J9 | CH7 | Gối sau phải RR | Như J2 |
 
-| Từ đâu → đến đâu | Màu gợi ý |
-|---|---|
-| LILYGO **21 (GPIO21) → DIN / IN** của thanh | Xanh dương |
-| PCA **V+** ở đầu header còn lại → **5V / VCC** thanh | Đỏ |
-| PCA **GND** ở đầu header còn lại → **GND** thanh | Đen |
+Hai servo dự phòng để rời, CH8…15 không có giắc và luôn tắt. Luồn dây hông
+và dây nguồn dưới PCB trước khi cố định; kiểm không kẹp vào đuôi chân hàn,
+không căng qua khớp. Khoảng trống dưới board hẹp, cần kiểm thực tế khi ráp.
 
-Mũi tên trên thanh đi **từ DIN vào các LED**. Không cắm vào DOUT/OUT. **GIẢ ĐỊNH:** thanh đã có ba dây; nếu chỉ có pad thì cần **3 mối hàn ngắn** ở đầu IN, đây là phần duy nhất có thể phải hàn. Có thể nhờ cửa hàng gắn sẵn dây để chỉ phải cắm. Đừng xoắn dây trần lên pad.
+### Màn hình rời Waveshare 23822, ST7789V2 1,9 inch
 
-Dữ liệu 3,3 V nối trực tiếp là **GIẢ ĐỊNH**, chưa thử với thanh KK10 của bạn. Firmware giới hạn sáng 20%, cả 8 bóng cùng màu, tắt khi chương trình khởi động. Nếu nhấp nháy: rút nguồn, rút ngắn dây DIN và đi DIN sát GND, rồi thử lại. Không đổi dây 5 V của thanh sang 3V: điện áp tối thiểu của WS2812B tham chiếu là 3,5 V, nên cách đó không được bảo đảm. Nếu vẫn nhấp nháy, để thanh đèn rút ra và dùng cua trước; ghi kết quả để chọn thanh thay thế tương thích dữ liệu 3,3 V. Không thêm mạch vào bản này. Xem [DEVIATIONS.md](DEVIATIONS.md).
+Dùng dây 8 lõi đi kèm màn; đầu nhỏ vào màn, các đầu cái vào **J10 theo nhãn**.
+Màu từng lõi tùy nhà bán: gắn tem theo tín hiệu, không đoán theo màu ảnh.
 
-## 5 — Ráp và bật lần đầu, không cần đo điện
+| Chân J10 | Nhãn trên màn / dây | GPIO / nguồn trên PCB |
+|---|---|---|
+| 1 | BL | GPIO38, đèn nền active HIGH |
+| 2 | RST / RES | GPIO5 |
+| 3 | DC | GPIO7 |
+| 4 | CS | GPIO6 |
+| 5 | CLK / SCK | GPIO8 |
+| 6 | DIN / MOSI | GPIO39 |
+| 7 | GND | GND |
+| 8 | VCC | **3V3**, không lấy từ 5 V |
 
-1. Rút cả hai USB; so từng nhãn theo bảng. Không có dây đỏ vào GND, không có V+ vào VCC, không lắp board giả.
-2. Nạp firmware khi **USB cổng 2 chưa cắm**, servo không có nguồn. Xem [README.md](README.md).
-3. **Chưa gắn horn** trong lần thử servo đầu. Kê thân cho các trục/chân không chạm bàn. Cắm cổng 1 rồi cổng 2. Servo nhận xung đứng giữa lần lượt: CH0, CH2, CH4, CH6, CH1, CH3, CH5, CH7, cách nhau 0,3 giây. Trục có thể xoay khi bắt đầu nhận xung.
-4. Đèn tắt. Màn hình có QR và hướng dẫn Wi-Fi. Quét QR, chấp nhận “kết nối không có internet”, mở trang cài Wi-Fi. Nếu điện thoại không tự mở, gõ **http://192.168.4.1/**.
-5. Khi đã vào Wi-Fi nhà, quét QR mới; mở **Trang Ráp**. Bấm đưa 8 servo về 90°. Gắn horn theo tư thế giữa trong hướng dẫn cơ khí, rồi chỉnh từng nấc +/− nếu lệch răng horn, bấm **Lưu tâm**. Giữ tay ngoài vùng chân khi có điện. Chưa bấm Xong Ráp thì nút đi luôn bị khóa.
-6. Thử giữ một nút rồi thả: các khớp ngừng dáng đi và từ từ về đứng. Khóa màn hình điện thoại cũng phải dừng. Nếu cua chạy sai hướng/chân chạm nhau: thả nút, rút cổng 2, kiểm nhãn CH và horn; không dùng trim để che chân in lệch.
+Đây là **SPI mode 0, 10 MHz**, không phải màn i80 của LILYGO. Màn được xoay
+180° trong vỏ theo case D15; firmware đã bù góc này để chữ đọc đúng chiều.
+QR và chữ dùng vùng 320×170, offset (0,35) trong RAM màn; bộ lệnh lấy từ
+[demo Waveshare chính thức](vendor/waveshare-source.json).
 
-Nếu màn hình báo không thấy PCA: rút cả hai nguồn, cắm lại VCC/GND/SDA/SCL theo nhãn. Nếu pin dự phòng tự ngắt khi servo chạy: thả nút, rút cổng 2, dùng pin hai cổng tốt hơn; có thể nhờ người sửa cấu hình giảm `swingRate`, `slowRate`, tăng `gaitPeriodMs` và build lại. Không thêm nguồn tự chế. Các điều chỉ biết khi ráp thật có trong [CHECKLIST-RAP.md](CHECKLIST-RAP.md), không phải kết quả đã đo.
+### Chân nội bộ và trạng thái khởi động
 
-Tắt/bật đủ **hai cổng** khi khởi động lại: PCA/WS2812 có thể nhớ xung/màu nếu chỉ reset MCU trong lúc nguồn module còn bật. Firmware gửi lệnh tắt lại khi chạy; không có công tắc tải do phần cứng bản này không có linh kiện đó.
+SDA18/SCL17→U3 PCA9685, địa chỉ 0x40, logic 3,3 V, 50 Hz; một bộ kéo lên.
+**GPIO21→U3 chân 23 /OE**, R9 10k kéo lên 3V3, HIGH=tắt xung. GPIO15 **NC**,
+không điều khiển nguồn LCD. BOOT GPIO0; USB D−19/D+20 qua điện trở 22Ω.
+GPIO9/40–42/45–48 không nối màn; GPIO4/16/3/43/44 và các chân bộ nhớ không
+được dùng cho chức năng ứng dụng. Không đổi dây để dùng binary LILYGO.
+
+Firmware giữ OE HIGH trước LCD/I²C, xóa cả 16 kênh rồi chỉ hạ OE sau lệnh
+PWM đầu thành công; lỗi I²C khóa OE HIGH tới lần khởi động mới. R9 giữ OE
+HIGH lúc reset/ROM/flash trống. Đây là đối chiếu thiết kế, chưa thử trên board.
+LED vẫn có thể giữ màu qua reset nếu cổng 2 còn điện: **rút cổng 2 trước nạp/reset**.
+
+### Ráp và bật lần đầu
+
+Nhờ xưởng/dịch vụ giao board **đã hàn đủ đầu cắm**. Danh sách từng mối hàn
+còn lại ở [assembly](../engineering/assembly.md): 37 chân PCB nếu xưởng chưa
+hàn THT, và 3 mối ngoài PCB nếu LED chỉ có pad trần. Người ráp không tự hàn
+ESP32, USB-C, PCA hay FPC; màn có dây cắm sẵn.
+
+Rút servo và cổng 2, chỉ cắm USB-C J1 để xem QR và cài Wi-Fi. Sau đó tắt cả
+hai nguồn, cắm dây như bảng, kê thân chắc trước bước Ráp/Giữa thô. Khi cấp
+nguồn servo, các kênh vào đứng lần lượt cách nhau 300 ms, không tự đi.
+Xem [README — nạp bản tích hợp](README.md#nap-board-tich-hop). Quyền nạp cũ
+chỉ dành LILYGO đã nhận diện; agent chưa flash board này hay chạy motor.
+Fit, QR qua cửa vỏ, chiều/góc servo, LED DIN 3,3 V, Wi-Fi và tải pin vẫn cần
+kiểm thật trong checklist ráp của project; test host không xác nhận robot đi được.

@@ -1,11 +1,34 @@
-# Firmware sources — checked 2026-11-06
+# Source evidence — baseline 2026-11-06; note-4 update 2026-11-09
 
-- LILYGO T-Display-S3, commit `1cc41eb1c76b2f3215130a3dd64e7138ce00b482`: [schematic T_Display_S3.pdf dated 4/29/2024](https://github.com/Xinyuan-LilyGO/T-Display-S3/blob/1cc41eb1c76b2f3215130a3dd64e7138ce00b482/schematic/T_Display_S3.pdf), [factory pin_config.h](https://github.com/Xinyuan-LilyGO/T-Display-S3/blob/1cc41eb1c76b2f3215130a3dd64e7138ce00b482/examples/factory/pin_config.h). Inspected the header region and SoC mappings, not just README. P1 SDA=18, SCL=17, TP_RESET=21 on non-touch; GPIO16 TP_INT has RINT100k; U0TXD=43 not used. LCD+BOOT match Config.h. Retrieved reference bytes only in build/firmware/references, not shipped as authored design.
-- [Kame32 kame.cpp](https://github.com/JavierIH/kame32/blob/8f33e489f7425747ab62aeb509777a06d2f14f3e/code/lib/Kame/kame.cpp), commit `8f33e489f7425747ab62aeb509777a06d2f14f3e`, GPLv3. Its independently phased hip/knee oscillators, sine wave movement, stance/swing gating and per-joint calibration inform Robot.cpp. Modified 2026-11-06: adjacent hip/knee PCA channel order, vector projection for 8 directions, one-leg crawl, acceleration/velocity limiting, 600ms deadman and assembly interlock. Original blocking execute()/walk() loops and direct ledc writes are replaced. Full GPL text at firmware/LICENSE; firmware authored source GPL-3.0-or-later. This repository was explicitly named in the brief; no other robot workspace was accessed.
-- [Adafruit PCA9685 pinouts](https://learn.adafruit.com/16-channel-pwm-servo-driver/pinouts): VCC logic vs V+ servo rail, common ground, OE module pull-down. Physical clone identity remains an assembly assumption.
-- [NXP PCA9685 datasheet](https://www.nxp.com/docs/en/data-sheet/PCA9685.pdf): MODE1 sleep/AI/restart, PRE_SCALE121 at25MHz ≈50.03Hz, LEDn ON/OFF register layout and full-off bit. Hardware.h sends on/off counts with per-channel phase offsets.
-- [Worldsemi WS2812B datasheet](https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf), p2 table +3.5…5.3V supply ratings and p3 VIH0.7VDD: supports the recorded deviation. The actual KK10 LED silicon is unidentified; direct3.3V data remains an explicit untested assumption, not a guaranteed logic level.
-- [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) **2.5.43**, cached Setup206_LilyGo_T_Display_S3.h used as a second check of the display interface and panel flags. Project-local TftSetup.h avoids editing the shared cache. Library license remains upstream.
-- [Adafruit NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel) **1.12.3**, shared cache, ESP32 implementation uses the ESP-IDF RMT driver; no bitbang delay in gait logic.
-- [ricmoo QRCode](https://github.com/ricmoo/qrcode) **0.0.1**, shared-cache sources copied under QrEncoder.c/.h with its embedded MIT notice, only header name changed to avoid ESP-IDF collision. C encoder is shared by target and host QR decode tests; independent decoder is ZXing3.1.1.
-- Vietnamese LCD glyph cells generated from system Arial13 by tools/firmware/make_font.py; generated Font.h is checked in, no runtime font dependency. Web uses the phone's system font. Only text/QR display, no external assets fetched at runtime.
+- [Kame32](https://github.com/JavierIH/kame32/tree/8f33e489f7425747ab62aeb509777a06d2f14f3e), `code/lib/Kame/kame.cpp`, specifically `execute`, `walk`, `omniWalk`: amplitude/period/offset/phase oscillator structure. Snapshot `vendor/kame32-original.cpp`; full GPLv3 in `vendor/KAME32-LICENSE`. This project's adapted firmware is GPL-3.0-or-later. Hardware-specific LEDC, blocking loops and old channel ordering were replaced; no claim of copying its physical gait calibration. New direction projection is specific to this robot.
+- [LILYGO official non-touch reference](https://github.com/Xinyuan-LilyGO/T-Display-S3/tree/1cc41eb1c76b2f3215130a3dd64e7138ce00b482), `examples/factory/pin_config.h` and `factory.ino`: verified i80 pin order, power GPIO15 HIGH, RD HIGH, 16 MHz pixel clock, swap XY, mirror(false,true), gap(0,35), invert colour, USB at left in landscape, and the newer-panel LCD_MODULE_CMD_1 register sequence. MIT license is in `vendor/LILYGO-LICENSE`. Reference pin header saved in `vendor/lilygo-pin_config.h`; the full example was inspected as evidence, not compiled. The LILYGO build remains tied to schematic 2024-04-29. Note 4 adds a separate integrated board target; the LILYGO reference is not evidence for the new panel/FPC, backlight circuit or OE wiring. Firmware uses the installed Espressif `esp_lcd` driver.
+- [Adafruit PCA9685 pinouts](https://learn.adafruit.com/16-channel-pwm-servo-driver/pinouts): VCC is logic, V+ is servo power, common GND; matched the contract. Clone pin location is not assumed: WIRING uses labels.
+- [NXP PCA9685 datasheet](https://www.nxp.com/docs/en/data-sheet/PCA9685.pdf): MODE1 AI/sleep, prescale, LEDn full-off fields. Startup off writes are single-register writes so they work even before auto-increment is enabled; prescale121 assumes the nominal25MHz internal oscillator, approximately50Hz. Oscillator tolerance/SG90 range are unmeasured.
+- [Nayuki QR Code generator](https://github.com/nayuki/QR-Code-generator/tree/bcfe1b018cec5f1f91b5705eca5bb4cdd34e9f8d/c), unmodified `qrcodegen.c/.h`, MIT notice embedded in both files. QR version1…5, ECC M with boost, ≥4-module quiet zone, screen integer scale3…4. Host tests use the same encoder and actual pixel size, independently decoded by macOS Vision.
+- [Noto Sans](https://github.com/notofonts/noto-fonts/tree/main/hinted/ttf/NotoSans), Regular, SIL OFL (`assets/OFL.txt`). Downloaded source font retained in `assets/`; its exact SHA256 is in `font-manifest.json`. Embedded12px bitmap includes Vietnamese precomposed tone letters, no font downloaded at runtime.
+- Build runtime: official Espressif Arduino core2.0.14 from shared `ARDUINO_DIRECTORIES_DATA`. Only core WiFi, WebServer, DNSServer, Wire, Preferences and bundled IDF `esp_lcd`/RMT. No local SDK/toolchain install, no cloud dependency, no hardware access.
+
+Release note4 tip: `122b5b3d406fc1cc148b6bf5abaf6c6fc7315e933a95e5565c1b60ee86d35e08`.
+Final board sources `design/main.kicad_pcb`, `build/board/main.net`,
+`engineering/firmware-interface.md` and `engineering/DEVIATIONS.md` establish
+GPIO21 OE, GPIO15 NC and the SPI display fallback. Reviewed hashes and all
+pad groups are in [board-interface.json](board-interface.json).
+
+- [Official Waveshare 1.9inch LCD wiki](https://www.waveshare.com/wiki/1.9inch_LCD_Module)
+  documents the SPI ST7789V2 and links its
+  [official demo archive](https://files.waveshare.com/upload/8/8d/LCD_Module_RPI_code.zip).
+  Downloaded 2026-11-09: exact archive/file SHA256 and URL in
+  `vendor/waveshare-source.json`. Retained C/Python originals in `vendor/`.
+  `LCD_1in9.c::LCD_1IN9_InitReg` supplies all16 register commands and120ms
+  sleep-out delay. `LCD_1inch9.py::ShowImage/SetWindows` supplies landscape
+  MADCTL0x70 and y35 offset (the C demo's orientation handling is inconsistent,
+  so the Python landscape window is used). The firmware uses SPI mode0 at
+  a conservative10MHz per board report. `case/DEVIATIONS.md` D15 turns the
+  panel180°, so MADCTL XOR0xc0=0xb0. No LILYGO init on the new target.
+- Display supply/pinout/backlight: board-team retained manufacturer schematic
+  `engineering/sources/integrated/waveshare.pdf`, and final J10 pad nets;
+  board logic supply3V3 matches the display logic requirement. No FPC guess.
+
+Case D7 servo direction signs remain unchanged; case D15 adds only the screen
+orientation. Hardware, Wi-Fi range, screen/window scan, power bank and movement
+remain untested. No other project/worktree or hardware was accessed.

@@ -1,3 +1,1 @@
-(fp_lib_table (version 7)
- (lib (name "Dummy")(type "KiCad")(uri "${KIPRJMOD}/Dummy.pretty")(options "")(descr "Integral bare pads and KiCad NPTH hole"))
-)
+(fp_lib_table (version 7) (lib (name "Local")(type "KiCad")(uri "${KIPRJMOD}/Local.pretty")(options "")(descr "KiCad bundled sources, localized models")))

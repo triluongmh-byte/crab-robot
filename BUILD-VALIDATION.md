@@ -1,29 +1,37 @@
-# Kiểm tái tạo trước push
+# Source build and remaining blocker
 
-Thiết kế gốc đã đạt `candidate_ready`, `teamReady=true` ở run r001. Bản sửa cuối được tester cơ khí và tích hợp duyệt; không có thử phần cứng.
+This branch is a **work-in-progress integrated controller**, not an order-ready robot packet. Main is unchanged. The current native PCB passes electrical/manufacturing checks, and both firmware targets compile, but its case insertion/tool-access check fails. Do not use the automatic team-ready flag to override that failure.
 
-Ngày 06/11/2026: **PASS**, exit code 0. Clone commit `251ee83f4b717c0e3ad1585b07d39f03540b8fed` vào thư mục trống `/private/tmp/crab-v17f-clean.*/project`, chạy đúng `./build.sh`. Không chép output/cache từ workspace. Sau build, Git trong clone vẫn sạch. Sau commit này chỉ cập nhật tài liệu kết quả, không đổi nguồn build.
+## Required repair
 
-- Board: author/parity/geometry/netlist/STEP đạt; `fab.ready=true`, native và manufacturing 0 findings; không stale.
-- CAD: 18 STEP +18 STL (12 part sản xuất, 3 file thử, 3 nhóm tham chiếu không in); cơ khí đạt, sweep 5° ±30°, khe nhỏ nhất 3,3 mm.
-- Print: native Bambu 3MF đủ 12 part, 2 plate; 6,96 giờ /186,9 g; TEST ONLY + MATING_TEST riêng; tên plate và binding kiểm đạt.
-- Overview 1,45 MB tự chứa và 4 ảnh từ mesh xuất cuối được tái tạo; các link bàn giao trong README, hướng dẫn cơ khí, firmware, wiring, checklist, BOM và index ảnh đều tồn tại.
-- Firmware: binary 790.752 byte được build mới; host Wi-Fi/API/BOOT/Ráp/gait/web/QR/PCA và đối chiếu dấu gối với cơ khí đều đạt. Không cài qua mạng, không flash.
-- Các report liên kết đúng hash của output mới; final assertions và `kicadpy.verify stale` đạt.
+`case/DEVIATIONS.md` D18 requests actual PCB corner notches, moved mounting holes and a recessed USB connector. Those changes exist only as a virtual fit proposal, not routed copper. The current PCB cannot be lowered into the base, and only one of its four screws is reachable. The U1 courtyard/antenna envelope also needs correction at the board handoff so the temporary 0.6 mm nut-seat floor can be restored. A new design-team run must repair the actual native PCB, rebuild case/plates, refresh firmware reconciliation, and pass `case/reports/assembly-access.json` for the **published** board.
 
-Log đầy đủ lưu cục bộ ở thư mục clean build (đường dẫn trong `build/clean-check-directory.txt`), không push cache/log. Ba SVG KiCad cuối đã được raster hóa và xem; ảnh tổng thể/từ trước được xem. Case → Overview không mở được vì môi trường không có cửa sổ; builder đã kiểm headless desktop/phone. Print team được thử lại riêng một lần và vẫn lỗi điều phối đề xuất plate; không chạy lại thiết kế đã đạt.
+The bridge currently has no internal-finding reroute operation after its erroneous candidate-ready result. A fresh owner message is required as a routing trigger; authorization for the repair already exists. This is a tool limitation, not a request for a new engineering decision.
 
-Build cần các công cụ đã cài của Harness trên máy này. Không cài qua mạng, không tự nạp firmware, không chạy motor hoặc máy in. Output/cache không đưa vào Git.
+## Toolchain
 
-## Kiểm lại cho cập nhật hướng dẫn — 09/11/2026
+macOS, KiCad 10.0.5 and the hash-pinned model library, CadQuery 2.7.0 / OCP 7.8.1.1, Bambu Studio CLI, Arduino CLI 1.5.1 with ESP32 core 2.0.14, Pillow, clang/clang++, Node, Swift and Apple Vision. `KICAD_HARNESS_PYTHON` must import kicadpy/Pillow; `KICAD_CASE_PYTHON` must import CadQuery/OCP/numpy/matplotlib/kicadpy. The original owner PETG settings are a source input at `case/print-settings.json`.
 
-Clone sạch commit `289ff22` vào thư mục tạm trống, chạy `./build.sh`: **PASS, exit 0**. Không chép output từ workspace, không cài qua mạng, không nạp/in/chạy motor. Sau build, Git trong clone sạch. Các commit tiếp theo của lần cập nhật này chỉ sửa tài liệu/ảnh SVG, không đổi source build.
+Run `./build.sh` in a normal macOS toolchain process. A restricted agent sandbox can block Bambu startup or Apple Vision inference; those host checks need normal macOS process access. The script fetches two hash-pinned manufacturer reference inputs; it never installs software, flashes, prints, places an order or pays.
 
-- Native board/gate: 0 finding; không stale.
-- CAD: 18 part, sweep ±30° mẫu 5°, khe nhỏ nhất 3,3 mm; kiểm cơ khí đạt.
-- Print: 2 plate, 6,96 giờ / 186,9 g; check-print không lỗi/cảnh báo.
-- Overview, bốn ảnh và toàn bộ file bàn giao baseline được tạo lại.
-- ESP32-S3 compile và host tests core, PCA, interface, gait, QR, web, Wi-Fi đạt.
-- Đã kiểm link Markdown, ảnh, XML SVG và diff không chứa token/backup flash.
+## Pipeline
 
-Đây là kiểm source baseline thân kín, không phải kiểm lại skeleton r2 hay binary đã nạp trên board của chủ. [Phân biệt phiên bản và kết quả thử thật](docs/STATUS.md).
+1. Fetch verified manufacturer inputs and recreate component models from pinned KiCad assets/measured box inputs.
+2. Preserve authored native copper; regenerate XML, STEP, ERC/DRC, orientation evidence and manufacturing packet.
+3. Bind the current board handoff and source-recreate the frozen r1 parts and baseline base. Full STL/STEP hashes guard the frozen geometry; only explicit STEP timestamp/product-name metadata is restored.
+4. Regenerate robot-frame CAD (`case/robot/`), board-frame native copies (`case/out/`), mechanical/native checks, offline Bambu plates and standalone assembly overview.
+5. Regenerate embedded font/UI assets; bind reviewed PCB pins to the fresh XML export only after exact PCB identity/parity checks; compile both hardware targets, reconcile the board and run host/QR/vendor-display tests.
+6. Require actual-board insertion/tool access, print/native checks, firmware evidence and freshness. A virtual fit proposal never satisfies the release check.
+
+The last stage deliberately rejects the current candidate. No check is suppressed or replaced by a successful seated-pose result. Generated reports, packets, CAD, firmware images and caches remain ignored.
+
+## Outputs
+
+- `boards/main.board.json`, `boards/main_review/<current revision>/manufacturing/`: native reports, Gerbers/drills, BOM, CPL and manual-assembly list.
+- `build/board/integrated.step`: actual populated PCB export.
+- `case/robot/`, `case/out/`, `case/reports/`: CAD in the two documented frames and scoped checks.
+- `case/print/production.3mf`, `test-only.3mf`, `mating-test.3mf`: offline arranged projects; no printer job is sent.
+- `case/overview.html`: standalone assembly viewer generated from this build's meshes.
+- `build/firmware/{integrated,esp32}/`: separate complete binary sets. `firmware/BUILD*.json`, `BOARD-RECONCILIATION.json`, `GAIT-REPORT.json` and `TEST-RESULTS.json` are regenerated evidence.
+
+No manufactured board, new physical fit, temperature, radio range or walking test is claimed. The old LILYGO QR confirmation does not validate this PCB.

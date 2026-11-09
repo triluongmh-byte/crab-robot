@@ -1,0 +1,10 @@
+{
+  "family": "esp32",
+  "tool": "arduino-cli",
+  "fqbn": "esp32:esp32:esp32s3:USBMode=hwcdc,CDCOnBoot=cdc,FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=opi,DebugLevel=none",
+  "sketch": "crab",
+  "build": "../build/firmware/integrated",
+  "usbVid": ["0x303a"],
+  "baud": 115200,
+  "compileArgs": ["--jobs", "0", "--build-property", "compiler.cpp.extra_flags=-DCRAB_INTEGRATED_BOARD=1"]
+}
