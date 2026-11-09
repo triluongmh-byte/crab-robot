@@ -1,21 +1,24 @@
-# Đồ để ráp
+# Assembly BOM
 
-Cập nhật 09/11: LILYGO đã có và đã hiện QR/web; PCA9685 chưa có. [Hướng dẫn mua PCA và đấu dây](docs/PCA9685-VA-DAU-DAY.md). Các số vít/nhựa dưới đây thuộc source baseline thân kín 06/11, khác skeleton r2. GIẢ ĐỊNH các món khác theo yêu cầu/ảnh của chủ; nếu còn thiếu thì mua đúng từ khóa và dấu nhận biết dưới đây. Không mua linh kiện cho board giả.
+[Tiếng Việt](BOM.vi.md).
 
-| Nhóm | Món / số lượng | Từ khóa và cách nhận đúng |
+Updated 9 November: the LILYGO is owned and displays QR/web; the PCA9685 is still missing. See the [PCA buying and wiring guide](docs/PCA9685-WIRING.md). Screw and material quantities below belong to the 6 November closed-body source baseline, not skeleton r2. Other owned items are **ASSUMED** from the original request/photos; check before buying duplicates. Do not buy components for the dummy board.
+
+| Category | Item / quantity | Search terms and identification |
 |---|---|---|
-| Đã có | LILYGO T-Display-S3 non-touch ×1 | Màn liền board, ESP32-S3; schematic 29/04/2024; chân cắm sẵn, có nhãn 17,18,1,21,3V,GND; LED tùy phiên bản firmware |
-| Đã có | SG90 ×8 dùng +2 dự phòng | Servo vị trí 180°, không phải continuous; giữ horn một tay và vít trong túi |
-| **Cần mua** | **PCA9685 ×1, hàn sẵn chân** | Tìm **“PCA9685 16 kênh điều khiển servo I2C hàn sẵn chân”**; 16 cụm 3 chân đánh số 0–15, terminal V+/GND; hàng VCC/GND/SDA/SCL. Chọn đủ chân và terminal đã hàn. |
-| Đã có | Thanh KK10 WS2812 8 bóng ×1 | Có 8 LED địa chỉ, đầu **DIN/5V/GND**, không dùng thanh LED trắng hai dây |
-| Đã có | 4 M3×12, 4 M3×20, 8 tán M3 | Không cần long đen/trụ đệm; M3×6/M3×8 để dư; vít SG90 lấy từ túi |
-| Cần mua | Pin dự phòng USB 5V hai cổng ×1 | Tìm “pin dự phòng mỏng 5000mAh 2 USB-A 2.4A”; chọn **≤100×65×15 mm, ≤120 g**, hai cổng cùng dùng được, mỗi cổng ≥2,4 A; cổng trên cạnh ngắn; vỏ kín, không cell rời |
-| Cần mua | Cáp USB-A → USB-C có data ×1 | Cáp ngắn, đầu gập 90° ở USB-C; rút đầu A để nạp, không kéo board ra khỏi thân |
-| Cần mua | USB-A ra terminal/hai dây 5V ×1 | Tìm “USB 5V screw terminal adapter”; đỏ +5V, đen GND, vặn vào terminal PCA; đầu gọn, không cần hàn nguồn |
-| Cần mua | Dây Dupont cái–cái ×7 | Tìm “Dupont female female 10cm”; 4 dây nối LILYGO–PCA, 3 dây LED; nếu thanh chưa có dây nhờ shop hàn sẵn đúng 3 pad IN |
-| Cần mua | Dây rút 2,5×100 mm ×1 | Giữ thanh đèn; thêm dây dư để gom dây nếu cần |
-| Cần mua | Đai/dây rút mở lại được ×1 | Rộng ≤4 mm, dài ≥25 cm; giữ pin, mở ra tháo sạc |
-| Cần mua nếu thiếu | PETG và dụng cụ | PETG khoảng 187 g bộ chính +26 g thử; lục giác 2,5 mm cho vít M3 đầu trụ (GIẢ ĐỊNH), tua vít 4 cạnh nhỏ SG90 |
-| Tùy chọn | Nhờ cửa hàng hàn 3 dây LED | Chỉ khi thanh có pad trần; không thêm mạch hoặc linh kiện nguồn |
+| Owned | LILYGO T-Display-S3 non-touch ×1 | Integrated screen, ESP32-S3; 29 April 2024 schematic; soldered headers labeled 17, 18, 1, 21, 3V, GND. LED pin depends on firmware version. |
+| Owned, assumed | SG90 ×8 installed +2 spare | 180° positional servos, not continuous rotation; keep single-arm horns and supplied screws. |
+| **To buy** | **PCA9685 ×1, headers soldered** | Search **“PCA9685 16 channel servo driver I2C pre soldered”**; sixteen three-pin sockets numbered 0–15, V+/GND screw terminal, VCC/GND/SDA/SCL control pins. Both headers and terminal must be fitted. |
+| Owned, assumed | KK10 WS2812 eight-pixel bar ×1 | Eight addressable LEDs with **DIN/5V/GND** input; not a two-wire white LED strip. |
+| Owned, assumed | 4 M3×12, 4 M3×20, 8 M3 nuts | Baseline quantities; no washers/standoffs. M3×6/M3×8 remain spare; use SG90 bag screws for the servos. |
+| To buy if missing | Two-port 5 V USB power bank ×1 | Search “slim 5000mAh dual USB-A 2.4A power bank”. **≤100×65×15 mm, ≤120 g**, both outputs usable together, ≥2.4 A per port; ports on a short edge; enclosed product, no loose cells. |
+| To buy if missing | USB-A → USB-C data cable ×1 | Short cable, preferably a 90° USB-C plug. Unplug its A end for flashing instead of pulling the board out. |
+| To buy if missing | USB-A to 5 V screw-terminal adapter ×1 | Search “USB 5V screw terminal adapter”; positive to PCA V+, ground to PCA GND. Compact, no soldering of power leads required. |
+| To buy if missing | Female-to-female Dupont wires ×7 | Search “Dupont female female 10cm”; four LILYGO–PCA wires and three LED connections. If the LED has bare pads, ask the shop to solder its three IN wires. |
+| To buy if missing | Male-to-male Dupont wires ×4 | For the current flashed-board power arrangement: two parallel leads per polarity between the USB adapter and PCA terminal. |
+| To buy if missing | 2.5×100 mm cable ties | Baseline uses one LED tie; skeleton r2 uses two. Keep extras for wire routing. |
+| To buy if missing | Releasable battery strap ×1 | Baseline: width ≤4 mm, length ≥25 cm. Skeleton r2 needs its own ≥42 cm strap per the workspace assembly guide. |
+| To buy if missing | PETG and tools | Baseline: about 187 g production parts +26 g test pieces; 2.5 mm hex key for M3 socket heads (**ASSUMPTION**) and small Phillips screwdriver for SG90 screws. |
+| Optional | Shop-soldered LED input wires | Needed only if the LED has bare pads; no extra power circuit or electronic components. |
 
-Horn/kích thước module phải qua hai bộ in thử. Nếu pin tự ngắt, đổi pin đúng tiêu chí hoặc giảm tốc theo firmware README; không lắp mạch nguồn tự chế. [Đấu dây từng sợi](firmware/WIRING.md), [BOM cơ khí](case/BOM.md).
+Check horn/module fit with both test sets. If the power bank shuts off, choose a suitable bank or reduce motion speed as described in the firmware guide; do not build a custom power circuit. [Baseline wiring, in Vietnamese](firmware/WIRING.md) · [Baseline mechanical BOM, in Vietnamese](case/BOM.md).

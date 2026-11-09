@@ -1,89 +1,89 @@
-# Robot Cua A1 V4
+# Crab Robot A1 V4
 
-<p align="center"><img src="docs/images/assembled.webp" alt="CAD thân kín baseline ngày 06/11, không phải skeleton r2" width="720"></p>
+<p align="center"><img src="docs/images/assembled.webp" alt="Closed-body CAD baseline from 6 November; not the skeleton r2 revision" width="720"></p>
 
-Cua đồ chơi bốn chân, 8 servo SG90: quét QR để cài Wi-Fi rồi lái bằng web trên điện thoại. Dùng **LILYGO T-Display-S3 non-touch + PCA9685 + thanh WS2812 8 bóng**, nguồn pin dự phòng USB 5 V hai cổng. Đấu dây trực tiếp; **board KiCad giả không đặt và không lắp vào robot**.
+A four-legged toy crab with eight SG90 servos. Scan a QR code to set up Wi-Fi, then drive it from a web page on your phone. It uses a **LILYGO T-Display-S3 non-touch, PCA9685 servo driver and eight-pixel WS2812 bar**, powered by a two-port 5 V USB power bank. Everything is hand-wired. **The dummy KiCad board must not be ordered or installed in the robot.**
 
-**[MUA PCA9685 VÀ CẮM DÂY — hướng dẫn cho người mới →](docs/PCA9685-VA-DAU-DAY.md)**
+**[BUYING A PCA9685 AND WIRING IT — beginner's guide →](docs/PCA9685-WIRING.md)**
 
-Ngày 09/11: chủ đã thấy QR, mở web và quét được Wi-Fi trên LILYGO; **còn thiếu PCA9685**, chưa thử servo/LED hoặc đi thật. Chủ báo plate 2 đang in, chưa xác nhận hoàn tất hay độ khít. [Trạng thái và phiên bản](docs/STATUS.md) · [English](README.en.md).
+As of 9 November 2026, the owner has confirmed QR display, web access and Wi-Fi scanning on the LILYGO. **The PCA9685 still needs to be purchased.** Servos, LEDs and walking have not been tested. Plate 2 was reported printing; completion and physical fit are unconfirmed. [Status and versions](docs/STATUS.md) · [Tiếng Việt](README.vi.md).
 
-**Phân biệt hai phiên bản:** source CAD/firmware đang lưu trong repo là baseline 06/11; gallery dưới đây là thân kín baseline. Khung skeleton r2 và firmware đã nạp trên board ngày 09/11 chưa nhập vào bộ source này. **LED DIN của baseline là GPIO21; board đã nạp hiện tại là GPIO1.** Bốn dây PCA và thứ tự CH0–CH7 giống nhau. Không nạp đè baseline chỉ để nối dây cho board đang chạy.
+**Check the version before wiring:** this repository contains the 6 November CAD/firmware baseline, shown in the gallery. The skeleton r2 design and newer firmware flashed on 9 November have not been imported into this source tree. **Baseline LED DIN uses GPIO21; the owner's currently flashed board uses GPIO1.** The four PCA connections and CH0–CH7 assignments are the same. Do not overwrite the working board with the baseline just to follow its wiring guide.
 
-## Cần mua PCA9685 nào?
+## Which PCA9685 should I buy?
 
-Mua **1 module PCA9685 điều khiển 16 servo I²C, đã hàn sẵn chân và terminal**. Từ khóa: `PCA9685 16 kênh điều khiển servo I2C hàn sẵn chân`. Nhận ra qua 16 cụm 3 chân đánh số 0–15, terminal V+/GND và hàng VCC/GND/SDA/SCL. Mẫu “Mạch driver PCA9685 (Driver điều khiển 16 servo), giao tiếp I2C” trong ảnh shop là đúng loại.
+Buy **one PCA9685 16-channel I²C servo driver module with all headers and the screw terminal already soldered**. Search for `PCA9685 16 channel servo driver I2C pre soldered`. Look for 16 groups of three pins numbered 0–15, a V+/GND screw terminal and a VCC/GND/SDA/SCL control header. The module type shown in the owner's shop screenshot is correct.
 
-Hình shop dùng Arduino Uno. Với LILYGO, nối theo **nhãn** sau:
+The shop's example connects to an Arduino Uno. For this LILYGO, follow the **printed labels** below:
 
 | LILYGO | PCA9685 |
 |---|---|
-| 3V / 3V3 | VCC — nguồn logic 3,3 V |
+| 3V / 3V3 | VCC — 3.3 V logic supply |
 | G / GND | GND |
 | 18 | SDA |
 | 17 | SCL |
 
-**VCC khác V+:** nguồn servo 5 V từ cổng 2 pin dự phòng vào terminal V+ và GND; cổng 1 cấp USB-C cho LILYGO. Rút cả hai nguồn trước khi cắm dây. [Hướng dẫn đầy đủ và hình cho board đã nạp](docs/PCA9685-VA-DAU-DAY.md).
+**VCC and V+ are separate:** power-bank port 2 supplies the servo rail through the PCA's V+/GND screw terminal; port 1 supplies the LILYGO through USB-C. Disconnect both supplies before changing wires. [Full instructions and diagram for the flashed board](docs/PCA9685-WIRING.md).
 
-## CH0, CH1 là gì?
+## What do CH0 and CH1 mean?
 
-**CH là số ổ cắm trên PCA9685. Một chân cua có hai servo:** hông gắn vào thân để xoay chân; gối nằm trên chân để nâng/hạ phần dưới. Mỗi servo cắm nguyên giắc 3 dây vào một CH: **nâu → GND/−, đỏ → V+/+, cam → PWM/S**. Đọc nhãn thực trên bo trước khi cắm.
+**CH is a numbered socket on the PCA9685. Each robot leg has two servos:** the hip servo is mounted on the body and swings the whole leg; the knee servo is mounted on the leg and raises or lowers its lower section. Plug each complete three-wire servo connector into one channel: **brown → GND/−, red → V+/+, orange → PWM/S**. Check the labels on the actual module.
 
-| Chân cua | Servo hông, gắn thân | Servo gối, nằm trên chân |
+| Robot leg | Hip servo, on the body | Knee servo, on the leg |
 |---|---:|---:|
-| Trước trái | CH0 | CH1 |
-| Trước phải | CH2 | CH3 |
-| Sau trái | CH4 | CH5 |
-| Sau phải | CH6 | CH7 |
+| Front left | CH0 | CH1 |
+| Front right | CH2 | CH3 |
+| Rear left | CH4 | CH5 |
+| Rear right | CH6 | CH7 |
 
-![Vị trí hông/gối và CH0–CH7, sơ đồ minh họa](docs/images/servo-channels.svg)
+![Hip and knee positions with CH0–CH7 assignments; schematic illustration](docs/images/servo-channels.en.svg)
 
-Trái/phải theo con cua; CH8–CH15 để trống. Hai SG90 dự phòng không lắp. Dán nhãn từng giắc trước khi ráp.
+Left and right are from the robot's perspective. Leave CH8–CH15 empty and keep the two spare SG90s aside. Label each connector before assembly.
 
-## Hình ảnh baseline trong repo
+## Repository baseline gallery
 
-Ảnh CAD và ảnh giao diện, không phải bằng chứng robot đã ráp hoặc đi được. Gallery này là **thân kín 06/11**, không dùng làm hình của skeleton r2.
+These are CAD renders and interface screenshots, not evidence of an assembled or walking robot. They show the **6 November closed-body baseline**, not skeleton r2.
 
 | | |
 |---|---|
-| ![CAD bung baseline](docs/images/exploded.webp) | ![CAD nhìn từ trên baseline](docs/images/top.webp) |
-| Hình bung: nắp và thanh đè nhấc lên | Nhìn từ trên |
-| ![CAD nhìn từ trước baseline](docs/images/front.webp) | ![Sơ đồ dây baseline GPIO21](docs/images/wiring.webp) |
-| Nhìn từ trước | Dây baseline: LED GPIO21; board hiện tại GPIO1 |
+| ![Baseline exploded CAD view](docs/images/exploded.webp) | ![Baseline top CAD view](docs/images/top.webp) |
+| Exploded view: lid and clamp bars lifted | Top view |
+| ![Baseline front CAD view](docs/images/front.webp) | ![Baseline wiring diagram using GPIO21](docs/images/wiring.webp) |
+| Front view | Baseline LED: GPIO21; currently flashed board: GPIO1 |
 
-<p align="center"><img src="docs/images/assembly-overview.webp" alt="Giao diện ráp từng bước của baseline" width="820"><br>Overview baseline: chọn bước để xem part và vít/tán.</p>
+<p align="center"><img src="docs/images/assembly-overview.webp" alt="Baseline step-by-step assembly interface" width="820"><br>Baseline overview: select a step to see its parts and screws/nuts. Interface text is Vietnamese.</p>
 
-<p align="center"><img src="docs/images/web-control.webp" alt="Trang điều khiển web trên điện thoại" width="300"><br>Giữ nút để đi, thả để dừng; mở trang Ráp để chỉnh tâm.</p>
+<p align="center"><img src="docs/images/web-control.webp" alt="Phone web control page" width="300"><br>Hold a direction to move, release to stop. Open the Assembly page to adjust servo centers. Interface text is Vietnamese.</p>
 
-## Ráp và dùng
+## Assembly and use
 
-1. [BOM đã có / cần mua / tùy chọn](BOM.md). LILYGO đã có; cần mua PCA9685 hàn sẵn chân.
-2. Với source baseline, in thử **TEST ONLY + MATING_TEST** trước: `case/print/TEST-ONLY-coupons.3mf` được tạo sau build. Theo [checklist](CHECKLIST-RAP.md); chưa có xác nhận hai bộ thử đạt.
-3. [Hướng dẫn cơ khí baseline](case/README.md), [bản đồ vít](case/fastener_map.csv), overview `case/overview.html` được tạo sau build. Không dùng số vít/thân baseline để thay cho skeleton r2.
-4. Board hiện tại: [mua PCA và đấu dây](docs/PCA9685-VA-DAU-DAY.md). Khi tự build firmware baseline: [WIRING](firmware/WIRING.md), [cách build/nạp](firmware/README.md). Rút nguồn servo khi nạp.
-5. Quét QR Wi-Fi, chọn mạng 2,4 GHz rồi nhập mật khẩu. Nếu trang không tự mở, dùng `http://192.168.4.1/`. Sau khi vào mạng, quét QR địa chỉ web. Giữ BOOT 8 giây để xóa Wi-Fi. Kê chân trước khi thử servo; dùng trang Ráp đưa servo về giữa trước khi gắn horn.
+1. Check the [BOM: owned, to buy and optional](BOM.md). The LILYGO is already owned; buy a PCA9685 with soldered headers.
+2. For the baseline source, print **TEST ONLY + MATING_TEST** first: `case/print/TEST-ONLY-coupons.3mf` is generated by the build. Follow the [assembly checklist, in Vietnamese](CHECKLIST-RAP.md); neither test set has a confirmed physical pass.
+3. Follow the [baseline mechanical guide, in Vietnamese](case/README.md) and [fastener map](case/fastener_map.csv). The build creates `case/overview.html`. Baseline body dimensions and screw quantities do not describe skeleton r2.
+4. For the currently flashed board, use the [PCA buying and wiring guide](docs/PCA9685-WIRING.md). If building baseline firmware, use its [wiring guide](firmware/WIRING.md) and [build/flash instructions](firmware/README.md), both in Vietnamese. Disconnect servo power before flashing.
+5. Scan the Wi-Fi QR, select a 2.4 GHz network and enter its password. If the setup page does not open, visit `http://192.168.4.1/`. After joining the network, scan the web-address QR. Hold BOOT for eight seconds to erase saved Wi-Fi. Support the body with the feet clear before servo tests, and center the servos in the Assembly page before fitting horns.
 
-## Thông số source baseline 06/11
+## Source baseline specifications — 6 November
 
-| Mục | Baseline trong repo |
+| Item | Repository baseline |
 |---|---|
-| Thân không tính chân | 126 × 75 × 47 mm |
-| Part in | 12 |
-| Vít / tán | 4 M3×12 + 4 M3×20, 8 tán; thêm vít túi SG90 |
-| In PETG, Bambu A1 | 2 plate, khoảng 4h27 + 2h30; 186,9 g |
-| Robot gồm pin | Khoảng 430–440 g, **ước tính** |
-| Kiểm CAD | ±30°, mẫu mỗi 5°, khe nhỏ nhất 3,3 mm; đối xứng 0 mm / 0° |
+| Body, excluding legs | 126 × 75 × 47 mm |
+| Printed production parts | 12 |
+| Screws / nuts | 4 M3×12 + 4 M3×20, 8 M3 nuts; plus screws supplied with SG90s |
+| PETG print, Bambu A1 | Two plates, about 4h27 + 2h30; 186.9 g |
+| Robot including battery | About 430–440 g, **estimated** |
+| CAD checks | ±30°, sampled every 5°; minimum clearance 3.3 mm; symmetry error 0 mm / 0° |
 
-Cấu hình: nozzle 0,4 mm, layer 0,20 mm, 2 walls, 7% Grid, tree auto. Các số này là kết quả baseline, không phải kết quả đo bản in hoặc số liệu skeleton r2.
+Settings: 0.4 mm nozzle, 0.20 mm layers, two walls, 7% Grid infill and automatic tree supports. These are baseline results, not physical measurements or skeleton r2 figures.
 
-## GIẢ ĐỊNH và phần kiểm bằng tay
+## Assumptions and manual checks
 
-Kích thước SG90/horn và module theo tham chiếu; phải thử coupon, horn và độ giữ module thực. Pin tối đa 100×65×15 mm, 120 g, mỗi cổng ≥2,4 A; dòng thực, tự ngắt và khối lượng chưa thử. LED dùng data 3,3 V là GIẢ ĐỊNH: dây DIN ngắn sát GND; còn nhấp nháy thì rút LED và dùng robot trước.
+SG90/horn and module dimensions come from references; check the coupon, horn fit and module retention on the real parts. Power-bank limits are 100×65×15 mm, 120 g and at least 2.4 A per port. Actual current, automatic shutoff and assembled weight remain untested. Direct 3.3 V LED data is an **ASSUMPTION**: keep DIN short and next to GND; if it still flickers, disconnect the LED bar and use the robot without it.
 
-Theo ghi chú tester, cần kiểm hốc/horn, đường uốn dây dưới board, QR khi đóng nắp, chiều servo, độ bám sàn và pin tự ngắt. Mô phỏng không chứng minh độ bền hay đi thật. [Checklist đạt/không đạt và cách xử lý](CHECKLIST-RAP.md). QR/web đã được chủ xác nhận trên board để rời với firmware mới; chưa có xác nhận cho binary baseline tự build.
+Tester notes call for checking servo pockets/horns, wire bends under the boards, QR scanning with the lid fitted, real servo directions, floor grip and power-bank shutoff. Simulation does not prove strength or walking. See the [pass/fail checklist and remedies, in Vietnamese](CHECKLIST-RAP.md). QR/web have been confirmed on the loose board running the newer firmware; the baseline binary has no separate physical confirmation.
 
-## Tái tạo từ source
+## Build from source
 
-Chạy `./build.sh` trong môi trường KiCad Harness đã cài KiCad, CadQuery, Bambu Studio, Arduino CLI/core và thư viện dùng chung. Script không tải/cài qua mạng, không nạp, in hay đặt hàng. Thứ tự: board và STEP → CAD → plate/3MF → overview/ảnh → firmware/tests. [Yêu cầu và kết quả build](BUILD-VALIDATION.md).
+Run `./build.sh` in a KiCad Harness environment with KiCad, CadQuery, Bambu Studio, Arduino CLI/core and shared libraries already installed. It does not download or install tools, flash hardware, print or place orders. Order: board and STEP → CAD → plates/3MF → overview/images → firmware/tests. See the [build requirements and validation record, in Vietnamese](BUILD-VALIDATION.md).
 
-Git lưu source, input và tài liệu; output/cache được ignore. Các đường dẫn `case/out/`, `case/print/`, `case/overview.html`, `case/images/` và `build/firmware/` chỉ xuất hiện sau build; ảnh thu nhỏ trong README được giữ riêng để xem ngay trên GitHub. Khi đổi máy, chỉnh đường thư viện trong `firmware/flash.json` theo hướng dẫn firmware. [Nguồn CAD](case/) · [Nguồn firmware](firmware/crab/) · [Yêu cầu gốc](prompts/original.md).
+Git stores sources, inputs and documentation; generated outputs and caches are ignored. `case/out/`, `case/print/`, `case/overview.html`, `case/images/` and `build/firmware/` appear after a build. Curated README thumbnails are stored separately so they display on GitHub. On another machine, update the library path in `firmware/flash.json` as described in the firmware guide. [CAD source](case/) · [Firmware source](firmware/crab/) · [Original request, in Vietnamese](prompts/original.md).

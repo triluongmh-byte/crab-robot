@@ -1,5 +1,7 @@
 # Mua PCA9685 và cắm dây cho Robot Cua
 
+[English](PCA9685-WIRING.md).
+
 Bản hướng dẫn cho **Robot Cua A1 V4, khung skeleton A1V4-r2**, LILYGO T-Display-S3 non-touch. Cập nhật ngày 2026-11-09 theo firmware đã nạp trên board của chủ.
 
 **Chọn đúng phiên bản trước khi nối LED:** board đã nạp ngày 09/11 dùng **GPIO1**; source baseline 06/11 đang lưu trong repo dùng **GPIO21** trong [Config.h](../firmware/crab/Config.h). Bốn dây PCA và CH0–CH7 giống nhau. Hướng dẫn/hình dưới đây dành cho board đã nạp ngày 09/11; nếu tự build baseline trong repo, dùng GPIO21 cho DIN. Khung skeleton r2 đã kiểm ở workspace, chưa được nhập vào bộ source baseline này. Đừng nạp đè baseline để làm theo hướng dẫn board hiện tại.

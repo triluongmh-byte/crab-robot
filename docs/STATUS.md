@@ -1,22 +1,24 @@
-# Trạng thái thực tế — 09/11/2026
+# Hardware status — 9 November 2026
 
-- Chủ có LILYGO T-Display-S3 non-touch. Firmware bản workspace hiện tại đã nạp vào ESP32-S3 và đọc kiểm tra lại các vùng bootloader, partition và app thành công.
-- Chủ xác nhận thấy QR, mở được trang web và thấy Wi-Fi công ty trong danh sách quét. Chưa có xác nhận kết nối thành công vào mạng công ty.
-- Hiện chỉ board và màn hình được cấp USB; chưa có PCA9685. Chủ cần mua 1 module hàn sẵn chân theo [hướng dẫn](PCA9685-VA-DAU-DAY.md).
-- Chủ báo plate 2 đang in, chưa xác nhận in xong/khít. Không coi ảnh slice là xác nhận part đã in.
-- Chưa thử servo, LED, nguồn pin dưới tải, độ bền khung hoặc đi trên sàn.
+[Tiếng Việt](STATUS.vi.md).
 
-## Hai phiên bản phải phân biệt
+- The owner has a LILYGO T-Display-S3 non-touch. The newer workspace firmware was flashed onto its ESP32-S3; bootloader, partition and application regions were read back and verified successfully.
+- The owner confirmed the QR display, web access and the company Wi-Fi appearing in the scan list. Successful connection to that network has not been confirmed.
+- Only the board and screen are USB-powered. The owner does not yet have a PCA9685 and needs one module with soldered headers: see the [buying guide](PCA9685-WIRING.md).
+- Plate 2 was reported printing. Completion and fit have not been confirmed; a slicer preview does not prove a physical print exists.
+- Servos, LEDs, power-bank behavior under load, frame strength and floor walking remain untested.
 
-| Mục | Source baseline trong GitHub (06/11) | Bản workspace/board của chủ (09/11) |
+## Keep the two versions separate
+
+| Item | GitHub source baseline, 6 November | Owner's workspace/flashed board, 9 November |
 |---|---|---|
-| Thân | Thân kín ban đầu, ảnh trong gallery README | Skeleton A1V4-r2, hở board và dây |
+| Body | Original closed body, shown in the README gallery | Skeleton A1V4-r2, exposing boards and wires |
 | LED DIN | GPIO21 | GPIO1 |
-| SDA / SCL / VCC logic | GPIO18 / GPIO17 / 3,3 V | Giống baseline |
-| CH0–CH7 | Hông/gối FL, FR, RL, RR | Giống baseline |
-| Ngắt khi mất heartbeat | 600 ms | 500 ms |
-| Phần cứng đã thử | Không có xác nhận riêng cho binary baseline | QR, web và quét Wi-Fi trên board để rời |
+| SDA / SCL / logic VCC | GPIO18 / GPIO17 / 3.3 V | Same as baseline |
+| CH0–CH7 | Hip/knee pairs for FL, FR, RL, RR | Same as baseline |
+| Lost-heartbeat timeout | 600 ms | 500 ms |
+| Physically confirmed | No separate confirmation for the baseline binary | QR, web and Wi-Fi scanning on the loose board |
 
-Lần cập nhật Git này chỉ thêm tài liệu mua/đấu dây và trạng thái, giữ nguyên source CAD/firmware baseline có sẵn. Hướng dẫn board đã nạp không có nghĩa source baseline là binary đang chạy trên board. Khi tự build/flash từ repo, theo đúng pinout baseline; không dùng khác biệt phần mềm để suy rằng bộ cơ khí đã khít hoặc robot đã đi được.
+These Git updates add buying/wiring documentation, translations and status notes while retaining the existing baseline CAD/firmware sources. The flashed-board guide does not mean the baseline source is the binary running on the owner's board. When building/flashing from this repository, follow the baseline pinout. Software differences do not establish mechanical fit or walking ability.
 
-Backup flash/NVS và các thông tin Wi-Fi được giữ cục bộ, không đưa lên repo.
+Flash/NVS backups and Wi-Fi information stay local and are not published.
