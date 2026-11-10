@@ -1,8 +1,8 @@
 # Source build validation — 2026-11-10
 
-**Full empty-clone build passed, exit 0**, for source commit `766b942e2ef2e7c7274b86ea3052b3c3aa781c32`. A new empty temporary clone ran the complete `./build.sh`; tracked source remained unchanged. This commit adds the direct-AP fix and actual HTTP-handler tests. Both firmware targets compile, offline status polls preserve Control/Assembly/Setup, station loss does not cancel a valid AP session, and saved-network retries pause while AP clients are attached. The independent 500 ms motion lease remains active.
+**Full empty-clone build passed, exit 0**, for source commit `b0b893cc74817dd86ca38eef1212a54a7e610c45`. A new empty temporary clone ran the complete `./build.sh`; tracked source remained unchanged. This includes the accepted direct-AP fix, default unknown/continuous with all sixteen PCA outputs off, explicit positional selection, and the manually opened one-servo neutral/speed experiment. Both hardware targets compile. Tests exercise actual HTTP handlers and PCA register output, single-channel/count bounds, the 2000 ms cap, 500 ms lease, release/session/inhibit/fault behavior and retained positional startup. They are host tests, not physical motor observations.
 
-The preceding mechanical implementation `20816fd07cb060d4e8dfa51b26529e8a7771d999` also passed a separate full empty-clone build. PCB, frame, plates, wiring and GPIO assignments are unchanged by the AP fix; this latest run regenerated and checked them again as part of the source publication proof. The next documentation-only commit records this result and changes no implementation. Generated binary hashes are tied to each build's manifest; byte-identical binaries across different build paths are not claimed.
+The preceding AP implementation `766b942e2ef2e7c7274b86ea3052b3c3aa781c32` and mechanical implementation `20816fd07cb060d4e8dfa51b26529e8a7771d999` also passed separate full empty-clone builds. PCB, frame, plates, wiring and GPIO assignments remain unchanged by these firmware updates; this latest run regenerated and checked them again for source publication. The next documentation-only commit records this result. Generated binary hashes are tied to each build's manifest; byte-identical binaries across different build paths are not claimed.
 
 | Check | Result |
 |---|---|
@@ -39,8 +39,10 @@ Watch the nominal clearances on the first print: hip body to bar 0.65 mm, USB he
 
 The owner's old LILYGO QR result, existing orange-body assembly and report of both module LEDs lighting do not validate the new controller/frame. See [owner evidence](references/OWNER-PRINTS.md), [the original-module wiring guide](firmware/WIRING.md#original-lilygo-and-bought-pca9685) and [what to buy after ordering](docs/AFTER-ORDER.md). No new hardware flash, motor movement, print job, order or payment was performed.
 
-## Current actuator change — new build pending
+## Current owned-hardware limitation
 
-The source now adds default continuous/unknown, all outputs off, an explicit positional selection and a bounded one-channel neutral/speed test. The full build record above proves the preceding AP checkpoint only; a fresh empty-clone run must validate this new source before it is published. Native firmware-team host checks have passed, while final integration review and physical flashing remain separate.
+Default-off startup and the bounded single-servo experiment are implemented and host-checked. They do not supply missing angle feedback: the owner's continuous SG90s cannot hold joint angle or execute the positional walking gait. Positional startup/gait/centring require an explicit compatible-positional setting, and reset returns to unknown/off.
 
-The seller confirms the bought SG90 360° units control speed/direction rather than angle. No software timing trick supplies missing angle feedback or proves walking. There is no verified servo supply in the photographed inventory; no bare-cell/module supply wiring or purchase is introduced. Prior reverse polarity leaves hardware condition unverified. Physical isolation, a new full-flash readback/verify and recovery plan are still required before the authorized LILYGO write.
+There is no established servo supply in the photographed inventory; no exposed-cell/module wiring or purchase is introduced. Prior reverse polarity leaves component health uncertain. Actual supply, neutral stability, emitted frequency, stop response and walking remain untested. The [test guide](firmware/SERVO-TEST.md) records timing, I²C/OE and client-stall limits; software full-off is not a supply disconnect or guaranteed brake.
+
+The owner renewed original-LILYGO flash authorization. Physical motor isolation confirmation and a new full-flash readback/verify with recovery command remain prerequisites; no device write or motor operation is claimed by this source-build result.
