@@ -1,6 +1,8 @@
 # Source build validation — 2026-11-10
 
-**Full empty-clone build passed, exit 0**, for source commit `20816fd07cb060d4e8dfa51b26529e8a7771d999`. `./build.sh` recreated the deliverables from committed source in a new empty temporary clone; tracked source remained unchanged. The following commit updates documentation/reference images only, including the owner's LILYGO wiring clarification and PCA arrival. It changes no runtime firmware, PCB, CAD or build implementation. The host suite was rerun after the guide/image update; guide links and both QR decodes passed, with unchanged compiled groups reused.
+**Full empty-clone build passed, exit 0**, for source commit `766b942e2ef2e7c7274b86ea3052b3c3aa781c32`. A new empty temporary clone ran the complete `./build.sh`; tracked source remained unchanged. This commit adds the direct-AP fix and actual HTTP-handler tests. Both firmware targets compile, offline status polls preserve Control/Assembly/Setup, station loss does not cancel a valid AP session, and saved-network retries pause while AP clients are attached. The independent 500 ms motion lease remains active.
+
+The preceding mechanical implementation `20816fd07cb060d4e8dfa51b26529e8a7771d999` also passed a separate full empty-clone build. PCB, frame, plates, wiring and GPIO assignments are unchanged by the AP fix; this latest run regenerated and checked them again as part of the source publication proof. The next documentation-only commit records this result and changes no implementation. Generated binary hashes are tied to each build's manifest; byte-identical binaries across different build paths are not claimed.
 
 | Check | Result |
 |---|---|
@@ -13,7 +15,7 @@
 | Ordinary USB-C access | PASS for 12.5 × 7 × 25 mm head, Ø4.5 mm cable; head projects about 20 mm beyond +Y body side |
 | Offline Bambu slicing and plate checks | PASS; two named plates, 5.29 h / 106.15 g total |
 | Both firmware targets | Compile PASS; separate complete LILYGO/integrated image sets |
-| Firmware host suite | All six groups PASS, including independent Apple Vision QR decoding at LCD scale |
+| Firmware host suite | All seven groups PASS, including real HTTP handlers for both targets and independent Apple Vision QR decoding at LCD scale |
 | Native-board firmware reconciliation | Reconciled; no findings |
 | Strict complete-packet and freshness checks | PASS; no stale native inputs |
 
@@ -37,6 +39,8 @@ Watch the nominal clearances on the first print: hip body to bar 0.65 mm, USB he
 
 The owner's old LILYGO QR result, existing orange-body assembly and report of both module LEDs lighting do not validate the new controller/frame. See [owner evidence](references/OWNER-PRINTS.md), [the original-module wiring guide](firmware/WIRING.md#original-lilygo-and-bought-pca9685) and [what to buy after ordering](docs/AFTER-ORDER.md). No new hardware flash, motor movement, print job, order or payment was performed.
 
-## Later owned-hardware clarification
+## Current owned-hardware limitation
 
-The owner reports 360° servo purchases, spinning and reversed terminal polarity. This does not change the tested implementation above: it remains calibrated for positional 180° actuators. The exact bought variant and hardware condition are unresolved. A continuous-rotation unit cannot serve as a position-controlled hip/knee without additional position feedback; a positional 360° unit would require a separately reviewed calibration change. These documentation corrections do not establish physical compatibility or walking.
+The seller text supplied by the owner confirms that the purchased SG90 360° variant controls speed and direction, not joint angle. The AP fix does not alter the positional boot, gait or raw-centre behavior. Keep servo plugs and power disconnected when flashing or checking this version; its 1500 µs startup can make these motors creep or spin. There is no continuous-servo test mode or default-off actuator setting in this checkpoint.
+
+The owner has no budget for additional purchases. A bounded one-servo software experiment remains separate and unimplemented; it cannot supply missing angle feedback or prove walking. The photographed exposed-cell/module setup has no established output rating and is not recommended or wired as a servo supply here. The reported reversed terminal polarity leaves component condition unverified. Real-phone AP continuity, motor health, angle holding and walking remain untested.
