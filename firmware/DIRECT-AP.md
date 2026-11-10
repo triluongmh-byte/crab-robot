@@ -32,8 +32,9 @@ session ordering and the persistent assembly lock are unchanged.
 
 ## Servo experiment remains separate and not started
 
-Release note 11 is gated on acceptance of this AP fix. No actuator setting or
-one-channel servo experiment is included in these binaries. The existing
+The AP fix has passed independent source/host review and a full empty-clone
+build. The separate servo experiment has not been implemented. No actuator
+setting or one-channel servo experiment is included in these binaries. The existing
 positional boot/gait/raw-centre logic remains unchanged, so do not run it with
 the owner's continuous/unknown servos. Continuous servos cannot hold joint
 angles or produce the positional walking gait; timed pulses do not add angle
@@ -46,5 +47,4 @@ as a supply here. No purchases, flashing or motor operation were performed.
 Build: `python3 tools/firmware/build.py --target all` from the project root.
 Host checks: `python3 tools/firmware/check.py`; focused AP checks:
 `python3 tools/firmware/check.py web http core`. Wiring and both hardware pin
-profiles are unchanged. See [Vietnamese firmware guide](README.md) and
-[handoff](HANDOFF.md). The entry agent owns top-level English publication.
+profiles are unchanged. See the [firmware guide](README.md) and [source validation](../BUILD-VALIDATION.md).
