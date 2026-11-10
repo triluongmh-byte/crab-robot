@@ -6,6 +6,12 @@ Two variants are supported. The original LILYGO and separate PCA9685 use the fir
 
 Reference: LILYGO T-Display-S3 **non-touch**, schematic 2024-04-29, with soldered headers; PCA9685 breakout at default address 0x40. Clone pin positions can differ. Read the labels rather than copying the Arduino Uno pin numbers in a shop picture.
 
+![Owner-supplied LILYGO pinout, USB-C downward and component side visible](../references/user-images/2026-11-10-owner-supplied-lilygo-pinout.png)
+
+In this picture, **18 is on the right below 44; 17 is directly below 18**. Use the upper-left **3V** pin for logic power and a pin marked **G/GND** for ground. U1RXD/U1TXD are alternate functions, not fixed wiring requirements: this application configures GPIO18 as SDA and GPIO17 as SCL. The four connections below match the compiled LILYGO pin profile. The picture is a supplied reference diagram, not a photograph of the received PCA board.
+
+First connect only these four logic wires with both supplies unplugged. Keep all servo plugs and the second bank output disconnected, then power LILYGO by USB and restart to check PCA detection.
+
 ![Original module wiring](assets/wiring.svg)
 
 | Suggested colour | From LILYGO | To |

@@ -17,7 +17,7 @@ If the PCBA service covers only SMT, have a soldering service fit these connecto
 
 ## External parts and assembly supplies
 
-Reuse suitable owned items. The photographs establish eight mechanically installed servos and the printed leg parts; ownership of the remaining items for this integrated variant is not established.
+Reuse suitable owned items. The photographs establish eight mechanically installed servos and the printed leg parts. The owner also reports an existing working LILYGO and, on 2026-11-10, receipt of the PCA9685 breakout. Those belong to the modular build; the custom-PCB display and remaining integrated-variant supplies still need checking against owned stock.
 
 | Item | Quantity | What to select |
 |---|---:|---|

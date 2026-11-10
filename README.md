@@ -6,6 +6,12 @@ The new body has **two open bar frames** and individual servo-tab mounts. It reu
 
 ![Integrated controller connections](docs/images/integrated-connections.svg)
 
+## Using the LILYGO and PCA9685 you already have?
+
+Start with the **[original-module wiring guide](firmware/WIRING.md#original-lilygo-and-bought-pca9685)**. The owner reports that the PCA9685 breakout has arrived. That build uses four logic wires: **3V→VCC, GND→GND, GPIO18→SDA, GPIO17→SCL**. The pinout picture also labels GPIO18/17 as U1RXD/U1TXD; those are alternate functions, while this firmware assigns them to I²C. CH0–CH7 are servo sockets on the PCA, not ESP32 GPIO numbers.
+
+The custom-PCB J2–J12 tables below describe the future integrated variant. Keep using the LILYGO firmware for the currently owned modules.
+
 ## Start here
 
 1. Read [what to buy after ordering the PCB](docs/AFTER-ORDER.md) and [the PCBA quotation guide](docs/PCB-ORDERING.md). Factory SMT assembly plus the through-hole service avoids fine-pitch soldering at home.

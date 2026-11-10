@@ -27,3 +27,9 @@ The owner explicitly reports that both clamp bars collided with the servos, so t
 Both bars remain **printed, removed and unused** inventory. Their interfaces must no longer be treated as known working interfaces. Preserve the four thighs, four feet, servo axes and useful horn interfaces; provide open direct-tab servo retention in the replacement frame. The earlier assumption that all ten plate-2 pieces should be retained in the installed assembly is superseded by this failure report.
 
 The bar-only/no-skin repair request remains in force. These photos do not show a print or physical test of its new frame, or of the unmanufactured integrated controller. Do not relabel the custom-cut body as a complete current CAD base, derive millimeters from these images or schedule a whole-kit reprint merely because physical mesh identity is uncertain. Identify only the minimum necessary structural replacement.
+
+## PCA9685 arrival and pinout clarification — 2026-11-10
+
+The owner reports that the missing bought board has arrived and asks how to wire the LILYGO. In the preceding purchase context this is the PCA9685 breakout, not a manufactured integrated controller. The attached [LILYGO product pinout](user-images/2026-11-10-owner-supplied-lilygo-pinout.png) is reference artwork, not a physical PCA photograph. GPIO18/17 are configured as SDA/SCL by the existing LILYGO firmware despite the diagram also showing their alternate UART functions. Follow the [original-module guide](../firmware/WIRING.md#original-lilygo-and-bought-pca9685). No new wiring, servo-power or motion result is inferred from receipt.
+
+After the four-wire hookup instructions, the owner reports that both boards light their LEDs on the first attempt. This is an owner-reported power indication. No photograph or PCA acknowledgement, calibration, servo-load or walking result is established by that report.
