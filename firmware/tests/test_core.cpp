@@ -7,7 +7,7 @@
 #include <iostream>
 #include <vector>
 using namespace crab;
-static void ready(Motion& m,uint32_t now=0){m.begin(now);for(int ch=0;ch<8;ch++){int seen=m.tick(now+10+ch*cfg::ENABLE_GAP_MS);assert(seen==ch);}assert(m.enabled==8);}
+static void ready(Motion& m,uint32_t now=0){m.selectActuator(true,now);for(int ch=0;ch<8;ch++){int seen=m.tick(now+10+ch*cfg::ENABLE_GAP_MS);assert(seen==ch);}assert(m.enabled==8);}
 static void test_network(){
  Network n;n.begin(false,0);assert(n.state==NetState::Setup&&!n.saved);
  n.connect(true,100);n.tick(18100,false);assert(n.state==NetState::Setup&&!n.saved&&!n.saveRequested);assert(std::string(n.message)==msg::FAILED);
@@ -41,6 +41,23 @@ static void test_case_knee_lift(){
   if(!(lift>5.5&&lift<6.5))std::cerr<<"Case knee lift failed: leg="<<leg<<" liftMm="<<lift<<"\n";
   assert(lift>5.5&&lift<6.5);
  }
+}
+static void test_unknown(){
+ Motion m;m.begin(0);m.newSession(3);
+ for(uint32_t t=10;t<5000;t+=10)assert(m.tick(t)==-1);
+ assert(m.enabled==0&&!m.positional()&&!m.command(3,1,1,5000));
+ assert(!m.centre()&&!m.trim(0,1));assert(m.setAssembly(true));assert(!m.centre());
+ assert(!m.openTest(true));m.setAssembly(false);assert(m.openTest(true));
+ assert(!m.selectActuator(true,5000));assert(m.test.config(7,327));
+ assert(!m.test.config(8,307)&&!m.test.config(0,286)&&!m.test.config(0,328));
+ assert(!m.testCommand(3,2,21,5000,true));assert(m.testCommand(3,3,20,5000,true));
+ assert(m.test.counts==347&&m.test.active);m.tick(5499);assert(m.test.active);m.tick(5500);assert(!m.test.active);
+ assert(!m.testCommand(3,4,20,5501,false));assert(m.testCommand(3,5,-20,5600,true));
+ for(uint32_t t=5750;t<7600;t+=150)assert(m.testCommand(3,m.lastSeq+1,-20,t,false));
+ m.tick(7600);assert(!m.test.active);assert(!m.testCommand(3,m.lastSeq+1,-20,7601,false));
+ m.newSession(4);assert(!m.test.opened&&!m.test.active);
+ assert(m.openTest(true));assert(m.testCommand(4,1,0,0xffffff00,true));m.tick(0x100);assert(!m.test.active); // wrap +512 ms deadman
+ assert(pwmCounts(1500)==307&&std::fabs(nominalUs(307)-1499.0234f)<.01f);
 }
 static void test_motion(){
  Motion m;m.newSession(12);m.begin(0);assert(!m.command(12,1,1,0));assert(m.enabled==0);ready(m);
@@ -101,4 +118,4 @@ static void simulation(const std::string& dir){
  }
  report<<"],\"sidewaysSupportedByModel\":true,\"hardwareTested\":false}\n";
 }
-int main(int argc,char**argv){assert(argc==2);test_network();test_button();test_case_knee_lift();test_motion();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: network, BOOT, lease, assembly, startup, case knee lift from pulses, gait direction and diagonal foot support, pulse bounds, QR encoding\n";}
+int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_motion();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, gait direction and diagonal foot support, pulse bounds, QR encoding\n";}

@@ -41,7 +41,7 @@ def cpp(group,profile):
  if group in ('core','display'):paths += [ROOT/'firmware/crab'/n for n in ['qrcodegen.c','qrcodegen.h']]
  if group=='display':paths += [ROOT/'firmware/crab'/n for n in ['display.h','waveshare_panel.h','font_vi.h']]
  if group in ('drivers','display'):
-  paths += ([ROOT/'firmware/crab/drivers.h'] if group=='drivers' else [])+[p for p in (ROOT/'firmware/tests/stubs').rglob('*') if p.is_file()]
+  paths += ([ROOT/'firmware/crab/drivers.h',ROOT/'firmware/crab/actuator_output.h'] if group=='drivers' else [])+[p for p in (ROOT/'firmware/tests/stubs').rglob('*') if p.is_file()]
   args += ['-I'+str(ROOT/'firmware/tests/stubs')]
  if group=='http':
   paths += [ROOT/'firmware/crab'/n for n in ['network_http.h','web_ui.h']]+[ROOT/'firmware/tests/http_stubs.h',ROOT/'firmware/tests/stubs/pgmspace.h']

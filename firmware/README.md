@@ -2,7 +2,7 @@
 
 The application implements QR setup, nearby 2.4 GHz Wi-Fi selection, saved credentials, eight hold-to-move directions, a light switch and servo centring/trim controls. Everything is served by the robot; there are no accounts, cloud services or downloaded web dependencies. The screen and web UI remain Vietnamese.
 
-**Current owned motors:** the seller confirms the purchased SG90 360° units are continuous-rotation motors. The positional walking, centre and angle-trim instructions below apply only to supported positional servos. Sending 1500 µs to a continuous unit is a neutral-speed experiment; it does not centre or hold its shaft. Do not run the positional assembly/gait commands with the owner's continuous motors. The owner has no additional purchase budget; a software-only experiment is under review, not a demonstrated walking solution.
+**Current owned motors:** the seller confirms the purchased SG90 360° units are continuous-rotation motors. They control speed/direction and cannot hold the joint angles required by this gait. The default is now **360° / unknown, all sixteen PCA outputs off**. Walking and raw-centre commands are refused until an explicit positional selection. A manually opened [one-servo experiment](SERVO-TEST.md) provides bounded neutral/speed commands; it does not turn these motors into positional servos. No additional purchase or physical motor test is being made.
 
 ## Choose the correct target
 
@@ -25,7 +25,7 @@ For this owner's original LILYGO, standing update permission and the required ve
 
 Follow the English [integrated flashing guide](../docs/INTEGRATED-FIRMWARE.md) for the future custom PCB, after professional assembly inspection. It has not been flashed or run on manufactured hardware.
 
-For the original LILYGO, disconnect power-bank output 2 and all servo power. Unplug bank output 1 before connecting the LILYGO to the computer with a data cable. Choose the actual LILYGO serial port, then run:
+For the currently owned LILYGO, remove all servo plugs from the PCA9685 and disconnect its servo V+ input. Connect only the LILYGO to the computer with a USB data cable. Do not use the photographed unidentified cell/module setup as a verified servo supply. Choose the actual LILYGO serial port, then run:
 
 ```sh
 arduino-cli upload \
@@ -46,18 +46,24 @@ If necessary, hold BOOT, press/release RESET, then release BOOT to enter the dow
 
 Desktop request/browser tests do not prove that every phone will retain an internet-free AP connection or that the real radio will remain uninterrupted. Physical direct-AP verification remains separate from compilation and host tests.
 
-## Centre before attaching horns
+## Default outputs and the one-servo experiment
 
-Support the body securely with its feet clear. **Uncouple already installed horns/legs from their servo output shafts before centring.** Do not drive an assembled leg against the frame.
+Every reset starts as **360° / chưa rõ loại — mặc định tắt** (continuous/unknown, off). The actuator selection and test settings live in RAM only; stored positional trims cannot enable the outputs. Home Wi-Fi and the light remain available independently of the actuator mode.
 
-Open **Ráp**, tap **Giữa thô 1500 µs** and wait about two seconds. Attach horns in the mechanical neutral pose. **Tư thế đứng** applies saved trims; adjust individual +/− controls in one-degree steps (±12°), then use **Lưu tâm** and **Xong ráp**. Assembly mode locks walking until exited, even if the browser disconnects. Trim compensates horn indexing, not asymmetric printed parts.
+**Thử 1 servo** opens the experimental test. Opening it, changing channel or adjusting neutral does not move a servo. A held button can command exactly one CH0–7; release, stop, session change or timeout requests full-off. Each press has a 2000 ms cap and 500 ms command lease. Integer PCA counts are displayed with a labelled nominal microsecond conversion. Read the [complete test guide and limits](SERVO-TEST.md) before any physical test. The current owned inventory has no servo supply of established rating, and flash permission does not authorize motor operation.
 
-Servo channels enable 300 ms apart; subsequent commands update one channel per 10 ms with slew/amplitude ramps. Simultaneous 50 Hz holding pulses remain. This reduces command surges but does not limit electrical current. If the bank shuts off, select **Chậm**, remove mechanical binding and use a suitable bank. Disconnect output 2 before reset/flashing; PCA/LED state can persist during MCU reset.
+The positional gait and centring code remain available only for **eight confirmed compatible positional servos**. On **Lái cua**, choose **Định vị 180° — đã xác nhận cả 8**, then **Áp dụng loại servo**. This intentionally starts positional pulses. Never select it for the owner's continuous motors. Reboot returns to unknown/off.
+
+## Centre before attaching horns — positional servos only
+
+With supported positional mode explicitly selected, support the body securely with feet clear and uncouple installed horns/legs from their output shafts. Open **Ráp**, tap **Giữa thô 1500 µs** and wait about two seconds. Attach horns in the mechanical neutral pose. **Tư thế đứng** applies saved trims; adjust individual +/− controls in one-degree steps (±12°), then use **Lưu tâm** and **Xong ráp**. Assembly locks walking until exited. Trim compensates horn indexing, not asymmetric printed parts. These commands are refused in unknown/continuous mode.
+
+In positional mode channels initially enable 300 ms apart and subsequent commands update one channel per 10 ms with slew/amplitude ramps. These reduce command surges without imposing an electrical current limit. The experimental mode uses its separate one-channel output policy. PCA init failure is finite and does not prevent QR/web startup; it displays the driver warning.
 
 ## Desktop checks and limits
 
-`python3 tools/firmware/check.py` runs core, web, HTTP, interface, driver, target and display groups, including independent QR decoding with Apple Vision. [TEST-RESULTS.json](TEST-RESULTS.json) is generated only after the suite passes. The board reconciler checks exact PCB/XML pins and reviewed evidence separately.
+`python3 tools/firmware/check.py` runs core, web, HTTP, interface, driver, target and display groups for both hardware profiles, including independent QR decoding with Apple Vision. It checks actual HTTP routes and PCA register output for default-off startup, one channel, count bounds, timeout/dead-man/session transitions and the retained positional behavior. [TEST-RESULTS.json](TEST-RESULTS.json) is generated only after the suite passes. The board reconciler checks exact PCB/XML pins and reviewed evidence separately.
 
-The gait test samples 720 points per cycle in eight directions, with alternating diagonal pairs. Its ideal-contact model does not establish static stability, friction, servo lag, power capacity or real walking. CAD collision checks are separate. First-prototype checks cover direction signs, horn fit, QR visibility, Wi-Fi range, bank behaviour and WS2812 reception of direct 3.3 V data.
+The positional gait test samples 720 points per cycle in eight directions, with alternating diagonal pairs. Its ideal-contact model does not establish stability, friction, servo lag, power capacity or walking. CAD collision checks are separate. The continuous-servo test neither holds angle nor establishes a walking gait. Software full-off is not a power cut or a guaranteed brake; I²C failure and scheduling/network delays remain physical limitations, as detailed in the test guide.
 
 [Sources and licences](SOURCES.md) · [Interface metadata](INTEGRATION.json) · [Mechanical checklist](../case/CHECKLIST-RAP.md)

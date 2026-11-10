@@ -19,7 +19,7 @@ python3 tools/firmware/check.py
 python3 tools/firmware/reconcile.py
 ```
 
-The reconciliation must pass against the current native board/netlist; a pending or failed result is not a release. GPIO21 enables the PCA9685 outputs only after initialization has sent FULL_OFF. The integrated display uses SPI (GPIO8 clock, GPIO39 data), while LILYGO retains its original parallel display bus.
+The reconciliation must pass against the current native board/netlist; a pending or failed result is not a release. GPIO21 holds PCA outputs off by default. Initialization sends FULL_OFF; actual pulses require an explicit positional selection or the separate one-servo experiment. See the [actuator policy](../firmware/README.md#default-outputs-and-the-one-servo-experiment). The integrated display uses SPI (GPIO8 clock, GPIO39 data), while LILYGO retains its original parallel display bus.
 
 ## Flash it yourself after assembly inspection
 

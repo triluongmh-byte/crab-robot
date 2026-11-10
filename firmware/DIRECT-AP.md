@@ -30,19 +30,9 @@ interruption. The independent 500 ms command lease still stops stale motion;
 station loss alone no longer stops a valid AP control session. Hold/release,
 session ordering and the persistent assembly lock are unchanged.
 
-## Servo experiment remains separate and not started
+## Servo mode stays independent
 
-The AP fix has passed independent source/host review and a full empty-clone
-build. The separate servo experiment has not been implemented. No actuator
-setting or one-channel servo experiment is included in these binaries. The existing
-positional boot/gait/raw-centre logic remains unchanged, so do not run it with
-the owner's continuous/unknown servos. Continuous servos cannot hold joint
-angles or produce the positional walking gait; timed pulses do not add angle
-feedback. A 1500 us pulse can cause creep/spin. Servo type and health per unit
-remain unknown. The owner's current parts include **no servo supply of
-established rating**; any later unloaded one-servo test needs a supply decision
-first. The exposed 18650 and unidentified module are not recommended or wired
-as a supply here. No purchases, flashing or motor operation were performed.
+The accepted AP behavior is retained with the new default-off actuator policy. Boot selects continuous/unknown and emits no servo pulses. The light and page navigation remain available. Only the manually opened [one-servo experiment](SERVO-TEST.md) can command a continuous servo, and it is not angle control or a walking gait. Positional walking/raw-centre require an explicit compatible-positional selection. The owned supply remains unverified; no motor operation is authorized by flashing.
 
 Build: `python3 tools/firmware/build.py --target all` from the project root.
 Host checks: `python3 tools/firmware/check.py`; focused AP checks:

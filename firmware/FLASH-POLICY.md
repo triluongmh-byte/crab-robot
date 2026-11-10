@@ -1,6 +1,6 @@
 # Project-scoped firmware flashing authorization
 
-The owner authorized updating this project's original LILYGO T-Display-S3 non-touch ESP32-S3 on 2026-11-09. This is standing permission for completed, tested firmware updates to that identified device. A later instruction not to flash overrides it. It does not authorize flashing the new integrated PCB, another device, motor operation, printing, purchases or publication of private device dumps.
+The owner authorized updating this project's original LILYGO T-Display-S3 non-touch ESP32-S3 on 2026-11-09. The owner renewed the request on 2026-11-10: “nạp hết đi fen.” This is standing permission for completed, tested firmware updates to that identified device. A later instruction not to flash overrides it. It does not authorize flashing the new integrated PCB, another device, motor operation, printing, purchases or publication of private device dumps.
 
 Before every write:
 

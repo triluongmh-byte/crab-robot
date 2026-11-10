@@ -23,13 +23,19 @@ class ServoDriver {
   if(ch<0||ch>15)return false;
   Wire.beginTransmission(cfg::PCA_ADDR);Wire.write(0x06+4*ch);Wire.write(on&255);Wire.write((on>>8)&31);Wire.write(off&255);Wire.write((off>>8)&31);return Wire.endTransmission()==0;
  }
- bool pulse(int ch,int us){
-  if(!ready||ch<0||ch>7)return false;
+ // Hard off without clearing the driver's initialised/fault state.
+ bool disableOutputs(){inhibit();bool ok=true;for(int ch=0;ch<16;ch++)ok=off(ch)&&ok;return ok;}
+ bool pulseCounts(int ch,int counts){
+  if(!ready||ch<0||ch>7||counts<1||counts>4095)return false;
   int on=ch*512;
-  if(!write(ch,on,(on+(us*4096L+10000)/20000)&4095)){allOff();return false;}
+  if(!write(ch,on,(on+counts)&4095)){allOff();return false;}
   if(cfg::PCA_OE_PIN>=0)digitalWrite(cfg::PCA_OE_PIN,LOW);
   return true;
  }
+ bool pulse(int ch,int us){
+  return pulseCounts(ch,crab::pwmCounts(us));
+ }
+
  void allOff(){inhibit();ready=false;for(int ch=0;ch<16;ch++)off(ch);}
 };
 class LightDriver {

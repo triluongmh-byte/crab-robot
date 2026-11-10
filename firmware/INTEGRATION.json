@@ -93,14 +93,14 @@
   "boardOutputsAvailableInWorker": true,
   "caseOutputsAvailableInWorker": true,
   "physicalChecklistForCaseLead": [
-    "Ráp: kê thân, giữa thô, gắn horn; xác nhận đúng 8 khớp theo CH0-7, tâm không che chân in lệch",
+    "Supported positional servos only, after explicit RAM mode selection: Ráp: kê thân, giữa thô, gắn horn; xác nhận đúng 8 khớp theo CH0-7, tâm không che chân in lệch",
     "QR hiện rõ qua cửa nắp; nếu captive portal không tự mở, vào 192.168.4.1",
-    "Nguồn servo bật lần lượt; cua đứng yên; thử hướng khi chân nhấc khỏi bàn trước, rồi thử trên sàn",
-    "Giữ/thả và rời trang phải dừng; mất kết nối hủy bước trong khoảng 0.5s rồi về đứng êm; bấm lại mới đi",
+    "Supported positional servos only, after explicit RAM mode selection: Nguồn servo bật lần lượt; cua đứng yên; thử hướng khi chân nhấc khỏi bàn trước, rồi thử trên sàn",
+    "Supported positional servos only, after explicit RAM mode selection: Giữ/thả và rời trang phải dừng; mất kết nối hủy bước trong khoảng 0.5s rồi về đứng êm; bấm lại mới đi",
     "Pin ngắt: giảm tốc rồi đổi pin; dây ấm: ngắt nguồn, dùng dây dày hơn",
     "LED chớp: giảm LED_BRIGHTNESS, rút ngắn DIN, hoặc đổi thanh nhận dữ liệu 3.3V",
     "Giữ BOOT8s khi đã chạy xóa Wi-Fi giữ tâm; rút nguồn cổng2 trước reset/nạp",
-    "Kê thân: xác nhận cặp trước trái + sau phải nhấc cùng nhau, rồi cặp trước phải + sau trái; không nhấc hai chân cùng bên. Sau đó thử cân bằng và 8 hướng trên sàn theo checklist.",
+    "Supported positional servos only, after explicit RAM mode selection: Kê thân: xác nhận cặp trước trái + sau phải nhấc cùng nhau, rồi cặp trước phải + sau trái; không nhấc hai chân cùng bên. Sau đó thử cân bằng và 8 hướng trên sàn theo checklist.",
     "Board integrated variant: use final board connector labels; no external LILYGO/PCA or Dupont GND bridge",
     "Verify display QR/window/BOOT/native USB and reset OE inhibition on assembled integrated board; never infer from host pass"
   ],
@@ -222,5 +222,13 @@
     "lcdRotationDeg": 180,
     "caseCableFitVerified": false,
     "remaining": "Case must reimport final STEP, check ordinary 12.5x7x25 mm plug at all three positions, close D23 and set fitsPublishedJ1=true before removing do-not-buy warning."
+  },
+  "actuatorPolicy": {
+    "releaseNote": 13,
+    "default": "continuous-or-unknown; all PCA outputs full off",
+    "settingStorage": "RAM only; reboot defaults unknown",
+    "positional": "explicit verified-180 setting retains prior startup/gait/Ráp",
+    "experiment": "manual; exactly one unloaded CH0-7; integer counts267-347; 2000ms cap;500ms lease",
+    "physicalTested": false
   }
 }

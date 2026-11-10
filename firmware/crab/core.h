@@ -76,7 +76,43 @@ struct HoldButton {
  }
 };
 // All methods called under the firmware's mutex; network task never writes PWM.
+enum class Actuator {Unknown,Positional};
+// PCA9685 nominal 50 Hz quantisation. Actual oscillator tolerance is unmeasured.
+inline int pwmCounts(int us){return (us*4096L+10000)/20000;}
+inline float nominalUs(int counts){return counts*(20000.0f/4096);}
+struct ServoTest {
+ bool opened=false,active=false;
+ int channel=0,neutral=307,counts=307,emittedCounts=0,emittedChannel=0;
+ uint32_t since=0,last=0,generation=0;
+ void stop(){active=false;}
+ void tick(uint32_t now){if(active&&(elapsed(now,since)>=2000||elapsed(now,last)>=cfg::DEADMAN_MS))stop();}
+ bool config(int ch,int centre){if(ch<0||ch>7||centre<287||centre>327)return false;stop();channel=ch;neutral=centre;counts=centre;return true;}
+ bool hold(int step,uint32_t now,bool fresh){
+  tick(now);
+  if(!opened||(step!=-20&&step!=-4&&step!=-1&&step!=0&&step!=1&&step!=4&&step!=20))return false;
+  if(fresh){if(active)return false;since=now;generation++;}
+  else if(!active||counts!=neutral+step)return false;
+  counts=neutral+step;last=now;active=true;return true;
+ }
+};
 struct Motion {
+ Actuator actuator=Actuator::Unknown;
+ ServoTest test;
+ bool positional()const{return actuator==Actuator::Positional&&!test.opened;}
+ bool sequence(uint32_t id,uint32_t seq){if(!id||id!=session||seq<=lastSeq)return false;lastSeq=seq;return true;}
+ bool selectActuator(bool positionalMode,uint32_t now){
+  if(positionalMode&&(assembly||test.opened))return false;
+  stop();test=ServoTest{};assembly=raw=false;actuator=positionalMode?Actuator::Positional:Actuator::Unknown;
+  amplitude=phase=0;for(auto& p:position)p=0;begin(now);return true;
+ }
+ bool openTest(bool active){
+  if(active&&(actuator!=Actuator::Unknown||assembly||inhibit))return false;
+  stop();test.opened=active;return true;
+ }
+ bool testCommand(uint32_t id,uint32_t seq,int step,uint32_t now,bool fresh){
+  if(!sequence(id,seq)||inhibit||assembly||actuator!=Actuator::Unknown)return false;
+  return test.hold(step,now,fresh);
+ }
  float offsets[8]={},position[8]={};
  Vec velocity{};
  float amplitude=0,phase=0,speed=.65f;
@@ -84,22 +120,24 @@ struct Motion {
  uint32_t session=0,lastSeq=0,lastCommand=0,start=0,lastTick=0;
  int enabled=0,cursor=0;
  void begin(uint32_t now){start=lastTick=now;enabled=0;}
- void stop(){velocity={};lease=false;}
+ void stop(){velocity={};lease=false;test.stop();}
  bool command(uint32_t id,uint32_t seq,int dir,uint32_t now,bool fresh=true){
-  if(!id||id!=session||seq<=lastSeq||dir<0||dir>8)return false;
-  lastSeq=seq;
+  if(dir<0||dir>8||!sequence(id,seq))return false;
   if(dir==0){stop();return true;}
-  if(inhibit||assembly||enabled<8)return false;
+  if(!positional()||inhibit||assembly||enabled<8)return false;
   if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
   velocity=direction(dir);lastCommand=now;lease=true;return true;
  }
- void newSession(uint32_t id){stop();session=id;lastSeq=0;}
- void setAssembly(bool active){stop();assembly=active;raw=false;}
- void centre(){stop();assembly=true;raw=true;}
- bool trim(int ch,int delta){if(!assembly||ch<0||ch>7||std::abs(delta)!=1)return false;raw=false;offsets[ch]=clamp(offsets[ch]+delta,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT);return true;}
+ void newSession(uint32_t id){stop();test.opened=false;session=id;lastSeq=0;}
+ bool setAssembly(bool active){if(active&&test.opened)return false;stop();assembly=active;raw=false;return true;}
+ bool centre(){if(!positional())return false;stop();assembly=true;raw=true;return true;}
+ bool trim(int ch,int delta){if(!positional()||!assembly||ch<0||ch>7||std::abs(delta)!=1)return false;raw=false;offsets[ch]=clamp(offsets[ch]+delta,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT);return true;}
  // One channel update per 10 ms; 300 ms gaps on initial enable.
  // angle+offset slew is enforced in the driver, so trim also moves smoothly.
  int tick(uint32_t now){
+  test.tick(now);
+  if(inhibit)test.stop();
+  if(!positional()||inhibit){velocity={};lease=false;return -1;}
   if(elapsed(now,lastTick)<10)return -1;
   const float dt=std::min(elapsed(now,lastTick)*.001f,.05f);lastTick=now;
   if(inhibit||assembly||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)stop();

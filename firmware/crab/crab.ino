@@ -7,6 +7,7 @@
 #include <atomic>
 #include "core.h"
 #include "drivers.h"
+#include "actuator_output.h"
 #include "display.h"
 #include "web_ui.h"
 WebServer server(80);DNSServer dns;
@@ -22,20 +23,13 @@ uint32_t lastDraw=0;String drawnKey;
 struct Guard{Guard(){xSemaphoreTake(motionLock,portMAX_DELAY);}~Guard(){xSemaphoreGive(motionLock);}};
 #include "network_http.h"
 void motionTask(void*){
- float sent[8];for(auto& p:sent)p=cfg::CENTRE_US;
+ ActuatorOutput outputs;
  TickType_t wake=xTaskGetTickCount();
  for(;;){
-  int ch=-1,target=1500;bool active=false,first=false;
   {
    Guard g;motion.inhibit=eraseHold.load()||!driverReady.load();
-   first=motion.enabled<8;ch=motion.tick(millis());
-   if(ch>=0){target=crab::pulse(ch,motion.position[ch],motion.offsets[ch],motion.raw);active=true;}
-  }
-  if(active&&driverReady.load()){
-   // Includes trim and raw-centre commands in the final pulse slew limiter.
-   float limit=cfg::SLEW_DPS*.08f*cfg::US_PER_DEG;
-   if(first)sent[ch]=target;else sent[ch]+=crab::clamp(target-sent[ch],-limit,limit);
-   if(!servos.pulse(ch,int(std::lround(sent[ch])))){driverReady=false;servos.allOff();stopMotion();}
+   if(driverReady.load()&&!outputs.service(motion,servos,millis()))driverReady=false;
+   else if(!driverReady.load()){motion.stop();motion.tick(millis());}
   }
   vTaskDelayUntil(&wake,pdMS_TO_TICKS(10));
  }
