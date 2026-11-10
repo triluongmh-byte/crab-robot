@@ -37,6 +37,8 @@ For the new frame, the generated **Print all** file retains the complete ten-par
 
 Read the current source-build result in [BUILD-VALIDATION.md](BUILD-VALIDATION.md). Native electrical/manufacturing checks, CAD checks and firmware host tests are desktop evidence. The new PCB has not been manufactured, powered or flashed; the new frame has not been printed or physically fit-tested. The earlier successful QR setup was on the LILYGO board. No new-board walking, temperature, radio-range or servo-load result is claimed.
 
+**Owned-module progress, 2026-11-10:** with the original LILYGO and the PCA9685 breakout wired by the owner, the LILYGO detects the PCA9685 and the web controller opens. The servos have not been powered or moved yet.
+
 Check the **three servo-screw types** before assembly: sixteen tab screws, eight horn-arm screws and eight centre screws. Spare centre screws do not replace missing horn-arm screws. The mechanical list provides at least eleven thin zip ties, plus bank retention. Ask the assembler to include the eleven through-hole connectors (**37 PCB joints**) if the PCBA quote covers only SMT.
 
 The first prototype still needs inspection of soldering/mounting insulation, servo/horn fit, cable slack, frame strength, QR visibility, Wi-Fi range, bank shutoff/surges and floor grip. Direct 3.3 V WS2812 data remains an actual-light-bar check. For the owner's current drilled body, inspect rough wire-hole rims, screw holes and servo tabs before power; see the physical checklist.
