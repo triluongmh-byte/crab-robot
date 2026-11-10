@@ -36,3 +36,7 @@ The integrated PCB has not been manufactured, powered or flashed. The two new fr
 Watch the nominal clearances on the first print: hip body to bar 0.65 mm, USB head underside to rail 0.65 mm, USB cable to fixed frame 0.35 mm, and foot to frame 0.23 mm at the extreme ±30-degree sweep. Keep the cable projection free. These measurements are CAD evidence, not physical-fit claims.
 
 The owner's old LILYGO QR result, existing orange-body assembly and report of both module LEDs lighting do not validate the new controller/frame. See [owner evidence](references/OWNER-PRINTS.md), [the original-module wiring guide](firmware/WIRING.md#original-lilygo-and-bought-pca9685) and [what to buy after ordering](docs/AFTER-ORDER.md). No new hardware flash, motor movement, print job, order or payment was performed.
+
+## Later owned-hardware clarification
+
+The owner reports 360° servo purchases, spinning and reversed terminal polarity. This does not change the tested implementation above: it remains calibrated for positional 180° actuators. The exact bought variant and hardware condition are unresolved. A continuous-rotation unit cannot serve as a position-controlled hip/knee without additional position feedback; a positional 360° unit would require a separately reviewed calibration change. These documentation corrections do not establish physical compatibility or walking.

@@ -12,6 +12,10 @@ The owner reports four hand-made wire openings and direct hip-tab screws after r
 - Check the four knee leads separately from the four hip leads. Each needs slack across its moving hip joint, with no tension at either end.
 - Inspect movement gently with power disconnected. The photographs establish mechanical assembly, not calibration, retention strength or walking.
 
+## Verify the servo control type first
+
+The owner now reports 360° units and spinning. Keep servo power disconnected until the exact purchase variant is checked. The current firmware expects positional 180° units. Continuous rotation is incompatible with the existing angle-controlled legs; a positional 360° variant would require a reviewed calibration change. See [the required type](BOM.md#required-servo-type). After reversed terminal polarity, inspect for abnormal heat, smell, damaged insulation or a swollen capacitor with power removed. Visible movement does not verify that the affected parts remain healthy. Test only an unloaded, isolated servo after the type and power wiring are resolved.
+
 ## Coupons before the new frame
 
 1. Print generated `print/test-saddle.3mf`, marked **TEST ONLY**. Place one actual hip servo on the two saddles; its body must enter freely and both tabs must rest flat without being bent. Try the two proper tab screws in the existing pilots. Do not drill either the servo or coupon.

@@ -30,6 +30,10 @@ From the PCA output-side power header, `V+` → LED `5V/VCC` and `GND` → LED `
 
 **ASSUMPTIONS:** the PCA has the Adafruit-style labelled functions, address bridges untouched and its normal OE pull-down; the LED accepts direct 3.3 V data. If the light flickers, shorten DIN beside GND, reduce configured brightness or choose a compatible stick; leave it disconnected if unresolved. If headers or LED leads are absent, have a soldering service fit them before use.
 
+## Check positional versus continuous rotation
+
+This firmware is calibrated for **180° positional SG90-class servos**. The owner reports 360° units and spinning; verify the actual seller variant before further powered tests. Continuous-rotation speed-controlled servos cannot hold these commanded joint angles. A positional 360° servo is a different device and would need a separate calibration change. “SG90” or “360°” alone is insufficient identification. See [the required servo type](../case/BOM.md#required-servo-type). Do not use the assembled legs to test an unidentified continuous-rotation unit. Keep servo power off after the reported reversed-terminal event until the wiring and parts are checked.
+
 ## Eight servos mean eight three-wire plugs
 
 Stand behind the robot looking forward: robot left is your left. The **hip** servo is mounted on the body; the **knee** servo is carried on the leg. CH denotes a complete socket, not a wire colour or GPIO.

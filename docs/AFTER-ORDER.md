@@ -21,6 +21,7 @@ Reuse suitable owned items. The photographs establish eight mechanically install
 
 | Item | Quantity | What to select |
 |---|---:|---|
+| Positional SG90-class **180°** servo with matching horn | 8 required | The owned units are reported as 360°. Verify their exact control type before replacement: continuous-rotation units cannot hold hip/knee angles. See [servo selection](../case/BOM.md#required-servo-type); check one unit for body/horn fit first |
 | Waveshare **1.9inch LCD Module, SKU 23822** | 1 | Assembled ST7789V2, 170×320 module with its supplied eight-wire cable |
 | USB-A to USB-C **data/sync** cable | 1 | For programming and bank port 1. The ordinary-plug check uses a 12.5 mm wide × 7 mm thick × 25 mm long housing at the PCB's +Y side. Cable diameter ≤4.5 mm. Use a cable within the checked size; bank-end right-angle USB-A housing ≤22 mm long |
 | LED harness | 3 wires | J11→DIN/5V/GND; female-to-female 2.54 mm leads if the LED bar has fitted pins, or have the service attach leads |

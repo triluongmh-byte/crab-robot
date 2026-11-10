@@ -9,11 +9,21 @@ For electronics assembly and the exact through-hole service, use [AFTER-ORDER.md
 | `frame_lower`, `frame_upper` | One each | New r5 structural parts; unprinted |
 | `thigh_FL/FR/RL/RR`, `foot_FL/FR/RL/RR` | Eight total | Reuse existing prints; exact physical source revision unmeasured |
 | Previous `cap_front`, `cap_rear` | Two | Printed, removed for servo interference, unused; not in Print all |
-| SG90 servos and one-arm horns | Eight installed, two spares assumed | Reference dimensions; check the real parts with the coupon |
+| Positional SG90-class **180°** servos and matching one-arm horns | Eight required; two spares optional | Owned units are reported as 360°; exact control type still needs verifying. Do not count continuous-rotation units as compatible |
 | M3×6 screws / M3 nuts | Four / four | PCB mounts B1–B4 |
 | M3×12 screws | Three | Frame joints J1–J3; printed self-tapping pilots, no nuts |
 
 Confirm the screw lengths in the owned stock; the existence of an M3 assortment does not establish every length.
+
+## Required servo type
+
+The existing gait commands joint **angles** and is calibrated for **180° positional SG90-class 9 g servos**. Buy/search terms: `SG90 9g 180 degree positional servo`, `holds commanded angle`, `not continuous rotation`. Match the reference body, tab geometry, shaft/horn fit and screw types; check one sample against the existing printed interfaces before buying the full set. The prior generic “SG90” wording did not distinguish these variants.
+
+The owner reports all purchased units as “360°” and describes repeated spinning. Their exact seller variant is not yet independently confirmed. **Continuous-rotation** units interpret PWM as speed/direction and do not hold a requested joint angle; centring/trimming does not turn them into positional servos. A **positional 360°** unit is different and could potentially be supported if its control interface is compatible, followed by separate pulse-to-angle calibration and bench verification. Serial/bus servos are not automatically compatible with PCA9685 PWM outputs. It is not supported by the current 180° calibration. Verify the purchase variant before deciding whether replacement is needed.
+
+Keep the existing frame and leg prints pending a real fit check of any replacement. Do not redesign or reprint them solely because of the reported control type. No powered rotation, centring or walking result is claimed for the current assembly. After the reported reverse-polarity event, inspect the unpowered parts before any isolated test; do not reconnect all eight assembled legs.
+
+Reference: [Adafruit explains continuous-rotation control and the absence of position feedback](https://learn.adafruit.com/adafruit-motor-selection-guide/continuous-rotation-servos).
 
 ## Servo screws — count by type
 
