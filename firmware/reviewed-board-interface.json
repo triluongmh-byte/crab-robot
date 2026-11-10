@@ -2,7 +2,6 @@
   "status": "reviewed-final-board",
   "releaseNoteSha256": "122b5b3d406fc1cc148b6bf5abaf6c6fc7315e933a95e5565c1b60ee86d35e08",
   "boardInputSha256": {
-    "build/board/main.net": "90b73f5535a8fd0c5ef388c154bef38fcbdcdcb9a456a8632773bc517fd4791e",
     "design/main.kicad_pcb": "5992e36582a47ea39ac5088fce09256c227a8697471aa3d949199ac9c35e4c7b"
   },
   "firmwareHardwareSha256": "088bfce5f8f03abdbaeb8960e39aef54c52bb84e6d92718683ee0e6d1765e5f0",
@@ -232,7 +231,6 @@
     "firmware/vendor/LCD_1inch9.py": "e7feb77a2979b560402137ab3142635a48f71352a77496c0e3b6fd0ff659add5",
     "firmware/vendor/waveshare-source.json": "254aad6d082938c7d5e180b577438bef42edd8accd0c52a1fc8f4e225d7f638f",
     "case/DEVIATIONS.md": "2647691814f94a4aee8a84709109ea210543ddb2c467f302b233a0944d597df3",
-    "engineering/board-interface.json": "b92d3443a3d85a7b81caa14d52cbcf5967e31d8f7f04d67824f07275b48c2952",
     "engineering/usb-relocation-audit.json": "39cb26e555f6b5ac1b9f501705d050bbe00f3fada656163ba0e127da1f8b844a",
     "engineering/USB-RELOCATION.md": "1c989f62c303fc498902e1a9b7b35940ec4684926bb5447a9c9da678dd11723d"
   },
@@ -286,13 +284,12 @@
     "gpioChanges": false,
     "reviewedNetGroupsUnchanged": 25,
     "boardStep": "build/board/integrated.step",
-    "boardStepSha256": "c7e892bd747b112dbde992bbb2c11ccfb5da77a64ba7a06cf647e5ddcd2203ae",
-    "caseCableCheck": "pending final STEP recheck; available case report assesses old rear J1",
+    "caseCableCheck": "Read the current generated assembly-access.json; final +Y ordinary-plug check passed desktop review, hardware untested.",
     "ordinaryPlugMm": [
       12.5,
       7,
       25
-    ],
-    "binaryRebuilt": false
-  }
+    ]
+  },
+  "boardGeometrySemanticsSha256": "233c9eaecd1bc3929977f66adf2b56af61a52a49e97a2d0c37fbb2b0e41de6b8"
 }
