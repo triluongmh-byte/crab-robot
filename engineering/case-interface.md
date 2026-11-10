@@ -3,7 +3,7 @@
 PCB: actual native export build/board/integrated.step. Native KiCad frame is
 x right, y down, top copper z0; exported STEP x right,y UP. Board outline
 88×62mm, thickness1.6mm, centred0,0. Do not reuse the old56×44carrier geometry.
-Mounts are actual source positions, final JSON will reconcile STEP/native.
+Mounts are actual source positions, final JSON is reconciled by the current native-board binding STEP/native.
 H1(-40,-13), H2(39,-26), H3(-39,26), H4(39,26) in KiCad coordinates; Ø3.2.
 
 Screen: engineering/sources/integrated/waveshare-display.step is the official
@@ -16,8 +16,10 @@ The screen is not yet positioned in robot frame; case sets that placement.
 
 PCB top: antenna along top(-Y KiCad/+Y STEP) edge centredx=-23; keep nearby
 conductors, motor wiring, screws and power bank away from antenna. Native
-footprint contains manufacturer's keepout. USB-C J1 at(-41,0), opening toward
--X. BOOTSW1(-6,3),RESETSW2(-6,10), reachable from top. PCA at(10,0).
+footprint contains manufacturer's keepout. Note9: USB-C J1 native origin(21.45,-28), rotation180°, board-local(21.45,+28),
+opening toward+Y. Mouth faceY+32.8, PCB edgeY+31. Ordinary12.5×7×25mm plug
+access must be rechecked against this final STEP atX15.75,21.45,27.15;
+old−X access is superseded. No other connector moved. BOOTSW1(-6,3),RESETSW2(-6,10), reachable from top. PCA at(10,0).
 ServoJ2..9 x=-16,-9,-2,5,12,19,26,33; top pinGND atKiCad y17, then5V at19.54,
 PWM at22.08. Allow plugged SG90 leads and bend radius/slack. J11LED at(22,27)
 point1DIN then+5V,GND along+X. J12 screw terminal(36,3), rotated90°, wire entry

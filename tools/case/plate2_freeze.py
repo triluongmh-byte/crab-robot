@@ -17,7 +17,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE_COMMIT = '2ef9e2c'
 MANIFEST = ROOT / 'case/frozen-plate2-A1V4-r1.json'
-PLATE2 = ['cap_front', 'cap_rear'] + [f'{k}_{c}' for k in ('thigh', 'foot') for c in ('FL', 'FR', 'RL', 'RR')]
+RETIRED = ('cap_front', 'cap_rear')   # owner removed both clamp bars (notes 7, 8): no longer current production parts
+PLATE2 = [f'{k}_{c}' for k in ('thigh', 'foot') for c in ('FL', 'FR', 'RL', 'RR')]
 ALSO_FROZEN = ['coupon_TEST_ONLY', 'MATING_TEST_leg_FL']   # test prints: same geometry, must not churn
 
 
@@ -83,6 +84,8 @@ def verify_files():
     """Frozen STL/STEP bytes in case/out. Returns a list of error strings."""
     errs = []
     for n, e in load()['parts'].items():
+        if n in RETIRED:
+            continue
         for suffix, key in (('stl', 'stlSha256'), ('step', 'stepSha256')):
             p = ROOT / f'case/robot/{n}.{suffix}'
             if not p.exists():
@@ -98,6 +101,10 @@ def verify_3mf(path):
     now = read_3mf(Path(path).read_bytes())
     errs, rows = [], []
     for n in man['plate2Parts']:
+        if n in RETIRED:
+            if n in now:
+                errs.append(f'{n} (retired clamp bar) is still in the 3MF')
+            continue
         e, r = man['parts'][n], now.get(n)
         if r is None:
             errs.append(f'{n} is missing from the 3MF'); continue
@@ -106,7 +113,7 @@ def verify_3mf(path):
             if not v:
                 errs.append(f'{n}: {k} differs from the frozen plate 2')
         rows.append({'part': n, 'meshSha256': r['meshSha'], **ok})
-    extra = sorted(n for n, r in now.items() if r['plate'] == 2 and n not in man['plate2Parts'])
+    extra = sorted(n for n, r in now.items() if r['plate'] == 2 and n not in PLATE2)
     if extra:
         errs.append(f'extra parts on plate 2: {extra}')
     return errs, rows

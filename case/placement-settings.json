@@ -29,16 +29,11 @@
   },
   "plugHeightAboveBoardMm": 16.5,
   "plugNote": "Vertical header with seated servo/Dupont housing: 2.54 plastic + about 14 mm housing above the board (GIA DINH, checklist).",
-  "usbPlugRealMm": [
-    11.4,
-    7.0
-  ],
-  "usbPlugNote": "USB-C plug body width must be <= 11.4 mm: it goes between the two rear hip servos. Purchase criterion in BOM.",
   "display": {
     "step": "ref/waveshare-23822-display.step",
     "stepSha256": "b0f1c0cf83221b95561fa0bdede212159476f65140dc4795f81c9ce45b7e6ca5",
-    "note": "Waveshare 23822 module, rotated 180 deg about Z so its tall back parts miss J10. PCB top against the lid ledge z 44.0; panel in the through window.",
-    "cxMm": -9.3,
+    "note": "Waveshare 23822 module, rotated 180 deg about Z. Moved -X so the GH1.25 plug on its back socket and the J10 wires clear each other: all of J10 is in front of the module PCB. PCB top against the rim ledge z 44.0; panel in the through window. See D27.",
+    "cxMm": -20.4,
     "cyMm": 20.35,
     "ledgeZMm": 44.0
   },

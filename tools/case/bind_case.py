@@ -8,6 +8,8 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import os
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -30,6 +32,10 @@ def main():
     display = ROOT / 'engineering/sources/integrated/waveshare-display.step'
     if display.is_file():
         shutil.copyfile(display, ROOT / 'case/ref/waveshare-23822-display.step')
+    subprocess.run([os.environ['KICAD_CASE_PYTHON'],
+                    str(ROOT/'tools/case/board_import.py'), str(source),
+                    '--interface', str(ROOT/'engineering/board-interface.json')],
+                   check=True, cwd=ROOT)
     print('Case bound to current published enclosure and actual board STEP')
 
 if __name__ == '__main__':

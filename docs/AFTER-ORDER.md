@@ -1,42 +1,47 @@
-# What to buy after ordering the integrated controller
+# What to buy and ask the assembler to fit
 
-**Draft for the pending board revision. The current PCB does not assemble into the case; do not order it. See the WIP notice in the root README.**
+Order **assembled PCBA** for the integrated controller. The ESP32-S3 module, PCA9685, regulator and USB-C belong on that one PCB. Read the current [build validation](../BUILD-VALIDATION.md) before using a manufacturing packet; no order has been placed by the project.
 
-Order **PCBA**, with the components assembled, rather than an empty PCB. This controller carries the ESP32-S3-WROOM-1-N16R8, PCA9685 and 3.3 V regulator itself. Your LILYGO board and separate PCA9685 module remain useful for the original modular robot; neither plugs into this controller.
+## Include in the assembly quotation
 
-## Include in the assembly quote
+The BOM specifies 29 factory SMT placements. Also request installation of these eleven through-hole connectors:
 
-The manufacturing BOM specifies 29 factory SMT placements. Also ask the assembler to install these 11 through-hole connectors; they can be a separate hand-assembly service:
-
-| References | Quantity | Part |
+| References | Quantity | Specified part |
 |---|---:|---|
 | J2–J9 | 8 | Samtec TSW-103-07-G-S, 1×3 male header, 2.54 mm |
 | J10 | 1 | Samtec TSW-108-07-G-S, 1×8 male header, 2.54 mm |
 | J11 | 1 | Samtec TSW-103-07-G-S, 1×3 male header, 2.54 mm |
-| J12 | 1 | Phoenix Contact 1715721, two-position 5.08 mm screw terminal |
+| J12 | 1 | Phoenix Contact 1715721, two-pole 5.08 mm screw terminal |
 
-If the assembler omits these, buy the exact connectors and have a soldering service fit them: **37 PCB solder joints** (27 on the nine 3-pin headers, 8 on the LCD header, 2 on the terminal). The ESP module, USB-C connector and PCA chip are intended for factory assembly.
+If the PCBA service covers only SMT, have a soldering service fit these connectors: **37 PCB joints**: 27 on nine three-pin headers, eight on the LCD header and two on the power terminal. The factory handles the ESP module, PCA chip and USB connector. If the LED stick has bare pads, ask for its three leads to be soldered as an additional external job; a prewired/prepinned stick avoids that job.
 
-## External parts
+## External parts and assembly supplies
 
-| Item | Quantity | Purchase condition |
+Reuse suitable owned items. The photographs establish eight mechanically installed servos and the printed leg parts; ownership of the remaining items for this integrated variant is not established.
+
+| Item | Quantity | What to select |
 |---|---:|---|
-| Waveshare **1.9inch LCD Module, SKU 23822** | 1 | ST7789V2, 170×320, with its supplied 8-wire cable. Buy the assembled module, not an FPC-only screen. The LILYGO screen stays on its old board. |
-| USB-A to USB-C **data** cable | 1 | For programming and power-bank port 1. USB-C plug body must be **at most 11.4 mm wide × 7 mm thick × 15 mm long** to pass the rear tunnel. Reuse a cable only if it meets both requirements. |
-| Three female-to-female 2.54 mm leads | 1 set | J11 → LED bar DIN / 5V / GND, if the bar has fitted pins. If it has bare pads, have the service solder three leads to it instead. |
-| Small cable ties | 3 minimum | 2.5 mm wide, at least 150 mm long: two LCD, one LED; keep spares for cables. |
-| Case fasteners | 11 screws + 8 nuts | Candidate: 4× M3×20, 4× M3×6, 3× M3×8; confirm after the fit repair and check your existing bag. |
+| Waveshare **1.9inch LCD Module, SKU 23822** | 1 | Assembled ST7789V2, 170×320 module with its supplied eight-wire cable |
+| USB-A to USB-C **data/sync** cable | 1 | For programming and bank port 1. The ordinary-plug check uses a 12.5 mm wide × 7 mm thick × 25 mm long housing at the PCB's +Y side. Cable diameter ≤4.5 mm. Use a cable within the checked size; bank-end right-angle USB-A housing ≤22 mm long |
+| LED harness | 3 wires | J11→DIN/5V/GND; female-to-female 2.54 mm leads if the LED bar has fitted pins, or have the service attach leads |
+| Thin zip ties | At least 11, plus spares | 2.5 mm wide, ≥150 mm: two LCD, one LED, eight for knee-lead strain relief |
+| Frame/PCB hardware | 7 screws and 4 nuts | Four M3×6, three M3×12, four M3 nuts; verify the lengths in your existing bag |
+| Correct servo screws | 16 tab + 8 horn-arm + 8 centre | Reference lengths 8/6/4 mm respectively; use the right types. See [the mechanical BOM](../case/BOM.md) for stock shortages. Spare centre screws are not horn-arm replacements |
+| JR-compatible three-wire male/female servo extensions | As needed | Approximately 20 cm for a stock lead that cannot reach an alternate route without tension; keep added connectors on the fixed frame side |
+| Hook-and-loop bank strap | 1 | 10–12 mm wide, ≥420 mm long, removable for charging |
+| Closed two-output 5 V power bank and USB-to-terminal adapter | 1 each if not already owned | Use [the mechanical dimensions and selection criteria](../case/BOM.md), including the bank and adapter envelopes |
+| WS2812 eight-LED stick and red/black 22 AWG power wire | As needed | Reuse suitable stock; obtain the correct prewired stick/harness rather than fine soldering at home |
 
-Reuse the eight SG90 servos with horns/screws, WS2812 eight-LED bar, two-output 5 V power bank and USB-to-terminal power adapter if already owned. Ownership of everything except the reported LILYGO and ordered PCA module has not been confirmed. The separately ordered PCA module is **not an extra purchase for this variant**.
+The new frame reuses four thighs and four feet. Both interfering clamp bars are retired. Only its two structural frames are new prints; the small TEST ONLY saddle coupon is separate. See [the owner inventory and photos](../references/OWNER-PRINTS.md).
 
-See the [complete external-parts BOM](../case/BOM.md) for power-bank, adapter, wire and strap dimensions.
+The separately bought PCA9685 breakout and LILYGO remain useful for the original modular robot. This custom controller already contains both controller functions, so those breakouts are not additional purchases for this variant. The original LILYGO firmware and its wiring table remain available.
 
-The LCD's small connector is identified by the manufacturer as **MX1.25**, not JST-GH. Prefer the supplied cable; do not buy a cable solely from a similar connector photo. Connect by printed signal names, not wire colors.
+## Before the first loaded test
 
-## What still needs hands-on work
+Ask the assembler to inspect soldering and mounting insulation, check the rails, test USB enumeration/flashing in **both plug orientations**, verify BOOT/RESET and idle servo outputs, and check the regulator temperature. USB line impedance and real operating temperature remain unmeasured; the board's geometry/electrical checks do not replace this first-board test. Inspect insulation around mounting hardware and exposed copper rather than relying on solder mask alone.
 
-The assembler should check soldering, power rails, USB in both orientations, reset/BOOT, idle servo outputs and regulator temperature before the first loaded test. The PCB mounting holes have no copper-free annulus; the service must inspect insulation under the mounting hardware and prevent hardware from bridging exposed copper. Do not scrape solder mask or rely on overtightened metal hardware.
+The owner then follows the illustrated guide: fit the board/display, plug the labelled leads, use the **integrated** firmware target, scan the QR and centre the unloaded servos before attaching horns. Real fit, retention, wire flexibility, motor directions, radio range, bank shutoff/surges, WS2812 data level, floor grip and walking are still first-prototype checks. The owner's earlier LILYGO QR success does not validate this new PCB.
 
-The owner then fits the board/screen, plugs the labeled cables, flashes the **integrated** firmware, scans the QR and centers the servos before attaching horns. CAD checks and compiled firmware do not establish physical fit, motor direction, radio performance, power-bank surge behavior, LED input compatibility or temperature. These are first-prototype checks, not completed tests.
+Use the display module's supplied cable. The manufacturer's catalogue uses inconsistent MX/GH connector names; a matching-looking loose eight-pin lead is not a verified replacement. Connect by the printed signal names.
 
-Primary product references: [Waveshare module](https://www.waveshare.com/1.9inch-LCD-Module.htm), [module documentation](https://www.waveshare.com/wiki/1.9inch_LCD_Module), [Samtec headers](https://www.samtec.com/products/tsw), [Phoenix terminal](https://www.phoenixcontact.com/en-gb/products/printed-circuit-board-terminal-mkds-15-2-508-1715721).
+Primary references: [Waveshare module and included cable](https://www.waveshare.com/product/1.9inch-lcd-module.htm), [module documentation](https://www.waveshare.com/wiki/1.9inch_LCD_Module), [Samtec headers](https://www.samtec.com/products/tsw), [Phoenix terminal](https://www.phoenixcontact.com/en-gb/products/printed-circuit-board-terminal-mkds-15-2-508-1715721).

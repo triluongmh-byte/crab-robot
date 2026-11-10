@@ -72,6 +72,16 @@ def pack(arr):
     return base64.b64encode(q.tobytes()).decode()
 
 
+def usb_wire():
+    """W2 follows J1 as published: the checked cable route when J1 is on a side edge, the old straight rear run otherwise."""
+    ev = json.loads((ROOT / 'case/reports/route-evidence.json').read_text())
+    r = next((x for x in ev['routes'] if x['route'].startswith('usb')), None)
+    if r:
+        return {'id': 'W2', 'label': 'Cáp USB-C: pin cổng 1 → khoang giữa 2 servo sau → ra đầu khung → dọc ngoài ray bên trái → đầu USB-C vào J1 qua cửa hông', 'color': '#3b5bdb', 'pts': r['waypoints']}
+    return {'id': 'W2', 'label': 'Cáp USB-C: pin cổng 1 → ra sau → J1 (cạnh sau; cáp thường không vừa, xem D23)', 'color': '#3b5bdb',
+            'pts': [[-48, 14, 10], [-61, 8, 12], [-66, 0, 20], [-66, 0, 26], [-61, 0, 26]]}
+
+
 def main():
     import cadquery as cq
     import model as M
@@ -79,7 +89,7 @@ def main():
     import build as B
     srcs = sorted(OUT.glob('*.stl')) + [Path(__file__), ROOT / 'case/model.py', ROOT / 'case/hardware.py',
                                        ROOT / 'case/build.py', OUT / 'parts.json', ROOT / 'case/assembly_steps.json',
-                                       Path(__file__).parent / 'overview_template.html']
+                                       Path(__file__).parent / 'overview_template.html', ROOT / 'case/reports/route-evidence.json']
     h = hashlib.sha256()
     for f in srcs:
         h.update(f.read_bytes())
@@ -93,10 +103,8 @@ def main():
         meshes.append(dict(id=mid, label=label, group=group, color=color, kind=kind, corner=corner,
                            tri=pack(T), edge=pack(edges_of(T)), n=int(len(T)), **(extra or {})))
 
-    add('base', 'base — đáy/khung chịu lực', 'frame', COL['frame'], stl_tris(OUT / 'base.stl'), 'print')
-    add('lid', 'lid — khung nắp (cửa màn hình, dải tán đèn, để hở giắc servo)', 'cover', COL['cover'], stl_tris(OUT / 'lid.stl'), 'print')
-    add('cap_front', 'cap_front — thanh đè hông trước', 'clamp', COL['clamp'], stl_tris(OUT / 'cap_front.stl'), 'print')
-    add('cap_rear', 'cap_rear — thanh đè hông sau', 'clamp', COL['clamp'], stl_tris(OUT / 'cap_rear.stl'), 'print')
+    add('frame_lower', 'frame_lower — khung dưới (nôi pin, ray, khối đỡ board)', 'frame', COL['frame'], stl_tris(OUT / 'frame_lower.stl'), 'print')
+    add('frame_upper', 'frame_upper — khung trên (yên tai servo, màn hình, dải đèn)', 'cover', COL['cover'], stl_tris(OUT / 'frame_upper.stl'), 'print')
     for c in CORNERS:
         add(f'thigh_{c}', f'thigh_{c} — đùi {CN[c]}', 'thigh', COL['moving'], stl_tris(OUT / f'thigh_{c}.stl'), 'print', c)
         add(f'foot_{c}', f'foot_{c} — cẳng {CN[c]}', 'foot', COL['foot'], stl_tris(OUT / f'foot_{c}.stl'), 'print', c)
@@ -126,7 +134,7 @@ def main():
     add('adapter', 'Đầu chuyển USB → terminal vặn vít (cổng 2)', 'bank', '#8a6d3b', shape_tris(bx(-59.5, -37.5, -24, -4, 3, 18)), 'bought')
     add('usbplug', 'Đầu USB-A vuông góc của cáp USB-C (cổng 1)', 'bank', '#2e3a46', shape_tris(bx(-59.5, -37.5, 4, 24, 3, 18)), 'bought')
     uitem = dict(B.electronics_items())['USB-C plug overmold']
-    add('usbc', 'Đầu USB-C cắm vào board (qua đường hầm phía sau)', 'elec', '#2e3a46', shape_tris(uitem), 'bought')
+    add('usbc', ('Đầu USB-C thường cắm vào J1, luồn qua cửa hông bên trái' if M.USB_SIDE else 'Đầu USB-C cắm vào J1 (cạnh sau, đầu cắm rộng tối đa 9 mm, xem D23)'), 'elec', '#2e3a46', shape_tris(uitem), 'bought')
     inst = HW.instances()
     for hh in inst:
         T = shape_tris(B.screw_solid(hh), 0.05)
@@ -146,19 +154,22 @@ def main():
     zt = M.BOARD_ZT
     zw = zt + 16.0
     wires = [
-        {'id': 'W1', 'label': 'Đầu chuyển cổng 2 → terminal J12 (+ / −, vặn vít; dây đi trên board tới đầu J12)', 'color': '#ff6a00',
-         'pts': [[-45, -14, 12], [-36.5, -16, 16], [-36.5, -16, 22], [-36, -32.5, 26], [-20, -32.5, 32], [30, -8.5, 38], [42.5, -2.5, 38], [42.5, -2.5, 31], [40.6, -2.5, 31]]},
-        {'id': 'W2', 'label': 'Cáp USB-C: pin cổng 1 → đường hầm phía sau → USB-C trên board', 'color': '#3b5bdb',
-         'pts': [[-48, 14, 10], [-61, 8, 12], [-66, 0, 20], [-66, 0, 27], [-60.7, 0, 27]]},
+        {'id': 'W1', 'label': 'Đầu chuyển cổng 2 → terminal J12 (+ / −, vặn vít)', 'color': '#ff6a00',
+         'pts': [[-45, -14, 12], [-46, -31, 22], [-20, -40, 30], [25, -40, 30], [38, -20, 36], [41.5, 0, 36], [38.5, 0, 31]]},
+        usb_wire(),
         {'id': 'W3', 'label': 'Dây thanh LED: J11 → thanh LED (DIN / 5V / GND)', 'color': '#bbbbbb',
-         'pts': [[24, -27, zt + 8], [28, -14, 36], [27.5, 0, 39]]},
+         'pts': [[20, -27, zt + 8], [26, -14, 36], [27.5, 0, 39]]},
         {'id': 'W4', 'label': 'Dây màn hình 8 sợi: J10 → màn hình Waveshare', 'color': '#9a59b5',
-         'pts': [[15, 20, zt + 16], [18, 26, 39], [12, 30, 40], [5, 18, 39]]},
-        {'id': 'W5', 'label': 'Dây servo hông → rãnh dưới đáy hốc → dưới board → ra khe mép board, lên hàng CH0/2/4/6 (nâu = GND)', 'color': '#a0522d',
-         'pts': [[50, 4.5, 23], [41, 4.5, 22.8], [31, 18, 22.5], [24, 32.5, 23], [20, 34.5, 30], [14, 30, zw], [14, -18, zw]]},
-        {'id': 'W6', 'label': 'Dây servo gối (vòng dư qua khớp) → cửa sổ hông → hàng CH1/3/5/7', 'color': '#c46a2a',
-         'pts': [[96, 64, 52], [75, 45, 58], [40, 39, 47], [-4, 38.5, 34], [-4, 30, zw], [-4, -18, zw]]},
+         'pts': [[11, 20, zt + 16], [14, 26, 39], [8, 30, 40], [1, 18, 39]]},
+        {'id': 'W5', 'label': 'Dây servo hông: khoang giữa 2 servo → ra đầu khung (đường B) hoặc thẳng ra cửa hông ở góc (đường C) → cửa hông bên phải → hàng CH0/2/4/6 (nâu = GND)', 'color': '#a0522d',
+         'pts': [[53, 3.5, 26], [60, 0, 27], [68, 0, 27], [68, -40, 27], [20, -44, 29], [14, -33, 30], [14, -29, 38], [-20, -27, 46], [-20, -19.5, 44]]},
+        {'id': 'W6', 'label': 'Dây servo gối: vòng dư qua khớp, buộc ở tấm đùi và cột góc → dọc ngoài ray tới x ±41.5 → lên đỉnh khung (phía trong trục đùi) hoặc qua cửa hông → hàng CH1/3/5/7', 'color': '#c46a2a',
+         'pts': [[75, 45, 46], [59.5, 39.2, 32], [41.5, 39.5, 32], [41.5, 39.5, 51], [41.5, -24, 51], [-13, -24, 51], [-13, -19.5, 44]]},
     ]
+    # both open routes of every servo lead, from the checked route evidence: shown only in the wire-routing step
+    ev = json.loads((ROOT / 'case/reports/route-evidence.json').read_text())
+    for i, r in enumerate(ev['routes']):
+        wires.append({'id': f'R{i + 1}', 'label': r['route'], 'color': '#1c7ed6' if ' route A ' in r['route'] else '#e8590c', 'pts': r['waypoints'], 'stepOnly': True})
     steps = json.loads((ROOT / 'case/assembly_steps.json').read_text())
     hwmap = {hh['id']: {'id': hh['id'], 'size': hh['size'], 'kind': hh['kind'], 'nut': bool(hh.get('nut')),
                         'entry': hh['entry'], 'action': hh['action'], 'parts': hh['parts']} for hh in inst}

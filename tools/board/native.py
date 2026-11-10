@@ -10,7 +10,7 @@ def run(kind):
  args=[toolchain.executable("cli")]
  if kind=="drc":args+=["pcb","drc","--schematic-parity","--severity-all","--format","json","--units","mm","-o",str(report),"design/main.kicad_pcb"]
  else:args+=["sch","erc","--severity-all","--format","json","--units","mm","-o",str(report),"design/main.kicad_sch"]
- toolchain.run(args,timeout=180);stamp.write_text(key)
+ toolchain.run(args,timeout=180)
  d=json.loads(report.read_text())
  fs=d.get("violations",[])+d.get("unconnected_items",[])+d.get("schematic_parity",[])
  for s in d.get("sheets",[]):fs+=s.get("violations",[])
@@ -18,4 +18,6 @@ def run(kind):
  print(kind,Counter(f["type"] for f in fs))
  for f in fs:
   if f["type"]!="unconnected_items":print(f["type"],f.get("description"),[(i.get("description"),i.get("pos")) for i in f.get("items",[])])
+ assert not fs,(kind,len(fs))
+ stamp.write_text(key)
 with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as ex:list(ex.map(run,sys.argv[1:] or ["erc","drc"]))

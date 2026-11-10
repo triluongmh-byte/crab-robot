@@ -48,8 +48,8 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-top:1px so
   <div class="card" id="card"></div>
   <details id="detail"><summary>Chi tiết</summary>
    <div class="card">
-    <div class="row"><label><input type="checkbox" id="openCover"> Mở nắp (ẩn nắp + thanh đè)</label></div>
-    <div class="row"><label><input type="checkbox" id="xray"> X-ray nắp</label></div>
+    <div class="row"><label><input type="checkbox" id="openCover"> Mở khung trên (ẩn khung trên)</label></div>
+    <div class="row"><label><input type="checkbox" id="xray"> X-ray khung trên</label></div>
     <div class="row"><label><input type="checkbox" id="elecT" checked> Điện tử</label><label><input type="checkbox" id="wireT" checked> Dây</label></div>
     <div class="row"><label for="explode">Tách rời</label><input type="range" id="explode" min="0" max="40" value="0"><span id="exv">0</span></div>
     <div class="muted">Tách rời chỉ để minh hoạ thứ tự lắp theo trục thật; không phải chuyển động.</div>
@@ -57,7 +57,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-top:1px so
     <div class="row"><label for="hip">Hông</label><input type="range" id="hip" min="-30" max="30" value="0"><span id="hipv">0°</span></div>
     <div class="row"><label for="knee">Gối</label><input type="range" id="knee" min="-30" max="30" value="0"><span id="kneev">0°</span></div>
     <div class="row"><button id="center">Về giữa (0°)</button><button id="anim">Chạy thử chuyển động</button></div>
-    <div class="muted">Phần đứng yên: đáy, nắp, thanh đè, servo hông. Phần quay: đùi (+servo gối) quanh trục hông đứng; cẳng quanh trục servo gối nằm ngang. Chân đối xứng gương.</div>
+    <div class="muted">Phần đứng yên: khung dưới, khung trên, servo hông. Phần quay: đùi (+servo gối) quanh trục hông đứng; cẳng quanh trục servo gối nằm ngang. Chân đối xứng gương.</div>
     <h3>Chọn từng vít/tán</h3><div class="ids" id="allIds"></div>
     <div id="legend"></div>
    </div>
@@ -108,7 +108,7 @@ function match(id,pat){if(pat==='*')return true;if(pat.endsWith('*')&&!pat.inclu
 function stepDef(){return S.step?DATA.steps[S.step-1]:null}
 function visible(m){const st=stepDef();if(m.group==='hw'||m.group==='nut'){if(!S.hw)return false}
  if(!S.elec&&(m.group==='elec'||m.group==='bank'))return false;
- if(S.open&&(m.group==='cover'||m.group==='clamp'))return false;
+ if(S.open&&m.group==='cover')return false;
  if(!st)return true;return st.show.some(p=>match(m.id,p))}
 function legMatrix(m,role){const c=m.corner;if(!c)return I4();const[sx,sy]=SIGN[c];const hp=DATA.joints.hip[c];const g=sx*sy;let M=I4();
  const st=stepDef();let aside=st&&st.legsAside;
@@ -119,7 +119,7 @@ function legMatrix(m,role){const c=m.corner;if(!c)return I4();const[sx,sy]=SIGN[
 function modelMatrix(m){let M=I4();const role=m.group==='foot'?'foot':(['thigh','kneeservo','hiphorn'].includes(m.group)?'thigh':(m.moveWith||null));
  if(role)M=legMatrix(m,role);
  const e=S.explode+(stepDef()&&stepDef().explode||0);if(e){
-  if(m.group==='cover')M=mul(tr(0,0,e*1.6),M);else if(m.group==='clamp')M=mul(tr(0,0,e*1.1),M);
+  if(m.group==='cover')M=mul(tr(0,0,e*1.6),M);
   else if(m.group==='hw'&&m.axis){M=mul(tr(-m.axis[0]*e*0.8,-m.axis[1]*e*0.8,-m.axis[2]*e*0.8),M)}
   else if(m.group==='nut'&&m.nutEntry){M=mul(tr(m.nutEntry[0]*e*0.5,m.nutEntry[1]*e*0.5,m.nutEntry[2]*e*0.5),M)}
   else if(m.group==='foot'){const[sx,sy]=SIGN[m.corner];M=mul(tr(sx*e*0.5,sy*e*0.5,-e*0.3),M)}
@@ -139,7 +139,7 @@ function draw(){const dpr=Math.min(2,window.devicePixelRatio||1);const w=cv.clie
  for(const m of meshes){if(!visible(m))continue;const M=modelMatrix(m);m._M=M;
   if(S.xray&&m.group==='cover'){later.push(m);continue}
   drawMesh(m,M,1,foc,dark)}
- if(S.wire&&(!st||st.show.some(p=>p.startsWith('wire:'))))for(const w of wires){if(st&&!st.show.some(p=>p==='wire:*'||p==='wire:'+w.id))continue;
+ if(S.wire&&(!st||st.show.some(p=>p.startsWith('wire:'))))for(const w of wires){if(!st&&w.stepOnly)continue;if(st&&!st.show.some(p=>p==='wire:*'||p==='wire:'+w.id))continue;
   gl.uniformMatrix4fv(loc.M,false,I4());gl.uniform3fv(loc.col,w.rgb);gl.uniform1f(loc.a,1);gl.uniform1f(loc.lit,1);bind(w.pb,w.nb);gl.drawArrays(gl.TRIANGLES,0,w.cnt)}
  // insertion arrows for the focused hardware
  if(S.focus){const m=byId['hw_'+S.focus];if(m&&m._M){const h0=xf(m._M,m.head);const a=m.axis;const tail=[h0[0]-a[0]*16,h0[1]-a[1]*16,h0[2]-a[2]*16];arrow(tail,h0,dark)}}
@@ -177,7 +177,7 @@ function totals(){const c={};for(const id in DATA.hw){const h=DATA.hw[id];c[h.si
  return Object.entries(c).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')+`<tr><td>tán M3</td><td>${nuts}</td></tr>`}
 function idBtn(id){return `<button data-id="${id}" class="${S.focus===id?'on':''}" aria-label="Xem ${id}">${id}</button>`}
 function render(){const st=stepDef();const card=$('#card');
- if(!st){card.innerHTML=`<h2>Đủ bộ — robot đã ráp</h2><div class="muted">12 part in (1 đáy, 1 nắp, 2 thanh đè, 4 đùi, 4 cẳng), 8 servo SG90, 11 vít M3 (giới hạn 12) + vít túi SG90.</div>
+ if(!st){card.innerHTML=`<h2>Đủ bộ — robot đã ráp</h2><div class="muted">10 part in (khung dưới, khung trên, 4 đùi, 4 cẳng), 8 servo SG90, 7 vít M3 (giới hạn 12) + vít túi SG90. Khung xương mở: không có vách, không có nắp kín.</div>
   <h3>Tổng vít/tán</h3><table>${totals()}</table><div class="warn">Đi theo Bước 1 → 8 bằng nút Sau. Mỗi bước có thẻ “Vít/tán bước này”. Bấm một mã vít để xem vít thật, chiều vặn (mũi tên cam) và part nó bắt.</div>
   <div class="warn">Chưa in, chưa ráp thử: độ khít hốc servo, rãnh horn và tán M3 cần in file TEST ONLY và MATING_TEST trước (case/README.md).</div>`}
  else{let hw='';if(!st.hw.length)hw='<div class="muted">Bước này không dùng vít/tán.</div>';
@@ -197,7 +197,7 @@ $('#knee').oninput=e=>{S.knee=+e.target.value;$('#kneev').textContent=e.target.v
 let animT=null;$('#center').onclick=()=>{if(animT){clearInterval(animT);animT=null}S.hip=S.knee=0;$('#hip').value=0;$('#knee').value=0;$('#hipv').textContent='0°';$('#kneev').textContent='0°';draw()};
 $('#anim').onclick=()=>{if(animT){clearInterval(animT);animT=null;return}let t=0;animT=setInterval(()=>{t+=0.05;S.hip=Math.round(25*Math.sin(t));S.knee=Math.round(25*Math.sin(t+1.2));$('#hip').value=S.hip;$('#knee').value=S.knee;$('#hipv').textContent=S.hip+'°';$('#kneev').textContent=S.knee+'°';draw()},50)};
 function renderAll(){$('#allIds').innerHTML=Object.keys(DATA.hw).map(idBtn).join('');$('#allIds').querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>focusId(b.dataset.id))}
-$('#legend').innerHTML=[['Đáy/khung','#d6cfc1'],['Nắp','#eee9df'],['Thanh đè','#cfc6b3'],['Chân (quay)','#9ebcca'],['Servo','#4d6fa8'],['Điện tử','#4c806c'],['Vít/tán','#596872']].map(([n,c])=>`<span><span class="sw" style="background:${c}"></span>${n}</span>`).join(' · ')+'<br>Dây: '+DATA.wires.map(w=>`<span><span class="sw" style="background:${w.color}"></span>${w.id} ${w.label}</span>`).join('<br>');
+$('#legend').innerHTML=[['Khung dưới','#d6cfc1'],['Khung trên','#eee9df'],['Chân (quay)','#9ebcca'],['Servo','#4d6fa8'],['Điện tử','#4c806c'],['Vít/tán','#596872']].map(([n,c])=>`<span><span class="sw" style="background:${c}"></span>${n}</span>`).join(' · ')+'<br>Dây: '+DATA.wires.map(w=>`<span><span class="sw" style="background:${w.color}"></span>${w.id} ${w.label}</span>`).join('<br>');
 document.addEventListener('keydown',e=>{if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT')return;if(e.key==='ArrowRight')go(S.step+1);if(e.key==='ArrowLeft')go(S.step-1)});
 renderAll();applyTheme();
 (function(){const h=new URLSearchParams(location.hash.slice(1));go(+(h.get('step')||0));if(h.get('focus'))focusId(h.get('focus'));

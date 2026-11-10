@@ -1,6 +1,6 @@
 # Firmware for the integrated controller
 
-**Draft for the pending board revision. The current PCB does not assemble into the case; do not order it. See the WIP notice in the root README.**
+The current prototype uses the side-entry USB-C PCB and two open frames. See [build validation](../BUILD-VALIDATION.md) for desktop checks and the remaining first-board tests.
 
 The two hardware variants share the web/Wi-Fi/gait application but use different display and servo-enable pins. Build the **integrated** target for this custom PCB. Keep the LILYGO target for the original development board and separate PCA9685 module.
 

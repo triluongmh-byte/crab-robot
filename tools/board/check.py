@@ -2,7 +2,7 @@
 """Independent integrated-board pin/rail/geometry audit, parallel and byte cached."""
 import concurrent.futures,hashlib,json,os,pathlib,sys
 from kicadpy import toolchain,verify
-R=pathlib.Path(__file__).resolve().parents[2];os.chdir(R);O=R/'build/board'
+R=pathlib.Path(__file__).resolve().parents[2];os.chdir(R);O=R/'build/board';O.mkdir(parents=True,exist_ok=True)
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def geometry():
  s=toolchain.worker('inspect',R/'design/main.kicad_pcb');refs={f['reference']:f for f in s['footprints']}

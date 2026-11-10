@@ -13,14 +13,13 @@ import cadquery as cq
 HERE = Path(__file__).resolve().parent
 
 # ----------------------------------------------------------------------------- body layout
-BX, BY = 62.5, 37.0          # half length / half width of the body shell (125 x 74)
+BX, BY = 63.0, 37.0          # half length / half width of the frame (126 x 74)
 CORNER_R = 5.0               # vertical edge round of the body plan
 FLOOR_T = 3.0                # base floor 0..3
 WALL_T = 3.0                 # load-bearing walls
 TUN_Z0, TUN_Z1 = 3.0, 18.5   # power-bank tunnel (bank 15 + 0.5)
 DECK_Z0, DECK_Z1 = 18.5, 21.5
 LID_Z0, LID_Z1 = 43.5, 46.5  # lid plate
-CAP_X0 = 40.0                # |x| >= CAP_X0 belongs to the clamp caps
 TAB_Z0, TAB_Z1 = 37.4, 39.9  # SG90 hip tab underside/top (servo bottom on deck z=21.5)
 INNER_Y = BY - WALL_T        # 34.0, inside face of the side walls
 BANK = dict(x0=-37.5, x1=62.5, y=33.0, z0=3.0, z1=18.0)
@@ -30,16 +29,8 @@ BAY_X0 = -BX + WALL_T        # -59.5 rear bay inner face
 HIP_X, HIP_Y = 53.25, 22.8
 SERVO_Z0 = DECK_Z1           # 21.5
 
-# A1V4-r2 skeleton (release note 2): the side walls above the deck become windows under sturdy rails.
-# Belly (z <= DECK_Z1) and the hip blocks (|x| >= CAP_X0) are unchanged: mech_check diffs them against r1.
-RAIL_Z0 = 36.5               # side rail z RAIL_Z0..LID_Z0 = 7 tall x 3 wide, clamped at both ends
-WIN_R = 3.0                  # window corner radius (>= 2 mm fillet rule at every rail/pier root)
-WIN_END_X = 37.0             # windows stop here: the wall from here to CAP_X0 ties the rail to the hip block
-# (side y sign, x0, x1) of each window bay (A1V4-r3: both sides are one long bay; the integrated board sits inside)
-SIDE_WINDOWS = [(-1, -WIN_END_X, WIN_END_X), (1, -WIN_END_X, WIN_END_X)]
 LED_CH_HALF_Y = 6.4          # diffuser channel half-width (bar +-6.0); centred on the body
 LED_TIE_X = (-14.0, 14.0)    # zip-tie stations, between LEDs (at +-10.5 / +-17.5)
-LID_OPEN_X = 36.0            # half length of the big -Y opening (3.8 mm end members stay)
 LED = dict(cx=0.0, cy=0.0, cz=41.5, sx=56.0, sy=12.0, sz=4.0)
 
 # ----------------------------------------------------------------------------- integrated board (release note 4)
@@ -93,24 +84,43 @@ def _part_box(p):
 
 
 BOARD_PARTS = [dict(p, robotBox=board_box(_part_box(p)), heightMm=_top_h(p)) for p in _EC.get('parts', []) if p.get('heightMm', 0) > 0]
-USB_PLUG_REAL = tuple(_PLACE.get('usbPlugRealMm', (11.4, 7.0)))
-# Board-end slots in the hip blocks (D17): the 88 mm board reaches x +-44. They sit below the frozen nut seats (z 28).
-SLOT_TOP = 26.3
-SLOT_X = 44.25              # end clearance 0.25 (wall 2.75 mm locally for 2.3 mm of height)
-SLOT_Y = 31.25
-# Native contract box for U1 (courtyard + antenna keepout, overhangs the board): cut from the base so the final contract passes (D19).
-U1_KEEPOUT = next((list(p['boxMm']) + [p['heightMm']] for p in _EC.get('parts', []) if p['ref'] == 'U1'), None)
 # THT tails (board-interface.json, drill > 0.3): clearance wells in the deck; hip-lead grooves (D19)
 _BI = json.loads((HERE / _PLACE['interfaceSource']).read_text()) if _PLACE.get('interfaceSource') else {}
 BOARD_TAILS = [board_xy(pad['at'][0], -pad['at'][1]) for c in _BI.get('connectors', []) for pad in c.get('pads', [])
                if max(pad.get('drillMm', [0])) > 0.3]
-TAIL_WELL_Z = 20.6          # deck well floor under the THT tails
-GROOVE_Z = 20.5             # hip-lead grooves under the board
-# Rear USB-C tunnel through the rear central block, along -X (D18). Its width (+-6.3) keeps the native plug corridor open.
-USB_TUNNEL = dict(y=6.3, z0=BOARD_ZT + 1.65 - 4.0, z1=BOARD_ZT + 1.65 + 4.0)
 J12_SCREW_X, J12_SCREW_Y = 36.0, (-3.0, 2.08)      # J12 pin column (board-interface.json local coords; screw holes above it)
 BOARD_IF = {i['kind'] if i['kind'] != 'button' else f"button:{i.get('name', '')}": i for i in _EC.get('interfaces', [])}
 BOARD_TOP_Z = max([BOARD_ZT + p['heightMm'] for p in BOARD_PARTS] + [BOARD_ZT])
+USB_ORDINARY_MM = (12.5, 7.0, 25.0)  # ordinary USB-C overmold: width (the board contract's own plugMm), thickness, rigid length (note 9)
+USB_SHELL_MID_Z = 1.65                # plug centre above top copper: mid of the 3.3 mm shell (contract zMm). The STEP envelope (-0.8..3.3) is also tested, see USB_PLUG_Z_MIDS
+USB_PLUG_Z_MIDS = (1.25, 1.65)        # plug centre heights above top copper checked on real solids: STEP envelope mid, shell mid
+
+
+def usb_mouth():
+    """J1 as published, in the robot frame: (mouth x, mouth y, access ax, access ay, plug centre z). The mouth face comes from the J1 body
+    measured in the published STEP (board_placement.json jStepJ1, written by board_import.py); the contract centre is the fallback."""
+    u = BOARD_IF['usb']
+    ux, uy = board_xy(*u['centerMm'])
+    a0, b0 = u.get('access', [-1, 0, 0])[:2]
+    ax, ay = a0 * _c - b0 * _s, a0 * _s + b0 * _c
+    centre = ux * ax + uy * ay
+    st = _PLACE.get('stepJ1')
+    if st and abs(ay) > 0.5:                 # side edge: the mouth is the J1 body's far Y face, plug centred on the body
+        xa, ya, xb, yb = board_box([st['xMm'][0], st['yMm'][0], st['xMm'][1], st['yMm'][1]])
+        return (xa + xb) / 2, (yb if ay > 0 else ya), ax, ay, BOARD_ZT + USB_SHELL_MID_Z
+    reach = centre + u.get('sizeMm', [9.5, 10.7])[0] / 2
+    for p in BOARD_PARTS:
+        if p['ref'] == 'J1':
+            xa, ya, xb, yb = p['robotBox']
+            reach = max([reach] + [x * ax + y * ay for x in (xa, xb) for y in (ya, yb)])
+    d = reach - centre
+    return ux + ax * d, uy + ay * d, ax, ay, BOARD_ZT + u.get('zMm', 3.3) / 2
+
+
+# J1 on a side edge (note 9) takes an ordinary cable through the side window; on the rear edge only the slim limit of D23 is modelled.
+USB_SIDE = abs(usb_mouth()[3]) > 0.5
+USB_PLUG_REAL = USB_ORDINARY_MM[:2] if USB_SIDE else tuple(_PLACE.get('usbPlugRealMm', (11.4, 7.0)))
+USB_PLUG_LEN = USB_ORDINARY_MM[2] if USB_SIDE else 15.0
 
 
 # Display module (release note 4 V0): Waveshare 1.9in on a harness, turned 180 deg about Z, PCB top against a lid ledge.
@@ -133,7 +143,10 @@ _px = sorted(disp_xy(v, DISP['panel_y'][0])[0] for v in DISP['panel_x'])
 _py = sorted(disp_xy(DISP['panel_x'][0], v)[1] for v in DISP['panel_y'])
 DISP_WIN = dict(x0=_px[0] - 0.2, x1=_px[1] + 0.2, y0=_py[0] - 0.2, y1=_py[1] + 0.2)      # panel through-window
 DISP_ACTIVE_C = disp_xy(sum(DISP['panel_x']) / 2, sum(DISP['panel_y']) / 2)
-DISP_TIE_Y = [DISP_Y1 - 2.8, DISP_Y1 - 24.5]   # tie stations (STEP y 2.8 and 24.5, clear of the back connector y 6.3..21)
+DISP_TIE_X = (-41.5, -36.0)                     # two zip ties across the module back, along Y, rear of the LED channel (D27)
+DISP_GH_MOUTH_X = DISP_X1 - 12.52               # GH1.25 back socket, side entry, mouth faces +X (vendor STEP x 12.52..16.72)
+DISP_GH_Y = (DISP_Y1 - 21.03, DISP_Y1 - 6.28)   # socket extent in Y
+DISP_GH_Z = (DISP_ZM - 3.91, DISP_ZM - 0.41)    # socket extent in Z
 
 
 def disp_back_boxes():
@@ -156,14 +169,7 @@ def iface_xy(kind):
     return board_xy(*i['centerMm']) if i else None
 
 
-# Plug tops (vertical 3-pin headers + servo plug) must stay under the lid plane; the wire bends may pass through its open frame.
-LID_PAD_Y0 = BY - 5.7        # inner face of a pad: outside the board plan (|y| > 31.25), merged into the 3 mm wall
-LID_PAD_X = (31.5, 39.99)    # |x| range of each pad, tied into the 3 mm wall at x 37-40 (does not enter the frozen |x| >= 40 zone)
-LID_SCREWS = [(36.0, BY - 4.0), (36.0, -(BY - 4.0)), (-36.0, -(BY - 4.0))]   # 3 corners: the rear +Y corner is under the display module
-LID_PILOT = 2.7              # M3x8 self-taps into this pilot (no nut fits in the 5.7 mm pad)
-
 # fasteners (owned set only): (id, x, y, z_head_seat, length, kind)
-CAP_SCREW_XY = [(43.5, 31.0), (43.5, -31.0)]
 NUT_AF, NUT_T = 5.5, 2.4     # M3 nut across flats / thickness
 NUT_SLOT_W, NUT_SLOT_H = 5.9, 2.8
 M3_CLEAR = 3.4
@@ -285,251 +291,239 @@ def corner_rigid(shape, corner):
     return corner_place(shape, corner)
 
 
-# ----------------------------------------------------------------------------- base
-def base():
-    top = LID_Z0
-    s = plan_outline(0, top)
-    # cap zone is lower: caps sit on z = TAB_Z1 for |x| >= CAP_X0
-    for sg in (1, -1):
-        x0, x1 = (CAP_X0, BX + 1) if sg > 0 else (-BX - 1, -CAP_X0)
-        s = s.cut(box(x0, x1, -BY - 1, BY + 1, TAB_Z1, top + 1))
-    # interior cavities
-    s = s.cut(box(BANK['x0'], BX + 1, -INNER_Y, INNER_Y, TUN_Z0, TUN_Z1))      # bank tunnel, open front
-    s = s.cut(box(BAY_X0, BANK['x0'] + 0.01, -INNER_Y, INNER_Y, TUN_Z0, TUN_Z1))  # rear bay
-    s = s.cut(box(-BX - 1, BAY_X0 + 0.01, -26.0, 26.0, TUN_Z0, TUN_Z1))     # rear service opening
-    s = s.cut(box(-BX + WALL_T, BX - WALL_T, -INNER_Y, INNER_Y, DECK_Z1, top + 1))  # electronics zone
-    s = s.union(internal_structures())
-    s = s.cut(internal_cuts())
-    s = s.cut(side_windows())
-    s = s.union(strap_ribs())
-    return s.clean()
+# ----------------------------------------------------------------------------- A1V4-r5 open bar skeleton (release notes 6, 7, 8)
+# Two parts replace base + lid, no walls anywhere. Every bar is >= 3 mm on every side and tied at both ends.
+#   frame_lower: bank cradle (floor bars, bottom rails, side trusses, deck rails), board seats, columns.
+#   frame_upper: hip tab saddles (each servo held by its own two tabs, screwed directly), side rails, open screen/LED bridge.
+# The board drops straight into frame_lower before frame_upper goes on, and the hip servos drop through the finished frame.
+# No clamp bars (owner removed them for interference, notes 7 and 8): nothing presses on or sits over a servo body or gear boss.
+BAR = 3.0                    # minimum bar side (note 6)
+RAIL_Y0, RAIL_Y1 = 33.5, 37.0  # bottom rail / truss band outside the bank (+-33 + 0.5)
+BOT_RAIL_Z = 6.0             # bottom rail z 0..6
+FLOOR_Z = 3.0                # bank rests on floor bars at z 3
+FLOOR_BAR_X = (56.5, 28.0, 0.0, -28.0, -49.0)   # centre x of the floor cross bars
+FLOOR_BAR_W = 7.0
+DECK_RAIL_Y0 = 31.3          # deck rails stop 0.3 outside the board plan (y +-31)
+COL_Y0, COL_Y1 = 31.3, 37.3  # 6 x 6 columns outside the board plan (body stays inside +-37.5)
+COL_TOP = 34.4               # joint and mid columns carry frame_upper here
+SADDLE_Z0 = 31.4             # underside of the tab saddles (6 mm of plastic for the bag screw); corner columns land here
+OUTER_COL_X = (57.0, 63.0)   # corner columns, outside the side window at each hip
+JOINT_XS = (33.9, 39.9)      # bolted joint columns; rear +Y has none (D22: U1 contract box)
+JOINT_SCREWS = [(36.9, 34.3), (36.9, -34.3), (-36.9, -34.3)]
+JOINT_PILOT = 2.7            # M3x12 self-taps into this pilot in the joint column
+MID_COL_X = (3.0, 9.0)       # one mid column per side, carries the long side rails
+INNER_DECK_X = (43.0, 46.0)  # inner deck cross bar, inboard of the servo body
+UPPER_RAIL_Z0 = 34.4         # side rails and cross bars of frame_upper: z 34.4..TAB_Z1
+# hip servo clearances. The SG90 envelope is unmeasured and a tight fit already failed (note 8): no printed face is closer than this.
+SERVO_HALF_W = SG_W_HALF = 6.1
+SERVO_Y0, SERVO_Y1 = 5.9, 28.7     # body extent along Y (FL)
+INNER_BAR_X = (43.0, 46.15)        # 1.0 mm from the body
+OUTER_BAR_X = (60.0, 63.0)         # 0.65 mm from the body: the 126 mm envelope and the 3 mm bar rule leave no more
+CENTRE_SADDLE_Y = 5.2              # 0.7 mm from the body inner end
+OUTER_SADDLE_Y0 = 29.4             # 0.7 mm from the body outer end
+TAB_HOLE_Y = (3.5, 31.1)           # SG90 tab holes (FL), nominal; the tab hole itself is larger than the bag screw
+TAB_PILOT = 1.6                    # bag screw pilot, same as the knee tab pilots on the printed thighs
+STRIP_END_X = 33.9           # end of the LED/screen strip (keeps the J12 terminal screws open from above)
+LED_BEAM_Y = (6.4, 9.4)      # the two parallel beams carrying the LED strip to the hip blocks
+SEAT_W = 8.0
+TAB_PILOTS = [(sx * HIP_X, sy * yy) for sx in (1, -1) for sy in (1, -1) for yy in TAB_HOLE_Y]
 
 
-def side_windows():
-    """Cutters for the large side windows above the deck: wall only, rounded corners, rail left on top."""
-    out = None
-    for sy, x0, x1 in SIDE_WINDOWS:
-        y0, y1 = sorted((sy * (INNER_Y - 0.01), sy * (BY + 1)))
-        c = box(x0, x1, y0, y1, DECK_Z1, RAIL_Z0).edges('|Y').fillet(WIN_R)
-        out = c if out is None else out.union(c)
-    return out
+def _bar_xz(pts, y0, y1):
+    """Bar with a polygon profile in XZ, extruded across y0..y1."""
+    return cq.Workplane('XZ').polyline(pts).close().extrude(-(y1 - y0)).translate((0, y0, 0))
 
 
-def internal_structures():
-    parts = []
-    for sg in (1, -1):
-        X = lambda a, b: (min(sg * a, sg * b), max(sg * a, sg * b))
-        # central block between the two hip servos of one end (tab seat for the inner tabs)
-        x0, x1 = X(41.0, BX - WALL_T)
-        parts.append(box(x0, x1, -5.8, 5.8, DECK_Z1, TAB_Z0))
-        # inner pocket wall (3 mm) up to the cap seat
-        x0, x1 = X(44.0, 47.0)
-        parts.append(box(x0, x1, -INNER_Y, INNER_Y, DECK_Z1, TAB_Z1))
-        # outer tab seats against the side walls
-        x0, x1 = X(47.0, BX - WALL_T)
-        for sy in (1, -1):
-            y0, y1 = sorted((sy * 29.0, sy * INNER_Y))
-            parts.append(box(x0, x1, y0, y1, DECK_Z1, TAB_Z0))
-        # cap-screw corner blocks
-        x0, x1 = X(40.0, 47.0)
-        for sy in (1, -1):
-            y0, y1 = sorted((sy * 26.5, sy * INNER_Y))
-            parts.append(box(x0, x1, y0, y1, DECK_Z1, TAB_Z1))
-    parts += board_blocks() + lid_pads()
-    for sg in (1, -1):        # 4 mm stub of the old spine inside the hip-block zone (frozen geometry, tied to the central block)
-        x0, x1 = sorted((sg * 40.0, sg * 44.0))
-        parts.append(box(x0, x1, -3.0, 3.0, DECK_Z1, LED['cz'] - LED['sz'] / 2))
-    # bank rear corner stops (below the USB port height)
-    for sy in (1, -1):
-        y0, y1 = sorted((sy * 28.0, sy * INNER_Y))
-        parts.append(box(BANK['x0'] - 3.0, BANK['x0'], y0, y1, TUN_Z0, 6.5))
+def _strut(x0, z0, x1, z1, w, y0, y1):
+    """Straight bar of width w between two points in the XZ plane."""
+    dx, dz = x1 - x0, z1 - z0
+    L = math.hypot(dx, dz)
+    nx, nz = -dz / L * w / 2, dx / L * w / 2
+    return _bar_xz([(x0 + nx, z0 + nz), (x1 + nx, z1 + nz), (x1 - nx, z1 - nz), (x0 - nx, z0 - nz)], y0, y1)
+
+
+def _union(parts):
     out = parts[0]
     for p in parts[1:]:
         out = out.union(p)
     return out
 
 
-def internal_cuts():
-    cuts = []
-    for sg in (1, -1):
-        X = lambda a, b: (min(sg * a, sg * b), max(sg * a, sg * b))
-        # hip servo cable channels under the inner end of each servo, out to the electronics zone
-        for sy in (1, -1):
-            y0, y1 = sorted((sy * 2.6, sy * 5.9))
-            x0, x1 = X(40.5, 59.0)
-            cuts.append(box(x0, x1, y0, y1, DECK_Z1 - 0.01, DECK_Z1 + 4.5))
-        # cap screw holes + side-entry nut slots from the outer wall
-        for (cx, cy) in CAP_SCREW_XY:
-            x, y = sg * cx, cy
-            cuts.append(cyl(x, y, DECK_Z1 - 0.01, TAB_Z1 + 1, M3_CLEAR))
-            nz0 = 28.0
-            ys = sorted((y - NUT_SLOT_W / 2 * (1 if y > 0 else -1) * 0 + (0 if y > 0 else 0), 0))
-            y_in = y - (NUT_AF / math.sqrt(3) + 0.3) if y > 0 else y + (NUT_AF / math.sqrt(3) + 0.3)
-            y_out = BY + 1 if y > 0 else -BY - 1
-            a, b = sorted((y_in, y_out))
-            cuts.append(box(x - NUT_SLOT_W / 2, x + NUT_SLOT_W / 2, a, b, nz0, nz0 + NUT_SLOT_H))
-    cuts += board_screw_cuts() + lid_pad_cuts()
-    cuts.append(box(40.0, 40.5, 3.2, 16.0, DECK_Z1, 28.0))   # sliver of the r1 FL-hip wire tunnel inside the frozen hip-block zone
-    # board-end slots and the servo-lead / J12 wire corridor in the hip blocks, below the frozen nut seats (D17)
-    for sg in (1, -1):
-        x0, x1 = sorted((sg * 40.0, sg * SLOT_X))
-        cuts.append(box(x0, x1, -SLOT_Y, SLOT_Y, BOARD_ZB, SLOT_TOP))
-        x0, x1 = sorted((sg * 40.0, sg * 44.0))
-        cuts.append(box(x0, x1, -6.0, 6.0, BOARD_ZB, TAB_Z0 + 2.2))
-    # U1 contract box (D19): z top copper .. +3
-    if U1_KEEPOUT:
-        ux0, uy0, ux1, uy1 = board_box(U1_KEEPOUT[:4])
-        cuts.append(box(ux0 - 0.05, ux1 + 0.05, uy0 - 0.05, uy1 + 0.05, BOARD_ZT - 0.01, BOARD_ZT + U1_KEEPOUT[4] + 0.05))
-    # deck wells under the THT tails and hip-lead grooves under the board
-    for (tx, ty) in BOARD_TAILS:
-        cuts.append(box(tx - 1.4, tx + 1.4, ty - 1.4, ty + 1.4, TAIL_WELL_Z, DECK_Z1 + 0.01))
-    for sg in (1, -1):
-        xa, xb = sorted((sg * 26.0, sg * 41.0))
-        for sy in (1, -1):
-            ya, yb = sorted((sy * 1.5, sy * 7.5))
-            cuts.append(box(xa, xb, ya, yb, GROOVE_Z, DECK_Z1 + 0.01))
-        xa, xb = sorted((sg * 26.0, sg * 31.0))
-        cuts.append(box(xa, xb, -SLOT_Y, SLOT_Y, GROOVE_Z, DECK_Z1 + 0.01))
-    # USB-C tunnel through the rear central block and the rear wall (D18)
-    t = USB_TUNNEL
-    cuts.append(box(-BX - 1, -40.0, -t['y'], t['y'], t['z0'], t['z1']))
-    # deck slots: port-1 USB cable riser and port-2 power wires
-    cuts.append(box(-43.5, -36.0, 6.0, 24.0, DECK_Z0 - 0.01, DECK_Z1 + 0.01))
-    cuts.append(box(-39.5, -33.5, -24.0, -8.0, DECK_Z0 - 0.01, DECK_Z1 + 0.01))
-    out = cuts[0]
-    for c in cuts[1:]:
-        out = out.union(c)
-    return out
+def _both_y(fn):
+    return [fn(1), fn(-1)]
 
 
-def _root_strip(length, r=2.0):
-    """Concave fillet cross-section (corner at the origin, leg r along +x and +z), extruded along +Y from the XZ plane."""
+def _sy_box(x0, x1, y0, y1, z0, z1, sy):
+    a, b = sorted((sy * y0, sy * y1))
+    return box(x0, x1, a, b, z0, z1)
+
+
+def _fillet_ring(x0, x1, y0, y1, z, r=2.0):
+    """Concave root fillet on the two X faces of a column foot sitting on the plane z (column goes up). Stays inside the body."""
     k = r * (1 - math.sqrt(0.5))
-    return (cq.Workplane('XZ').moveTo(0, 0).lineTo(r, 0).threePointArc((k, k), (0, r)).close().extrude(-length))
-
-
-def _seat_r():
-    return min(2.0, BOARD_ZB - DECK_Z1 - 0.05)
-
-
-def _seat_block(x, y, sy):
-    """One seat at the board height: 10 wide, root r 2. Runs to the side wall for holes near it, else to the free faces."""
-    y0, y1 = sorted((y - sy * 5.0, sy * (INNER_Y + 0.5) if abs(y) >= 18.0 else y + sy * 5.0))
-    x0, x1 = max(x - 5.0, -43.99), min(x + 5.0, 43.99)
-    block = box(x0, x1, y0, y1, DECK_Z1, BOARD_ZB)
-    free_y = ['<Y' if sy > 0 else '>Y'] if abs(y) >= 18.0 else ['<Y', '>Y']
-    for sel in free_y:
-        block = block.edges('|Z').edges(sel).fillet(2.0) if False else block
-    try:
-        for sel in free_y:
-            block = block.edges('|Z').edges(sel).fillet(1.2)
-    except Exception:
-        pass
-    e = 0.02
-    tail_near = lambda xa, xb: any(xa - 1.0 < tx < xb + 1.0 and y0 - 1.0 < ty < y1 + 1.0 for tx, ty in BOARD_TAILS)
-    if x1 < 43.5 and not tail_near(x1, x1 + _seat_r()):
-        block = block.union(_root_strip(y1 - y0, _seat_r()).translate((x1 - e, y0, DECK_Z1 - e)))
-    if x0 > -43.5 and not tail_near(x0 - _seat_r(), x0):
-        block = block.union(_root_strip(y1 - y0, _seat_r()).mirror('YZ').translate((x0 + e, y0, DECK_Z1 - e)))
-    return block
-
-
-def board_blocks():
-    """Board seat blocks at each mounting hole: deck-rooted, solid to the side wall (never a free post)."""
-    return [_seat_block(h['xy'][0], h['xy'][1], 1 if h['xy'][1] > 0 else -1) for h in BOARD_HOLES]
-
-
-def lid_pads():
-    """Lid screw pads: blocks level with the rail, at the rail's end where the 3 mm wall runs from the deck to the lid."""
-    out = []
-    for (x, y) in LID_SCREWS:
-        y0, y1 = sorted((math.copysign(LID_PAD_Y0, y), math.copysign(INNER_Y + 0.5, y)))
-        x0, x1 = sorted((math.copysign(LID_PAD_X[0], x), math.copysign(LID_PAD_X[1], x)))
-        out.append(box(x0, x1, y0, y1, RAIL_Z0, LID_Z0))
+    strip = lambda: cq.Workplane('XZ').moveTo(0, 0).lineTo(r, 0).threePointArc((k, k), (0, r)).close().extrude(-(y1 - y0))
+    out = None
+    if x1 + r <= BX + 0.01:
+        out = strip().translate((x1 - 0.02, y0, z - 0.02))
+    if x0 - r >= -BX - 0.01:
+        b = strip().mirror('YZ').translate((x0 + 0.02, y0, z - 0.02))
+        out = b if out is None else out.union(b)
     return out
 
 
-def board_screw_cuts():
-    """M3x6 from the board top: M3 nut dropped into a hex well in the seat, tip clearance in the deck."""
+def frame_lower():
+    p = []
+    # bottom rails and deck rails along X
+    for sy in (1, -1):
+        p.append(_sy_box(-BX, BX, RAIL_Y0, RAIL_Y1, 0, BOT_RAIL_Z, sy))
+        p.append(_sy_box(-BX, BX, DECK_RAIL_Y0, RAIL_Y1, DECK_Z0, DECK_Z1, sy))
+    # floor cross bars (bank rests on them), plus an X brace so the cradle carries torsion alone
+    for xc in FLOOR_BAR_X:
+        p.append(box(xc - FLOOR_BAR_W / 2, xc + FLOOR_BAR_W / 2, -RAIL_Y0 - 0.01, RAIL_Y0 + 0.01, 0, FLOOR_Z))
+    for sy in (1, -1):
+        L = math.hypot(2 * (BX - 4), 2 * RAIL_Y0)
+        ang = math.degrees(math.atan2(sy * 2 * RAIL_Y0, 2 * (BX - 4)))
+        p.append(cq.Workplane('XY').box(L, 5.0, FLOOR_Z, centered=(True, True, False)).rotate((0, 0, 0), (0, 0, 1), ang))
+    # side trusses between the rails: verticals + diagonals, mirrored front/rear
+    verts = (0.0, 30.0, 59.5)
+    for sy in (1, -1):
+        y0, y1 = sorted((sy * RAIL_Y0, sy * RAIL_Y1))
+        for sx in (1, -1):
+            for xc in verts:
+                if xc == 0.0 and sx < 0:
+                    continue
+                w = 6.0
+                x0 = sx * xc - w / 2 if abs(xc) < 59 else (sx * BX - (w if sx > 0 else 0))
+                x1 = x0 + w
+                p.append(box(x0, x1, y0, y1, BOT_RAIL_Z - 0.01, DECK_Z0 + 0.01))
+            a, b = (sx * 3.0, BOT_RAIL_Z - 1.0), (sx * 29.0, DECK_Z0 + 1.0)
+            c, d = (sx * 33.0, BOT_RAIL_Z - 1.0), (sx * 58.0, DECK_Z0 + 1.0)
+            p.append(_strut(a[0], a[1], b[0], b[1], 4.5, y0, y1))
+            p.append(_strut(c[0], c[1], d[0], d[1], 4.5, y0, y1))
+    # deck end cross bars only, none under a servo body: the whole bay under each hip servo pair stays open
+    for sx in (1, -1):
+        p.append(box(*sorted((sx * OUTER_BAR_X[0], sx * BX)), -DECK_RAIL_Y0 - 0.01, DECK_RAIL_Y0 + 0.01, DECK_Z0, DECK_Z1))
+        p.append(box(*sorted((sx * INNER_DECK_X[0], sx * INNER_DECK_X[1])), -DECK_RAIL_Y0 - 0.01, DECK_RAIL_Y0 + 0.01, DECK_Z0, DECK_Z1))
+    # bank rear corner stops, below the USB ports
+    for sy in (1, -1):
+        p.append(_sy_box(BANK['x0'] - 3.0, BANK['x0'], 28.0, RAIL_Y0 + 0.01, 0, 6.5, sy))
+    # columns: one corner column per hip, bolted joint columns toward the middle (D22), one mid column per side
+    for sx in (1, -1):
+        for sy in (1, -1):
+            x0, x1 = sorted((sx * OUTER_COL_X[0], sx * OUTER_COL_X[1]))
+            y0, y1 = sorted((sy * COL_Y0, sy * COL_Y1))
+            p.append(box(x0, x1, y0, y1, DECK_Z0, SADDLE_Z0))
+            p.append(_fillet_ring(x0, x1, y0, y1, DECK_Z1))
+            if not (sx < 0 and sy > 0):      # U1 contract box: no joint column at the rear +Y
+                x0, x1 = sorted((sx * JOINT_XS[0], sx * JOINT_XS[1]))
+                p.append(box(x0, x1, y0, y1, DECK_Z0, COL_TOP))
+                p.append(_fillet_ring(x0, x1, y0, y1, DECK_Z1))
+    for sy in (1, -1):
+        y0, y1 = sorted((sy * COL_Y0, sy * COL_Y1))
+        p.append(box(MID_COL_X[0], MID_COL_X[1], y0, y1, DECK_Z0, COL_TOP))
+        p.append(_fillet_ring(MID_COL_X[0], MID_COL_X[1], y0, y1, DECK_Z1))
+    p += board_seats()
+    s = _union(p)
+    # bank void (front slide-out), kept clear of every bar above the floor
+    s = s.cut(box(BANK['x0'], BX + 1, -RAIL_Y0, RAIL_Y0, FLOOR_Z, DECK_Z0))
+    s = s.cut(board_seat_cuts())
+    for (x, y) in JOINT_SCREWS:
+        s = s.cut(cyl(x, y, COL_TOP - 6.9, COL_TOP + 0.01, JOINT_PILOT))
+    # outer corner chamfers only: extra margin for the foot sweeping past the frame corners
+    for sx in (1, -1):
+        for sy in (1, -1):
+            corner = (cq.Workplane('XY').polyline([(sx * (BX + 0.01), sy * (COL_Y1 + 0.01)), (sx * (BX - 3.0), sy * (COL_Y1 + 0.01)), (sx * (BX + 0.01), sy * (COL_Y1 - 3.0))]).close().extrude(COL_TOP + 1).translate((0, 0, -0.5)))
+            s = s.cut(corner)
+    return s.clean()
+
+
+def board_seats():
+    """Seat under every board hole: an open saddle tied into the deck rail or the rear cross bar, top at the board bottom."""
+    out = []
+    for h in BOARD_HOLES:
+        x, y = h['xy']
+        sy = 1 if y > 0 else -1
+        w = SEAT_W / 2
+        x0, x1 = max(x - w, -46.0), min(x + w, 46.0)
+        if abs(y) >= 20.0:                 # near the side rail: saddle runs into it
+            y0, y1 = sorted((y - sy * w, sy * (DECK_RAIL_Y0 + 0.5)))
+        else:                              # H1: on the rear cross bar, with a bar out to the side rail
+            y0, y1 = y - w, y + w
+            out.append(box(x0, x0 + 6.0, y1 - 0.01, DECK_RAIL_Y0 + 0.5, DECK_Z0, 20.7))
+            out.append(box(-46.0, x0 + 0.01, y0, y1, DECK_Z0, DECK_Z1)) if x0 > -46.0 else None
+        out.append(box(x0, x1, y0, y1, DECK_Z0, BOARD_ZB))
+    return out
+
+
+def board_seat_cuts():
+    """M3x6 from the board top into an M3 nut dropped in a hex well; tip clearance below it."""
     out = []
     for h in BOARD_HOLES:
         x, y = h['xy']
         out.append(cyl(x, y, BOARD_ZT - 6.0 - 0.2, BOARD_ZB + 0.01, M3_CLEAR))
         out.append(hexprism_z(0, 0, BOARD_ZB - NUT_WELL_D, BOARD_ZB + 0.01, NUT_AF + 0.3).rotate((0, 0, 0), (0, 0, 1), 30).translate((x, y, 0)))
-        out.append(cyl(x, y, SLOT_TOP - 0.1, BOARD_ZT + 3.05, 6.4))   # screw-head relief in the hip-block underside (stays below the C nut seat)
-    return out
+    return _union(out)
 
 
-def lid_pad_cuts():
-    """M3x8 self-tapping into a Ø2.7 pilot in the rail-end pad (the pad is 5.7 mm deep: no room for a captive nut)."""
-    return [cyl(x, y, LID_Z0 - 6.2, LID_Z0 + 0.01, LID_PILOT) for (x, y) in LID_SCREWS]
-
-
-def strap_ribs():
-    """0.5 mm strap guide ribs on the outer side walls (belt around the bank front, body <= 75 wide)."""
-    parts = []
+def frame_upper():
+    p = []
     for sy in (1, -1):
-        for z0 in (2.0, 16.5):
-            y0, y1 = sorted((sy * (BY - 0.5), sy * (BY + 0.5)))
-            parts.append(box(-50.0, 50.0, y0, y1, z0, z0 + 1.5))
-    out = parts[0]
-    for p in parts[1:]:
-        out = out.union(p)
-    return out
-
-
-# ----------------------------------------------------------------------------- lid
-def lid():
-    """A1V4-r3 frame: holds the centred LED diffuser, opens over the screen, the servo headers and the buttons."""
-    s = box(-CAP_X0 + 0.2, CAP_X0 - 0.2, -BY, BY, LID_Z0, LID_Z1)
-    # LED diffuser channel from below: 0.8 mm skin over the bar, centred on the body
+        p.append(_sy_box(-BX, BX, 34.0, RAIL_Y1, UPPER_RAIL_Z0, TAB_Z1, sy))         # side rails
+    for sg in (1, -1):
+        X = lambda a, b: tuple(sorted((sg * a, sg * b)))
+        p.append(box(*X(*OUTER_BAR_X), -BY, BY, UPPER_RAIL_Z0, TAB_Z1))                # outer end bar
+        p.append(box(*X(*INNER_BAR_X), -BY, BY, UPPER_RAIL_Z0, TAB_Z1))                # inner end bar
+        # centre saddle (both servos of the pair sit their inner tab here) and corner saddles; open below, no pocket, no cup
+        p.append(box(*X(INNER_BAR_X[1] - 0.1, OUTER_BAR_X[0] + 0.1), -CENTRE_SADDLE_Y, CENTRE_SADDLE_Y, SADDLE_Z0, TAB_Z0))
+        for sy in (1, -1):
+            p.append(_sy_box(*X(INNER_BAR_X[1] - 0.1, BX), OUTER_SADDLE_Y0, RAIL_Y1, SADDLE_Z0, TAB_Z0, sy))
+        # LED/screen beams from the hip block to the strip. The rear +Y beam would pass through the display (D27), so it is left out:
+        # the strip's rear end is carried by the -Y beam and by the screen rim on the +Y side rail.
+        for sy in (1, -1):
+            if sg < 0 and sy > 0:
+                continue
+            p.append(_sy_box(*X(STRIP_END_X - 4.4, INNER_BAR_X[0] + 1.05), LED_BEAM_Y[0], LED_BEAM_Y[1], UPPER_RAIL_Z0, TAB_Z1, sy))
+            p.append(_sy_box(*X(STRIP_END_X - 4.4, STRIP_END_X), LED_BEAM_Y[0], LED_BEAM_Y[1], TAB_Z1 - 0.01, LID_Z1, sy))
+    # joint pads on the side rails
+    for (x, y) in JOINT_SCREWS:
+        sy = 1 if y > 0 else -1
+        x0, x1 = sorted((math.copysign(JOINT_XS[0], x), math.copysign(JOINT_XS[1], x)))
+        p.append(_sy_box(x0, x1, COL_Y0, 34.05, UPPER_RAIL_Z0, TAB_Z1, sy))
+    # open head: LED strip and screen rim only
+    p.append(box(-STRIP_END_X, STRIP_END_X, -LED_BEAM_Y[1], LED_BEAM_Y[1], LID_Z0, LID_Z1))
+    # screen rim: open at the rear end (the module overlaps the inner bar line) and open at the front between two corner tabs, so the J10 wires rise free
+    rim_x0, rim_front = -46.5, DISP_X1 + 0.3
+    p.append(box(rim_x0, rim_front, LED_BEAM_Y[0] - 0.01, BY, LID_Z0, LID_Z1))
+    p.append(box(rim_x0, -33.8, -6.0, LED_BEAM_Y[0], LID_Z0, LID_Z1))                 # -Y rear stringer behind the LED channel
+    p.append(box(-46.15, -40.15, -6.0, 0.0, TAB_Z1 - 0.01, LID_Z0 + 0.01))     # 6 x 6 post carrying it to the inner end bar
+    for y0, y1 in ((LED_BEAM_Y[0] - 0.01, 13.0), (27.5, BY)):
+        p.append(box(rim_front - 0.01, rim_front + 6.0, y0, y1, 42.0, LID_Z1))          # front corner tabs: +X stop for the PCB, clear of the J10 wire span y 13..27.5
+    # webs tying the screen rim down to the +Y side rail
+    for xc in (-43.0, 2.0):
+        p.append(box(xc - 3.0, xc + 3.0, 34.0, BY, TAB_Z1 - 0.01, LID_Z0 + 0.01))
+    s = _union(p)
+    # SG90 bag screw pilots, through the saddle (a longer screw just pokes out below); no nut, no drilling
+    for (x, y) in TAB_PILOTS:
+        s = s.cut(cyl(x, y, SADDLE_Z0 - 1, TAB_Z0 + 0.1, TAB_PILOT))
+    for (x, y) in JOINT_SCREWS:
+        s = s.cut(cyl(x, y, UPPER_RAIL_Z0 - 1, TAB_Z1 + 1, M3_CLEAR))
+    # LED diffuser channel from below (0.8 skin), one tie slot beyond each bar end
     s = s.cut(box(-29.0, 29.0, -LED_CH_HALF_Y, LED_CH_HALF_Y, LID_Z0 - 0.01, LID_Z1 - 0.8))
-    # LED bar: one tie along the back of the bar, anchored around lid webs beyond each end of the channel
     for sx in (1, -1):
-        for k in (0, 1):
-            x0, x1 = sorted((sx * (29.5 + k * 2.6), sx * (31.0 + k * 2.6)))
-            s = s.cut(box(x0, x1, -1.8, 1.8, LID_Z0 - 1, LID_Z1 + 1))
-    # opening over everything on the -Y side: servo headers, connectors, wiring reachable with the frame on
-    y1 = -LED_CH_HALF_Y - 5.0
-    op = box(-LID_OPEN_X, LID_OPEN_X, -27.0, y1, LID_Z0 - 1, LID_Z1 + 1).edges('|Z').fillet(2.0)   # headers, terminal, connectors
-    s = s.cut(op).cut(box(-30.0, 30.0, -BY + 3.5, -26.9, LID_Z0 - 1, LID_Z1 + 1).edges('|Z').fillet(2.0))   # clear of the corner lid screws
-    # screen: a 0.5 deep pocket for the PCB rim, the panel in a through window. Glass stays below the lid top.
+        x0, x1 = sorted((sx * 29.5, sx * 31.0))     # the tie runs under the bar, up through this slot and around the strip end
+        s = s.cut(box(x0, x1, -1.8, 1.8, LID_Z0 - 1, LID_Z1 + 1))
+    # local relief over RESET so a pin reaches it from the open -Y side (the strip is not load-bearing here)
+    s = s.cut(box(-13.9, -2.0, -LED_BEAM_Y[1] - 0.1, -7.2, LID_Z0 - 1, LID_Z1 + 1))
+    # screen: PCB rim pocket, panel through-window, tie slots
     s = s.cut(box(DISP_X0 - 0.3, DISP_X1 + 0.3, DISP_Y0 - 0.3, DISP_Y1 + 0.3, LID_Z0 - 0.01, DISP['z_ledge']))
     w = DISP_WIN
     s = s.cut(box(w['x0'], w['x1'], w['y0'], w['y1'], LID_Z0 - 1, LID_Z1 + 1))
-    # display ties: at each module end a lid web between two slots; the tie runs along the module back (STEP y 2.8, 24.5)
-    for ty in DISP_TIE_Y:
-        for ex, sx in ((DISP_X0 - 0.8, -1), (DISP_X1 + 0.8, 1)):
-            for k in (0, 1):
-                x0, x1 = sorted((ex + sx * k * 2.4, ex + sx * (1.3 + k * 2.4)))
-                s = s.cut(box(x0, x1, ty - 1.8, ty + 1.8, LID_Z0 - 1, LID_Z1 + 1))
-    # RESET and BOOT: a notch in the -Y rim next to the opening. RESET is under the notch; BOOT sits under the LED bar and
-    # is reached with a pin from the notch at about 23 deg (mech_check bootAccess measures that path).
-    btns = [board_xy(*i['centerMm']) for k, i in BOARD_IF.items() if k.startswith('button:')]
-    if btns:
-        bx0, bx1 = min(b[0] for b in btns) - 3.0, max(b[0] for b in btns) + 3.0
-        s = s.cut(box(bx0, bx1, -LED_CH_HALF_Y - 5.2, -LED_CH_HALF_Y - 1.1, LID_Z0 - 1, LID_Z1 + 1))
-    for (x, y) in LID_SCREWS:
-        s = s.cut(cyl(x, y, LID_Z0 - 1, LID_Z1 + 1, M3_CLEAR))
-    # screwdriver holes over the J12 terminal screws (wired before the lid closes; holes let the owner re-tighten them)
-    for jy in J12_SCREW_Y:
-        s = s.cut(cyl(J12_SCREW_X, jy, LID_Z0 - 1, LID_Z1 + 1, 4.0))
-    return s.clean()
-
-
-# ----------------------------------------------------------------------------- caps (shared clamp bars)
-def cap(sign=1):
-    x0, x1 = CAP_X0, BX
-    s = box(x0, x1, -BY, BY, TAB_Z1, LID_Z1)
-    s = s.edges('|Z and >X').fillet(CORNER_R)
-    # windows around the servo bodies above the tabs (gear tower passes through)
-    for sy in (1, -1):
-        y0, y1 = sorted((sy * 5.8, sy * 29.0))
-        s = s.cut(box(47.0, BX - WALL_T, y0, y1, TAB_Z1 - 0.01, LID_Z1 + 0.01))
-    for (cx, cy) in CAP_SCREW_XY:
-        s = s.cut(cyl(cx, cy, TAB_Z1 - 1, LID_Z1 + 1, M3_CLEAR))
-    if sign < 0:
-        s = s.mirror('YZ')
+    # two zip ties across the module back: up through a slot in each stringer and around its outer edge
+    for tx in DISP_TIE_X:
+        for y0, y1 in ((2.0, 3.3), (34.6, 35.9)):
+            s = s.cut(box(tx - 1.8, tx + 1.8, y0, y1, LID_Z0 - 1, LID_Z1 + 1))
+    # the inner bar under the module rear end is removed so the module lifts straight into its rim; its -Y half still ties the centre saddle
+    s = s.cut(box(-46.2, -42.95, DISP_Y0 - 0.3, DISP_Y1 + 0.3, UPPER_RAIL_Z0 - 1, TAB_Z1 + 1))
     return s.clean()
 
 

@@ -45,3 +45,6 @@ design/Local.3dshapes/
 .DS_Store
 
 *.log
+
+engineering/usb-relocation-audit.json
+firmware/NATIVE-CHECKS.json

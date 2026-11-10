@@ -36,3 +36,8 @@ ThửUSB cả hai chiều cắm, BOOT+RESET vàoROM; không cắmPC và pin dự
 cùng mộtUSB-C bằng cáp chia. Với tảiWi-Fi+QR, kiểm khôngreset/thermalcycling;
 đo nhiệtU2 và thửtải chuyểnđộng thật theo giới hạn thermal.md.
 Những kiểm tra này chưa làm; hardwareTested luônfalse.
+
+Note9: cổng J1 hiện hướng ra cạnh+Y của PCB, không còn cạnh−X. Đội case phải
+kiểm lại đầu USB-C thường12.5×7×25mm với STEP mới trước khi bỏ cảnh báo mua
+cáp. Xưởng thử USB nhận thiết bị, nạp/serial ở cả hai chiều cắm; đường USB
+V0 chưa được đo trở kháng/eye hoặc thử trên mạch thật. Không tự nạp ở đây.

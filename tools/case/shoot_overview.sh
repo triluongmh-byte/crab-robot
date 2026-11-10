@@ -9,8 +9,8 @@ shot() { "$CH" --headless=new --no-sandbox --use-angle=swiftshader --enable-unsa
   --user-data-dir="$ROOT/build/case/chrome-$1" --window-size=$2 --virtual-time-budget=5000 \
   --screenshot="$OUTD/$1.png" "$F#$3" >/dev/null 2>&1; }
 shot full 1400,1000 "theme=light" &
-shot step3 1400,1000 "step=3&focus=C1" &
-shot phone 390,1700 "step=6" &
+shot step4 1400,1000 "step=4&focus=TFL-1" &
+shot phone 390,1700 "step=7" &
 shot dark 1400,1000 "theme=dark&step=8&cam=front" &
 shot top 1400,1000 "cam=top" &
 shot detail 390,2400 "step=4&detail=1&hip=25&knee=-25" &

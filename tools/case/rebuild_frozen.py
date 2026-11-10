@@ -57,7 +57,9 @@ def main():
                 raise SystemExit(f'Frozen manifest differs from accepted source baseline: {name}.{suffix}')
     def rebuild(name):
         expected = data['parts'][name]
-        targets = {kind: output / f'{name}.{kind}' for kind in ('stl', 'step')}
+        destination = ROOT/'case/ref/retired-clamp-bars' if name in ('cap_front','cap_rear') else output
+        destination.mkdir(parents=True, exist_ok=True)
+        targets = {kind: destination / f'{name}.{kind}' for kind in ('stl', 'step')}
         if all(p.is_file() and sha(p) == expected[kind + 'Sha256'] for kind, p in targets.items()):
             return name, False
         with tempfile.TemporaryDirectory(prefix=name + '-', dir=scratch) as directory:

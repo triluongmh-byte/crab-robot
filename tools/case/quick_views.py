@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'case/robot'
-COL = {'base': '#d6cfc1', 'lid': '#eee9df', 'cap': '#c9bfa8', 'thigh': '#9ebcca', 'foot': '#7fa3b4',
+COL = {'frame_lower': '#d6cfc1', 'frame_upper': '#eee9df', 'thigh': '#9ebcca', 'foot': '#7fa3b4',
        'electronics': '#4c806c', 'servos': '#5a7fb0', 'hardware': '#596872', 'coupon': '#e0a060', 'MATING': '#9ebcca'}
 
 def load(name):

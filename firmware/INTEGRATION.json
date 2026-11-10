@@ -194,7 +194,7 @@
   },
   "integratedInterface": {
     "status": "reconciled",
-    "baseline": "Final build/board/main.net and design/main.kicad_pcb; engineering/firmware-interface.md; case D15",
+    "baseline": "Final note9 build/board/main.net and design/main.kicad_pcb; engineering/firmware-interface.md; display remains case D15/D27",
     "confirmedAgainstFinalNetlist": true,
     "readyForFlashing": false,
     "flashAuthorization": "No authorization for integrated board; previous authorization only LILYGO",
@@ -205,5 +205,22 @@
       "Vendor landscape plus 180-degree case D15 rotation"
     ],
     "report": "BOARD-RECONCILIATION.json"
+  },
+  "documentationReleaseNoteSha256": "034b50d8298791a3011c5272db395aa2babb18093ff3843c3da109b633650101",
+  "usbPortDocumentation": {
+    "status": "updated-from-final-board",
+    "source": "engineering/board-interface.json",
+    "reconciliation": "BOARD-RECONCILIATION.json",
+    "J1BoardLocalOriginMm": [
+      21.45,
+      28
+    ],
+    "mouthFaces": "+Y",
+    "mouthFaceYmm": 32.8,
+    "gpioChanges": false,
+    "binaryRebuilt": false,
+    "lcdRotationDeg": 180,
+    "caseCableFitVerified": false,
+    "remaining": "Case must reimport final STEP, check ordinary 12.5x7x25 mm plug at all three positions, close D23 and set fitsPublishedJ1=true before removing do-not-buy warning."
   }
 }

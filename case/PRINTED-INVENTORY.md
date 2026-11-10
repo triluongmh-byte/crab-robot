@@ -1,24 +1,18 @@
-# Part đã in thật (sổ do nhóm case giữ, suy ra từ `print/events.jsonl`)
+# Owner-reported printed inventory
 
-Nguồn: `print/events.jsonl`, kiểm ngày 2026-11-09. File chỉ có 1 sự kiện loại `proposal` (bản A1V4-r1, không có part nào). **Chưa có xác nhận in nào.**
-Chỉ ghi vào sổ khi chính bạn xác nhận đã in. Xuất, slice hoặc máy in báo "job xong" đều không tính là đã in.
+Evidence is the owner's direct reports on 2026-11-10 and [the supplied photographs](../references/OWNER-PRINTS.md). Exporting, slicing or a printer reporting completion is not treated as a physical print confirmation. Exact physical mesh identities remain unverified; no cropped-body mesh hash is invented. Orange/yellow describe visible colours, not confirmed materials.
 
-| Part / bản | Số lượng đã in | Nhựa | Tình trạng (khít / gãy / sửa) | Bằng chứng | Độ chắc |
-|---|---|---|---|---|---|
-| — | 0 | — | — | — | — |
-
-## Đang in theo lời bạn báo (chưa tính là đã in)
-
-| Part / bản | Plate | Trạng thái | Bằng chứng |
+| Inventory ID | Item / quantity | Physical status | Identity limits |
 |---|---|---|---|
-| `cap_front`, `cap_rear`, `thigh_FL/FR/RL/RR`, `foot_FL/FR/RL/RR` — A1V4-r1 | plate 2 của `print/production.3mf` | **Bạn báo đang in** (2026-11-09). Chưa xong, chưa xác nhận ra part thật, chưa thử khít. | Tin nhắn của bạn trong release note 2. Không có xác nhận từ máy in. |
+| `OWNER-20261110-P1-UPPER-FRAME` | One owner-selected region of the plate-1 body | Owner reports lower geometry was removed **in the slicer before printing**. Later photos show the orange body with four rough hand-made wire openings, four assembled legs/eight servos and direct hip-tab screws. The two clamp bars have been removed | The photographed body is probably this variant, not a proven exact match. Cut height, revision, cropped mesh, added holes and screw sizes/lengths are unknown |
+| `OWNER-20261110-P1-REMAINDER` | Other plate-1 contents | Owner reports the plate completed; items were not individually enumerated | Do not invent a completed full base/lid or unlisted accessory |
+| `OWNER-20261110-P2` — legs | Four thighs and four feet | Printed and mechanically assembled by owner report/photo; no failure reported. Reuse in the new production assembly | r1 association is inferred from history. No physical mesh measurement, calibration or walking result is established |
+| `OWNER-20261110-P2` — clamp bars | `cap_front`, `cap_rear`, one each | Printed, removed because of servo interference, unused. Retain as spare inventory; absent from the current assembly and Print all | Exact interference location/cause is unknown. The identifying blue-highlight image is CAD, not a photo |
 
-Khi plate 2 in xong và bạn báo "đã in, ổn", 10 part này sẽ chuyển sang bảng trên và vào nhóm `ĐÃ IN — GIỮ LẠI`.
+The owner's hip servos are now screwed through their tabs directly into the modified body. Whether servo tabs were enlarged, the precise holes, screw types and holding strength are unknown. Do not copy these unknown holes into CAD or assume permission for further drilling.
 
-## Bản đang cần
+## Current production revision
 
-- 12 part = 0 đã xác nhận in + 10 part plate 2 đang in theo báo + 2 part mới (`base`, `lid` bản **A1V4-r3**).
-- **Chưa nên in `base` và `lid` r3.** Bản board đã công bố chưa hạ vào thân được (4 góc board nằm dưới khối giữ tán của thanh đè); board cần sửa trước, rồi 2 part này mới dựng lại lần cuối.
-- `base` và `lid` bản r1 và r2 (cho LILYGO và PCA9685) không dùng nữa cho bản board tích hợp. Chưa có xác nhận nào cho thấy chúng đã được in. Nếu bạn đã in, chúng có thể không vừa board mới.
-- Hàng in thử (TEST ONLY, MATING_TEST) ghi riêng khi có. Nếu MATING_TEST đạt thì `thigh_FL` và `foot_FL` của nó tính là part thật đã in.
-- Part của bản V3/v11 cũ (ảnh IMG_2432–2435) là thiết kế khác; không dùng lại cho bản này.
+A1V4-r5 consists of eight reusable leg parts plus **two new, unprinted** bar frames, `frame_lower` and `frame_upper`. The old owner-modified body is a separate physical variant. Its mechanical assembly does not validate the new frame, the integrated PCB, cable motion, strength or walking.
+
+TEST ONLY / saddle / mating coupons have no owner-confirmed physical result. Earlier V3 failure photos refer to another design and are not reusable parts or validation for this revision.

@@ -19,30 +19,29 @@ OUT = HERE / 'robot'
 STAMP = ROOT / 'build' / 'case' / 'stamps.json'
 sys.path.insert(0, str(HERE))
 
-REVISION = 'A1V4-r3'           # base + lid: skeleton, integrated-board retention; plate-2 parts stay at A1V4-r1 (frozen)
+REVISION = 'A1V4-r5'           # frame_lower + frame_upper: open bar skeleton, hip servos on their own tabs (notes 6-8); legs stay at A1V4-r1 (frozen)
 CORNERS = ('FL', 'FR', 'RL', 'RR')
 
 # name -> (role, printable, print base rotation [rx, ry] or None for auto, supports)
 PRODUCTION = {
-    'base': ('shell', [0, 0], True),
-    'lid': ('lid', [180, 0], False),
-    'cap_front': ('bracket', [180, 0], False),
-    'cap_rear': ('bracket', [180, 0], False),
+    'frame_lower': ('shell', [0, 0], True),
+    'frame_upper': ('lid', [180, 0], True),
     **{f'thigh_{c}': ('other', [180, 0], False) for c in CORNERS},
     **{f'foot_{c}': ('other', 'foot', False) for c in CORNERS},
 }
-COUPONS = ['coupon_TEST_ONLY', 'MATING_TEST_leg_FL']
+COUPONS = ['coupon_TEST_ONLY', 'MATING_TEST_leg_FL', 'coupon_saddle_TEST_ONLY']
 REFERENCES = ['ref_DO_NOT_PRINT_electronics', 'ref_DO_NOT_PRINT_servos', 'ref_DO_NOT_PRINT_hardware']
 ALL = list(PRODUCTION) + COUPONS + REFERENCES
 # Parts the owner reports printing (and the two test prints): never rebuilt, bytes verified on every run
 FROZEN_MANIFEST = json.loads((HERE / 'frozen-plate2-A1V4-r1.json').read_text())
-FROZEN = FROZEN_MANIFEST['parts']
+RETIRED = ('cap_front', 'cap_rear')   # clamp bars: owner removed them (notes 7, 8); printed inventory only, not a production part
+FROZEN = {k: v for k, v in FROZEN_MANIFEST['parts'].items() if k not in RETIRED}
 
 
 def input_hash():
     h = hashlib.sha256()
     place = json.loads((HERE / 'board_placement.json').read_text())
-    for f in ('model.py', 'hardware.py', 'build.py', 'board_placement.json', place['source']):
+    for f in ('model.py', 'hardware.py', 'build.py', 'board_placement.json', place['source'], place['interfaceSource']):
         h.update((HERE / f).read_bytes())
     return h.hexdigest()
 
@@ -52,14 +51,10 @@ def shape_for(name):
     import cadquery as cq
     import model as M
     import hardware as HW
-    if name == 'base':
-        return M.base()
-    if name == 'lid':
-        return M.lid()
-    if name == 'cap_front':
-        return M.cap(1)
-    if name == 'cap_rear':
-        return M.cap(-1)
+    if name == 'frame_lower':
+        return M.frame_lower()
+    if name == 'frame_upper':
+        return M.frame_upper()
     if name.startswith('thigh_') or name.startswith('foot_'):
         kind, c = name.split('_')
         th, ft = M.leg_parts(c)
@@ -70,6 +65,8 @@ def shape_for(name):
             if False else compound([th, ft])
     if name == 'coupon_TEST_ONLY':
         return coupon()
+    if name == 'coupon_saddle_TEST_ONLY':
+        return saddle_coupon()
     if name == 'ref_DO_NOT_PRINT_electronics':
         return electronics()
     if name == 'ref_DO_NOT_PRINT_servos':
@@ -102,13 +99,9 @@ def electronics_items(labels_only=False):
         items.append((f'display {lab}', b(x0, x1, y0, y1, z0, z1)))
     usb = M.BOARD_IF.get('usb')
     if usb:
-        ux, uy = M.board_xy(*usb['centerMm'])
-        ax, ay = usb.get('access', [-1, 0, 0])[:2]
+        px, py, ax, ay, zc = M.usb_mouth()
         w, h = M.USB_PLUG_REAL
-        zc = M.BOARD_ZT + usb.get('zMm', 3.3) / 2
-        L = 15.0
-        mouth = usb.get('sizeMm', [9.5, 10.7])[0] / 2
-        px, py = ux + ax * mouth, uy + ay * mouth
+        L = M.USB_PLUG_LEN
         xa, xb = sorted((px - abs(ay) * w / 2, px + ax * L + abs(ay) * w / 2)) if ax else (px - w / 2, px + w / 2)
         ya, yb = sorted((py - abs(ax) * w / 2, py + ay * L + abs(ax) * w / 2)) if ay else (py - w / 2, py + w / 2)
         items.append(('USB-C plug overmold', b(xa, xb, ya, yb, zc - h / 2, zc + h / 2)))
@@ -200,6 +193,15 @@ def coupon():
                                                        kind='bold').translate((33, 26, 0))
     s = s.union(txt)
     return s.translate((-35, -100, 0))
+
+
+def saddle_coupon():
+    """TEST ONLY: the real front-left hip saddles cut from frame_upper (same bars, same pilots), so one SG90 can be dropped in and screwed before the whole frame is printed."""
+    import cadquery as cq
+    import model as M
+    s = M.frame_upper().intersect(M.box(45.0, 63.0, -8.0, 37.0, 31.0, 40.0))
+    txt = cq.Workplane('XY').workplane(offset=39.9).text('TEST ONLY', 3.5, 0.6, halign='center', valign='center', kind='bold').rotate((0, 0, 0), (0, 0, 1), 90).translate((61.5, 14.0, -0.3))
+    return s.union(txt)
 
 
 # ----------------------------------------------------------------------------- export worker
@@ -309,6 +311,9 @@ def main():
     parts.append({'name': 'coupon_TEST_ONLY', 'role': 'coupon', 'stl': 'coupon_TEST_ONLY.stl',
                   'step': 'coupon_TEST_ONLY.step', 'printRotateDeg': [0, 0, 0], 'supports': False, 'material': 'PETG',
                   'note': 'TEST ONLY - do not assemble; see case/README.md "In thử trước"'})
+    parts.append({'name': 'coupon_saddle_TEST_ONLY', 'role': 'coupon', 'stl': 'coupon_saddle_TEST_ONLY.stl',
+                  'step': 'coupon_saddle_TEST_ONLY.step', 'printRotateDeg': [180, 0, 0], 'supports': True, 'material': 'PETG',
+                  'note': 'TEST ONLY - real hip saddles of frame_upper, FL: drop one SG90 in and fit 2 bag screws before printing the frame'})
     parts.append({'name': 'MATING_TEST_leg_FL', 'role': 'coupon', 'stl': 'MATING_TEST_leg_FL.stl',
                   'step': 'MATING_TEST_leg_FL.step', 'printRotateDeg': [0, 0, 0], 'supports': False, 'material': 'PETG',
                   'note': 'MATING_TEST: the real thigh_FL + foot_FL; printed separately in case/print/mating-test.3mf'})
@@ -317,10 +322,10 @@ def main():
     manifest = {
         'schema': 1, 'revision': REVISION, 'frame': 'PILOT_CONTRACT.json robot body frame (mm, +X front, +Y left, +Z up)',
         'pilotContractSha256': hashlib.sha256((ROOT / 'PILOT_CONTRACT.json').read_bytes()).hexdigest(),
-        'variant': 'integrated board (ESP32-S3 + PCA9685 on one PCB; Waveshare display on a harness)',
+        'variant': 'integrated board on the open bar skeleton (ESP32-S3 + PCA9685 on one PCB; Waveshare display on a harness)',
         'verification': {'nativePCBCheckerApplies': True, 'report': '../reports/mechanical.json',
                          'nativeReport': '../reports/native-case-check.json', 'boardContract': json.loads((HERE / 'board_placement.json').read_text())['source'],
-                         'boardFitReport': '../reports/board-fit.json'},
+                         'routeReport': '../reports/route-evidence.json', 'accessReport': '../reports/assembly-access.json'},
         'overview': '../overview.html',
         'parts': parts,
     }
@@ -332,18 +337,19 @@ def main():
     if '--only-parts' in sys.argv:
         return
     py = sys.executable
-    for script in ('write_fastener_map.py', 'mech_check.py', 'make_print.py', 'render_overview.py', 'print_check.py'):
+    for script in ('write_fastener_map.py', 'mech_check.py', 'route_check.py', 'make_print.py', 'render_overview.py', 'print_check.py'):
         r = subprocess.run([py, str(ROOT / 'tools/case' / script)], cwd=ROOT)
         if r.returncode:
             sys.exit(f'{script} failed ({r.returncode})')
     # native check and assembly-access evidence on the real board contract
-    place = json.loads((HERE / 'board_placement.json').read_text())
-    subprocess.run([py, str(ROOT / 'tools/case/board_fit.py'), str(HERE / place['source'])], cwd=ROOT)
     subprocess.run([py, str(ROOT / 'tools/case/export_board_frame.py')], cwd=ROOT, check=True)
-    subprocess.run([py, str(ROOT / 'tools/case/assembly_access.py')], cwd=ROOT)
     r = subprocess.run([py, str(ROOT / 'tools/case/case_check.py')], cwd=ROOT)
     if r.returncode:
         sys.exit('case_check failed')
+    # D23 gate, last so every output above is still written: an ordinary USB-C cable must fit J1 as published
+    acc = json.loads((ROOT / 'case/reports/assembly-access.json').read_text())
+    if not acc['usbCableAssessment']['fitsPublishedJ1']:
+        sys.exit('OPEN (D23): an ordinary USB-C cable does not fit J1 as published. See case/reports/assembly-access.json usbCableAssessment.')
 
 
 if __name__ == '__main__':

@@ -51,3 +51,7 @@ that module revision behaves as documented. SPI GPIO8/39 avoid strap loading.
 WS2812 DIN GPIO1 remains direct3.3V, a retained reference assumption. A powered
 WS2812 keeps its last colour on warm MCU reset; no default-off LED claim is
 made. Firmware sends black first. Switch both bank ports off to clear it.
+
+Note9: J1 moved to+Y; USB-RELOCATION.md and usb-relocation-audit.json measure
+the actual new0.6mm PB1 feeder. Conservative560mA drop≈60mV at20°C/72mV
+at70°C, still0.678V dropout reserve. Rail nets/caps/LDO and loads unchanged.

@@ -1,6 +1,6 @@
 # Integrated controller: connect it by labels
 
-**Draft for the pending board revision. The current PCB does not assemble into the case; do not order it. See the WIP notice in the root README.**
+The current prototype uses the side-entry USB-C PCB and two open frames. See [build validation](../BUILD-VALIDATION.md) for desktop checks and the remaining first-board tests.
 
 This guide is for the custom ESP32-S3 + PCA9685 PCB. The original LILYGO + separate PCA module uses a different wiring guide and firmware target.
 
@@ -8,8 +8,8 @@ Unplug **both** power-bank outputs before changing connections. The USB-C input 
 
 ![Controller and external cables](images/integrated-connections.svg)
 
-1. Run the port-1 cable to **J1 USB-C**, keeping its power-bank end unplugged while wiring. Use a data-capable cable when programming. Its USB-C plug body must fit the case tunnel (maximum 11.4 mm width).
-2. Connect the supplied Waveshare 23822 LCD harness to **J10**, matching the signal names in the table below. The screen is mounted separately on the lid.
+1. Run the port-1 cable to **J1 USB-C**, keeping its power-bank end unplugged while wiring. Use a data-capable cable when programming. Use a housing no larger than 12.5 × 7 × 25 mm and a cable no thicker than 4.5 mm. Route it through the rear bay/end window and outside the +Y rail to the side-facing port. The head projects about 20 mm beyond the body.
+2. Connect the supplied Waveshare 23822 LCD harness to **J10**, matching the signal names in the table below. The screen is retained separately on the upper open frame.
 3. Connect the LED bar's **input** end to **J11**: DIN to DIN, 5V to 5V, GND to GND. Follow the labels/arrows rather than the wire colors.
 4. Wire the USB-to-terminal adapter to **J12 while the board is on the bench**: positive to +5V, negative to GND. Keep its port-2 USB end unplugged until first start. Keep the two positive supply inputs separate. The PCB already joins their grounds.
 5. Plug the eight servos into **CH0–CH7** as below. Each servo plug has three wires: **brown → GND, red → +5V, orange → PWM**. Use the PCB labels to orient the plug.
@@ -46,6 +46,6 @@ Here SCL/SDA on the **LCD** mean SPI clock/data; the LCD is not attached to the 
 
 Have the assembler complete its electrical inspection first. Leave the second supply and all servos disconnected while flashing the **integrated** target and checking the QR/Wi-Fi screen. Scan the setup QR, enter Wi-Fi details and open the robot's web control page. Hold BOOT for eight seconds while the application is running to return to Wi-Fi setup. For ROM programming, hold BOOT while pressing/releasing RESET instead.
 
-For servo setup, turn power off, attach the servo plugs, then support the body with the legs free. Use the assembly/center controls **before attaching the horns**. Fit the horns and legs using the case assembly guide, then test one joint at a time. Do not force a stalled servo. Walking, directions and calibration still require an actual first-prototype test.
+For servo setup, turn power off, attach the servo plugs, then support the body with the legs free. Uncouple any already installed horn/leg assemblies from the output shafts. Use the assembly/center controls **before attaching the horns**; never centre an assembled leg against the frame. Fit the horns and legs using the case assembly guide, then test one joint at a time. Do not force a stalled servo. Walking, directions and calibration still require an actual first-prototype test.
 
 If the LCD is blank or wiring is uncertain, remove power and have the assembler check the labels. Disconnect both power outputs to turn everything fully off; resetting the MCU is not a servo/LED power switch.

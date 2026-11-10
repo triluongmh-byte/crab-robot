@@ -2,8 +2,8 @@
   "status": "reviewed-final-board",
   "releaseNoteSha256": "122b5b3d406fc1cc148b6bf5abaf6c6fc7315e933a95e5565c1b60ee86d35e08",
   "boardInputSha256": {
-    "build/board/main.net": "19ee419a0723f07a8e396c5f8cf73c36f2d038b88a8347078ccf316e0624fa58",
-    "design/main.kicad_pcb": "f48c2f225963f402bb60010f2bcf6a25bb6f146a4766a034697652d7ca8faee2"
+    "build/board/main.net": "90b73f5535a8fd0c5ef388c154bef38fcbdcdcb9a456a8632773bc517fd4791e",
+    "design/main.kicad_pcb": "5992e36582a47ea39ac5088fce09256c227a8697471aa3d949199ac9c35e4c7b"
   },
   "firmwareHardwareSha256": "088bfce5f8f03abdbaeb8960e39aef54c52bb84e6d92718683ee0e6d1765e5f0",
   "firmwareDisplaySha256": {
@@ -225,13 +225,16 @@
   "displayManufacturerEvidence": "firmware/vendor/LCD_1in9.c",
   "oeResetPullupEvidence": "engineering/firmware-interface.md",
   "evidenceSha256": {
-    "engineering/firmware-interface.md": "7814205cb90e8037b26cd7220c45781b5ac1fd8c02f40e9282370d147455e1a6",
-    "engineering/DEVIATIONS.md": "0c91065d80608408dfb9abe10a0e370d85dd0facaa02329ad0cab3a8c8c2b2e3",
+    "engineering/firmware-interface.md": "9140376a141815c12e34d0e631393ef7e7c8d6fd03ac49298baa81b1e63175fe",
+    "engineering/DEVIATIONS.md": "5b80adfa8f5633a588f6dc5380bb5d59695be74ad718a1e35b85c8ab36cd2081",
     "engineering/sources/integrated/waveshare.pdf": "29aa980ba4c0905eef87a095224a7da7bc667b00c3c65110db31101fc73b000d",
     "firmware/vendor/LCD_1in9.c": "b191a3e2d0155c3cd51f678b97095fd0e00ddc19d1449b2adc9ced9dfe45a506",
     "firmware/vendor/LCD_1inch9.py": "e7feb77a2979b560402137ab3142635a48f71352a77496c0e3b6fd0ff659add5",
     "firmware/vendor/waveshare-source.json": "254aad6d082938c7d5e180b577438bef42edd8accd0c52a1fc8f4e225d7f638f",
-    "case/DEVIATIONS.md": "4177c74ee8d11eeb29bcff403835aefd6aa14ba26c757ce23f2ea4468729333e"
+    "case/DEVIATIONS.md": "2647691814f94a4aee8a84709109ea210543ddb2c467f302b233a0944d597df3",
+    "engineering/board-interface.json": "b92d3443a3d85a7b81caa14d52cbcf5967e31d8f7f04d67824f07275b48c2952",
+    "engineering/usb-relocation-audit.json": "39cb26e555f6b5ac1b9f501705d050bbe00f3fada656163ba0e127da1f8b844a",
+    "engineering/USB-RELOCATION.md": "1c989f62c303fc498902e1a9b7b35940ec4684926bb5447a9c9da678dd11723d"
   },
   "display": {
     "part": "Waveshare 23822 ST7789V2",
@@ -265,5 +268,31 @@
       "J1.B6"
     ]
   },
-  "hardwareTested": false
+  "hardwareTested": false,
+  "usbPortUpdate": {
+    "releaseNoteSha256": "034b50d8298791a3011c5272db395aa2babb18093ff3843c3da109b633650101",
+    "reference": "J1",
+    "boardLocalOriginMm": [
+      21.45,
+      28
+    ],
+    "mouthFaces": "+Y",
+    "mouthFaceYmm": 32.8,
+    "nativeKiCadOriginMm": [
+      21.45,
+      -28
+    ],
+    "rotationKiCadDeg": 180,
+    "gpioChanges": false,
+    "reviewedNetGroupsUnchanged": 25,
+    "boardStep": "build/board/integrated.step",
+    "boardStepSha256": "c7e892bd747b112dbde992bbb2c11ccfb5da77a64ba7a06cf647e5ddcd2203ae",
+    "caseCableCheck": "pending final STEP recheck; available case report assesses old rear J1",
+    "ordinaryPlugMm": [
+      12.5,
+      7,
+      25
+    ],
+    "binaryRebuilt": false
+  }
 }

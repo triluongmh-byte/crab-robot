@@ -1,38 +1,39 @@
-# Crab Robot — integrated controller prototype
+# Crab Robot — integrated controller and open skeleton
 
-**UNPUBLISHED WORK IN PROGRESS — do not order this revision.** Electrical and firmware checks pass, but the current PCB cannot be inserted into the protected case and three mounting screws cannot be reached. The real PCB needs the corner, mounting-hole and USB-position changes in `case/DEVIATIONS.md` D18. The virtual revision passes an insertion sweep; that is not a revised routed board. `build.sh` deliberately rejects this incomplete assembly. Main is unchanged.
+One **88 × 62 mm custom PCB** contains the ESP32-S3-WROOM-1-N16R8, PCA9685 servo controller, 3.3 V regulator, native USB-C and BOOT/RESET buttons. Eight SG90 servos, a small cabled Waveshare LCD, LED stick and an ordinary closed USB power bank complete the robot. This is the integrated hardware branch; the original modular build remains on `main`.
 
-One **88 × 62 mm custom PCB** contains the ESP32-S3-WROOM-1-N16R8, PCA9685 eight-servo controller, 3.3 V regulator, USB-C and BOOT/RESET buttons. It replaces the LILYGO development board and separate PCA9685 breakout in the robot. A small Waveshare 1.9-inch LCD connects by an eight-wire harness and keeps the QR setup flow.
+The new body has **two open bar frames** and individual servo-tab mounts. It reuses the four thighs and four feet already printed. The two interfering clamp bars are retired. Skin is deferred until the owner asks for it.
 
-This branch is the integrated hardware variant. The original modular build remains on `main`.
-
-![Integrated controller and external connections](docs/images/integrated-connections.svg)
+![Integrated controller connections](docs/images/integrated-connections.svg)
 
 ## Start here
 
-1. Read [what to buy and ask the assembler to fit](docs/AFTER-ORDER.md). Choose **assembled PCBA**, rather than a bare board requiring fine-pitch soldering.
-2. Use the [PCB/PCBA ordering guide](docs/PCB-ORDERING.md) and generated manufacturing packet to request a quote.
-3. Follow the [illustrated wiring guide](docs/INTEGRATED-WIRING.md). The bought servos, light and power bank remain external.
-4. Build and flash the **integrated** firmware using the [firmware guide](docs/INTEGRATED-FIRMWARE.md).
-5. Assemble the [integrated skeleton case](case/README.md). Its base/lid are new; the plate-2 legs and clamp bars retain their frozen r1 geometry and placement.
+1. Read [what to buy after ordering the PCB](docs/AFTER-ORDER.md) and [the PCBA quotation guide](docs/PCB-ORDERING.md). Factory SMT assembly plus the through-hole service avoids fine-pitch soldering at home.
+2. Follow [the illustrated integrated wiring guide](docs/INTEGRATED-WIRING.md). Port 1 of the bank powers USB-C logic; port 2 powers the servo/LED terminal. Their positive rails stay separate; ground is shared on the PCB.
+3. Use [the correct firmware target](docs/INTEGRATED-FIRMWARE.md). The integrated board and the original LILYGO have separate binaries and pin configurations.
+4. Use [the mechanical assembly guide](case/README.md), [BOM](case/BOM.md) and [physical checks](case/CHECKLIST-RAP.md). The generated overview uses one eight-step assembly sequence, with the real parts, screws and wire paths.
 
 ## What it does
 
-On first start the LCD shows a setup QR. Connect your phone, choose the Wi-Fi network and enter its password, then open the robot's web controller. The firmware provides directional driving, speed, LED control and servo-centering/trim controls for assembly. Hold the running application's BOOT button for eight seconds to return to Wi-Fi setup.
+On first start the LCD displays a setup QR. Connect a phone, choose Wi-Fi and enter its password, then open the web controller. The firmware implements driving directions, speed, LED control and servo-centre/trim controls. Hold the running application's BOOT button for eight seconds to return to setup.
 
-Eight SG90 servos plug directly into the labeled CH0–CH7 sockets: two per leg. Port 1 of the existing 5 V power bank feeds USB-C logic power; port 2 feeds the servo/LED terminal through the USB adapter. Their positive rails stay separate; their grounds are joined on the PCB. No loose-cell battery pack is needed.
+The USB-C connector is on the PCB's **+Y side**, where an ordinary data cable can pass through the open frame. The display mount preserves its 180° orientation and leaves room for its mating plug and all eight wires. Each servo lead has alternative open routes; long routes may need an extension rather than a stretched cable.
 
-## Prototype status
+## Existing prints and owner feedback
 
-Native schematic/PCB checks, manufacturing checks, firmware host tests and CAD/slicer checks are desk checks. The new board has **not** been manufactured, powered or flashed; the new case has **not** been physically fit-tested. No walking, radio-range, temperature or servo-load result is claimed. The owner's successful QR test was on the earlier LILYGO board, not this PCB.
+![Owner's assembled robot with the previous manually modified body](references/user-images/2026-11-10-owner-assembled-2563.jpg)
 
-The release validation record is in [BUILD-VALIDATION.md](BUILD-VALIDATION.md). Generated reports bind their results to the files produced by your build.
+This is the owner's **previous orange body**, with eight servos and four yellow legs mechanically installed. The owner hand-made four wire openings, removed both interfering clamp bars and used direct hip-tab screws. It is not a print or test of the new frame or integrated PCB. [The chronological photo record](references/OWNER-PRINTS.md) preserves what was printed, removed and modified, including the unknown source revision and screw/hole details.
 
-## What may need hands-on adjustment
+For the new frame, the generated **Print all** file retains the complete ten-part assembly on two named plates. Plate 1 is the two new frames; plate 2 is the eight existing leg parts to keep. Try the separate **TEST ONLY** saddle coupon with one real servo before a long print. Generated plate estimates and validation are recorded in [BUILD-VALIDATION.md](BUILD-VALIDATION.md).
 
-Ask the assembler to inspect soldering, mounting insulation and regulator temperature. The through-hole connector service covers 37 PCB joints if not included in the PCBA quote. Use the LCD's supplied cable; the module connector is MX1.25. The case's rear tunnel needs a USB-C plug body at most **11.4 mm wide**.
+## Prototype status and hands-on work
 
-The first assembled prototype still needs checks for servo/horn fit, actual joint directions, cable routing, screen readability and QR scanning, power-bank shutoff/surges, floor grip and skeleton strength. Direct 3.3 V WS2812 data is an assumption to check on the actual light bar. BOOT access with the lid closed uses an angled pin path; the native checker does not verify that path. See [remaining purchases and manual work](docs/AFTER-ORDER.md) and the case deviations for the recorded limits.
+Read the current source-build result in [BUILD-VALIDATION.md](BUILD-VALIDATION.md). Native electrical/manufacturing checks, CAD checks and firmware host tests are desktop evidence. The new PCB has not been manufactured, powered or flashed; the new frame has not been printed or physically fit-tested. The earlier successful QR setup was on the LILYGO board. No new-board walking, temperature, radio-range or servo-load result is claimed.
+
+Check the **three servo-screw types** before assembly: sixteen tab screws, eight horn-arm screws and eight centre screws. Spare centre screws do not replace missing horn-arm screws. The mechanical list provides at least eleven thin zip ties, plus bank retention. Ask the assembler to include the eleven through-hole connectors (**37 PCB joints**) if the PCBA quote covers only SMT.
+
+The first prototype still needs inspection of soldering/mounting insulation, servo/horn fit, cable slack, frame strength, QR visibility, Wi-Fi range, bank shutoff/surges and floor grip. Direct 3.3 V WS2812 data remains an actual-light-bar check. For the owner's current drilled body, inspect rough wire-hole rims, screw holes and servo tabs before power; see the physical checklist.
 
 ## Build from source
 
@@ -40,10 +41,10 @@ The first assembled prototype still needs checks for servo/horn fit, actual join
 ./build.sh
 ```
 
-Run in the documented macOS KiCad Harness toolchain: KiCad 10.0.5 and its pinned model library, CadQuery 2.7.0/OCP 7.8.1.1, Bambu Studio CLI, Arduino CLI with ESP32 core 2.0.14, Python/Pillow, clang/clang++, Node and Swift/Vision. Set `KICAD_HARNESS_PYTHON` and `KICAD_CASE_PYTHON` to the supplied interpreters. The first build downloads two hash-pinned Waveshare reference inputs into an ignored cache; vendor datasheets are not stored in Git. The script reports missing dependencies and does not install software, flash hardware, print or order anything.
+Use the documented macOS toolchain: KiCad 10.0.5, CadQuery 2.7.0/OCP 7.8.1.1, Bambu Studio CLI, Arduino CLI with ESP32 core 2.0.14, Pillow, clang/clang++, Node and Swift/Vision. Set `KICAD_HARNESS_PYTHON` and `KICAD_CASE_PYTHON` to the supplied interpreters. The first build fetches hash-pinned manufacturer references into an ignored cache. It reports missing dependencies and installs no software.
 
-Build order is library/model preparation → native board checks/exports/STEP/manufacturing packet → source-recreated frozen parts → current case/CAD checks → print plates → interactive assembly overview → both firmware targets and host/interface tests. Native copper is an authored input; the release build does not rerun the placement-draft generator over accepted routes.
+Build order: model/source preparation → native board/STEP/manufacturing exports → source-recreated frozen parts → case, complete lead-motion/access checks and arranged plates → standalone assembly overview → both firmware targets, native-board reconciliation and host/QR tests → complete release and freshness checks. Authored copper remains the board source.
 
-Generated CAD, Gerbers, reports, firmware binaries, plates and overview remain outside Git. After a successful build, open `case/overview.html`, `case/print/production.3mf` and the manufacturing packet under `boards/`. See [build requirements and validation](BUILD-VALIDATION.md) for exact output paths and commands.
+After a successful build, open `case/overview.html`, `case/print/production.3mf` and the manufacturing packet under `boards/`. STL/STEP/3MF/Gerbers, reports, binaries and rendered views are regenerated outputs and are intentionally outside Git. The build does not flash, operate a printer or place an order.
 
-[Native KiCad sources](design/) · [PCB BOM and engineering](engineering/) · [Firmware source](firmware/crab/) · [Case source](case/)
+[Native KiCad sources](design/) · [Engineering](engineering/) · [Firmware](firmware/crab/) · [Case sources](case/)

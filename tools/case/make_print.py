@@ -76,14 +76,14 @@ def oriented(name, rot):
     return T, (mx - mn)
 
 
-# Owner reports plate 2 printing (release note 2). Reported only: it stays out of "ĐÃ IN" until a confirmation event.
-IN_PROGRESS_REPORTED = set(FREEZE.PLATE2)
-SKELETON_REVISION = 'A1V4-r3'
+SKELETON_REVISION = 'A1V4-r5'
+# Owner's completion report (release note 6) and bars-removed report (notes 7, 8): 8 leg parts printed. Clamp bars are not production parts.
+OWNER_REPORTED_PRINTED = set(FREEZE.PLATE2)
 
 
 def printed_parts():
     """Parts confirmed physically printed (print/events.jsonl, else PRINTED-INVENTORY.md table)."""
-    done = set()
+    done = set(OWNER_REPORTED_PRINTED)
     ev = ROOT / 'print/events.jsonl'
     if ev.exists():
         for line in ev.read_text().splitlines():
@@ -238,31 +238,37 @@ def main():
         if ext[2] > BED[2] or max(ext[0], ext[1]) > BED[0] - 2 * EDGE:
             errors.append(f'{n} does not fit the bed: {ext}')
     # Bambu Studio 2.7 drops plate names that contain '/' or ':' -> the group slash is U+2215 '∕'
-    groups = [('ĐÃ IN — GIỮ LẠI', [p['name'] for p in prod if p['name'] in done]),
-              ('MỚI∕SỬA — CẦN IN', [p['name'] for p in prod if p['name'] not in done])]
+    groups = [('MỚI∕SỬA — CẦN IN', [p['name'] for p in prod if p['name'] not in done]),
+              ('ĐÃ IN — GIỮ LẠI', [p['name'] for p in prod if p['name'] in done])]
     plates = []
     for gname, names in groups:
         if not names:
             continue
-        big = [n for n in names if n in ('base', 'lid')]          # plate 1 <= 4h30 needs the caps elsewhere
-        small = [n for n in names if n not in big]
-        for cls, members, label in ((1, big, f'Thân khung xương MỚI {SKELETON_REVISION} (đáy, nắp) — CHỌN IN PLATE NÀY'),
-                                    (2, small, 'Thanh đè và chân (2 thanh đè, 4 đùi, 4 cẳng) — GIỮ NGUYÊN, đang in theo báo của bạn, chưa xác nhận')):
-            if not members:
-                continue
-            rev = SKELETON_REVISION if cls == 1 else 'A1V4-r1'
-            items = sorted(((n, ori[n][1][0], ori[n][1][1]) for n in members), key=lambda t: -t[2])
+        rev = SKELETON_REVISION if gname.startswith('MỚI') else 'A1V4-r1'
+        label = ('Khung xương MỚI A1V4-r5 (khung dưới, khung trên) — CHỌN IN PLATE NÀY' if gname.startswith('MỚI')
+                 else '4 đùi 4 cẳng (bạn báo đã in và đã ráp, chưa thử chạy) — KHÔNG IN LẠI')
+        if gname.startswith('ĐÃ IN'):
+            # the printed leg parts keep their exact bed spots from the frozen plate 2 (the clamp bars' spots simply stay empty)
+            fz = FREEZE.load()['parts']
+            pl = []
+            for n in names:
+                t = fz[n]['transform'].split()
+                pl.append((n, float(t[9]) - PLATE_PITCH, float(t[10])))
+        else:
+            items = sorted(((n, ori[n][1][0], ori[n][1][1]) for n in names), key=lambda t: -t[2])
             pl = shelf_pack(items, BED[0], BED[1])
-            if pl is None:
-                errors.append(f'{label} does not fit one plate'); continue
-            plates.append((f'{gname} {len([p for p in plates if p[0].startswith(gname)]) + 1} — {label} — PETG — {rev}',
-                           [(n, ori[n][0], cx, cy) for n, cx, cy in pl]))
+        if pl is None:
+            errors.append(f'{label} does not fit one plate'); continue
+        plates.append((f'{gname} — {label} — PETG — {rev}', [(n, ori[n][0], cx, cy) for n, cx, cy in pl]))
     prod_file = PRINT / 'production.3mf'
     write_3mf(prod_file, plates, 'Robot Cua A1 V4 — Print all')
     # separate projects (never inside Print all)
     coupon_T, cext = oriented('coupon_TEST_ONLY', [0, 0, 0])
     write_3mf(PRINT / 'test-only.3mf', [('TEST ONLY — coupon hốc servo, rãnh horn, lỗ M3 và tán, trụ mảnh', [('coupon_TEST_ONLY', coupon_T, 128, 128)])],
               'TEST ONLY coupon')
+    sad_T, sext = oriented('coupon_saddle_TEST_ONLY', [180, 0, 0])
+    write_3mf(PRINT / 'test-saddle.3mf', [('TEST ONLY — yên tai servo hông thật của khung r5 (thử 1 servo, 2 vít túi)', [('coupon_saddle_TEST_ONLY', sad_T, 128, 128)])],
+              'TEST ONLY saddle coupon')
     mt = [(n, ori[n][0], ori[n][1][0], ori[n][1][1]) for n in ('thigh_FL', 'foot_FL')]
     pl = shelf_pack([(n, sx, sy) for n, _, sx, sy in mt], BED[0], BED[1])
     write_3mf(PRINT / 'mating-test.3mf', [('MATING_TEST — đùi FL + cẳng FL (part thật)', [(n, ori[n][0], cx, cy) for n, cx, cy in pl])],
@@ -279,10 +285,10 @@ def main():
         for n, T, cx, cy in parts:
             sx, sy = ori[n][1][0], ori[n][1][1]
             b = (cx - sx / 2, cy - sy / 2, cx + sx / 2, cy + sy / 2)
-            if b[0] < EDGE - 1e-6 or b[1] < EDGE - 1e-6 or b[2] > BED[0] - EDGE + 1e-6 or b[3] > BED[1] - EDGE + 1e-6:
+            if b[0] < EDGE - 0.01 or b[1] < EDGE - 0.01 or b[2] > BED[0] - EDGE + 0.01 or b[3] > BED[1] - EDGE + 0.01:
                 errors.append(f'{n} outside plate {idx} margin')
             for o, ob in boxes:
-                if not (b[2] + GAP - 1e-6 <= ob[0] or ob[2] + GAP - 1e-6 <= b[0] or b[3] + GAP - 1e-6 <= ob[1] or ob[3] + GAP - 1e-6 <= b[1]):
+                if not (b[2] + GAP - 0.01 <= ob[0] or ob[2] + GAP - 0.01 <= b[0] or b[3] + GAP - 0.01 <= ob[1] or ob[3] + GAP - 0.01 <= b[1]):
                     errors.append(f'{n} closer than {GAP} mm to {o} on plate {idx}')
             boxes.append((n, b))
             if n in seen:
@@ -332,11 +338,11 @@ def main():
         'meshes': [{'name': f"{p['name']}.stl", 'canonicalSTLSha256': sha((BOARD_OUT / p['stl']).read_bytes()),
                     'printRotateDeg': p.get('printRotateDeg') or [0, 0, 0]} for p in prod],
         'plates': plate_rep, 'slicer': est, 'limits': limits,
-        'separateProjects': {'testOnly': 'case/print/test-only.3mf', 'matingTest': 'case/print/mating-test.3mf'},
+        'separateProjects': {'testOnly': 'case/print/test-only.3mf', 'testSaddle': 'case/print/test-saddle.3mf', 'matingTest': 'case/print/mating-test.3mf'},
         'printedInventory': sorted(done),
         'plate2Frozen': {'passed': not frozen_errs, 'errors': frozen_errs, 'baseline': FREEZE.load()['sourceCommit'],
-                         'parts': frozen_rows, 'status': 'in progress by owner report only: not finished, not confirmed, not fit-checked'},
-        'selectForPrinting': {'plateIndex': 1, 'name': plates[0][0], 'why': 'new skeleton base + lid'},
+                         'parts': frozen_rows, 'status': 'owner reports printed and assembled (2026-11-10, photo); both clamp bars removed and left out of Print all; not walked; not reprinted'},
+        'selectForPrinting': {'plateIndex': 1, 'name': plates[0][0], 'why': 'new open bar skeleton r5: frame_lower + frame_upper (replaces base + lid; hip servos on their own tabs, no clamp bars)'},
         'checkedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
         'note': 'Layout verified by reopening the saved 3MF; estimates from a real Bambu Studio CLI slice of that file '
                 '(no printer contacted). Physical printability/fit remain untested.',

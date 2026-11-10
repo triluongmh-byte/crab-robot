@@ -1,6 +1,6 @@
 # Requesting a PCB assembly quote
 
-**Draft for the pending board revision. The current PCB does not assemble into the case; do not order it. See the WIP notice in the root README.**
+The current prototype uses the side-entry USB-C PCB and two open frames. See [build validation](../BUILD-VALIDATION.md) for desktop checks and the remaining first-board tests.
 
 This is an **integrated controller prototype**, not a socket carrier. The ESP32-S3 module and PCA9685 are assembled on the custom PCB. Do not substitute the original LILYGO/PCA module bill of materials.
 

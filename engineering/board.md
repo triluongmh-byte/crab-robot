@@ -18,3 +18,9 @@ Current readiness/counts/packet hashes come only from boards/main.board.json
 and its newest native/manufacturing reports. Old note3 fab.ready does not
 apply. Independent tester and cross-team integration still determine product
 readiness. No push, order, upload, flash, motor or printer action occurred.
+
+Note9 (2026-11-10): J1 relocated to native(21.45,-28), rotation180°, mouth
+board-local+Y atY32.8. Real USB/CC/PB1 copper rerouted and severity-all native
+DRC/parity pass. All other footprints, GPIOs, outline/mounts, rails unchanged.
+See USB-RELOCATION.md for measured path/DC limits; case must recheck final
+ordinary-cable access against the updated STEP. No firmware rebuild needed.

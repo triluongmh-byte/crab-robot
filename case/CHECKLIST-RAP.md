@@ -1,32 +1,42 @@
-# Checklist ráp — phần cơ khí (lead gộp vào `CHECKLIST-RAP.md` ở thư mục gốc)
+# Physical assembly checks
 
-Những việc này chỉ biết được khi in hoặc ráp thật. **Không tính là lỗi** và không chặn bàn giao.
+These checks distinguish a nominal CAD fit from the actual prototype. Stop at a mismatch and report it; do not force, shave or drill the new parts. The integrated board and r5 frame have not been physically tested.
 
-| Việc | Đạt là | Không đạt thì |
-|---|---|---|
-| In `test-only.3mf` và thử SG90 trong hốc | Servo vào vừa tay, lắc ≤ 0.5 mm | Báo "chật" hoặc "lỏng" để chỉnh `FIT` |
-| Ép horn 1 tay vào rãnh coupon | Phải ấn mới vào, lật ngược không rơi | Báo lại; không gọt rãnh, không dán |
-| Tán M3 vào khe coupon, vặn M3 | Tán nằm lọt, vít ăn ren | Báo lại để chỉnh khe |
-| In `mating-test.3mf`, ráp chân FL (Bước 4) | Servo gối vào ô, vít tai bắt chặt, cẳng xoay êm bằng tay | Báo lại trước khi in cả bộ |
-| Túi SG90 đủ vít cho Bước 4 và 8 | Mỗi chân dùng 6 vít túi | Lấy vít trong túi của 2 servo dự phòng |
-| Giữ thanh LED bằng 1 dây rút dọc lưng thanh | Thanh áp vào rãnh tán sáng, không lắc | Rút chặt vừa tay; đuôi dây rút cắt sát |
-| Giữ màn hình bằng 2 dây rút dọc lưng module | Mặt kính áp sát mặt dưới nắp, QR nhìn rõ qua cửa sổ, không kênh | Rút lại; không rút quá chặt làm gãy kính |
-| Dây màn hình 8 sợi và dây LED | Cắm đủ, không căng khi đóng nắp | Thêm vòng dư hoặc đổi đường dây |
-| Hạ board xuống thân (cần bản board đã sửa 4 góc) | Board lọt thẳng xuống, nằm phẳng trên 4 khối đỡ, 4 lỗ thẳng hốc tán | Không gọt và không ép; báo lại |
-| Vít M3x8 nắp ăn ren vào lỗ dẫn Ø2.7 | Vít vặn êm, nắp giữ chắc, không xoay tuột | Không siết quá; nếu trượt ren, báo lại |
-| Dây servo hông nằm trong rãnh sàn dưới board (khe dưới board chỉ 1,3 mm) | Dây nằm gọn trong rãnh, không bị chân hàn đè | Luồn lại vào rãnh, đừng ép board |
-| Nối dây J12 trên bàn trước khi đặt board | Dây chắc; đầu dây vào từ phía +X, chỉ còn khoảng 3 mm tới vách | Tháo board ra nối lại |
-| Sóng Wi-Fi của ESP32 (anten gần pin và màn hình) | Điện thoại kết nối được trong phòng | Báo lại khoảng cách đo được |
-| Tán M3 vào hốc lục giác trên khối đỡ board | Tán thả vào lọt, không quay khi vặn | Báo lại để chỉnh hốc |
-| Dây servo hông luồn dưới board rồi ra khe mép board | Dây không bị đè khi đặt board, đủ dài tới giắc | Luồn lại trước khi vặn vít board |
-| Đầu USB-C qua đường hầm phía sau | Đầu cắm vào được thẳng tay, không chạm 2 servo hông sau; rút ra cắm PC để nạp firmware | Nếu đầu USB-C quá to: đổi cáp có đầu mảnh theo BOM |
-| Nút BOOT (nằm dưới thanh LED) | Que ghim 1 mm đưa từ khe viền bên phải, nghiêng khoảng 23°, bấm được nút có chữ BOOT | Tháo nắp ra rồi bấm; đừng bẻ thanh LED |
-| Nút RESET | Que ghim bấm thẳng qua khe viền | Báo lại |
-| Vặn dây vào terminal J12 | 2 dây chắc, đi vào từ đầu trước của J12; siết qua 2 lỗ trên nắp nếu cần | Dây lỏng thì tháo nắp và vặn lại |
-| Khung nắp đóng và 3 vít M3x8 | Nắp phẳng, giắc servo vẫn thò tay tới được | Kiểm lại dây có đè mép khung không |
-| Thanh ray hai bên và cửa sổ (bản khung xương A1V4-r2, chưa thử bền thật) | Ấn nhẹ ray bên bằng ngón tay, ray không nứt ở chân; robot đứng vẫn thẳng | Nếu nứt: báo lại, đừng dán; lúc đó sẽ tăng tiết diện ray |
-| Đai dán giữ pin | Pin không trượt ra khi nghiêng robot 45° | Quấn chặt hơn hoặc thêm 1 vòng |
-| Dây servo gối qua cửa sổ hông | Còn vòng dư khi xoay chân hết tầm bằng tay | Kéo thêm dây vào trong, buộc gọn |
-| Thử bằng tay khi chưa cấp điện | Xoay nhẹ chân thì không cọ thân hay đầu vít | Báo vị trí cọ; không gọt |
-| Gắn chân ở góc giữa (trang Ráp) | Đùi chéo 45°, cẳng thẳng đứng, lệch < 1 răng horn | Tháo ra, xoay 1 răng rồi gắn lại; phần lệch nhỏ chỉnh bằng +/− |
-| Chiều quay khớp (bảng dấu firmware) | Trang Ráp: + làm cẳng FL, RR vào trong, FR, RL ra ngoài (xem DEVIATIONS D7) | Báo để firmware đảo dấu |
+## Owner's current orange body
+
+The owner reports four hand-made wire openings and direct hip-tab screws after removing both interfering clamp bars. Before supplying power:
+
+- Inspect every opening for sharp edges against the lead insulation. Protect the crossing with suitable tape/sleeving without cutting the wire or enlarging the hole.
+- Inspect around the four wire openings and every owner-made screw hole for cracks.
+- Gently check each hip servo for looseness or cracked tabs. Snug the correct screws without overtightening; remaining looseness or cracks require a repair review, not more drilling.
+- Check the four knee leads separately from the four hip leads. Each needs slack across its moving hip joint, with no tension at either end.
+- Inspect movement gently with power disconnected. The photographs establish mechanical assembly, not calibration, retention strength or walking.
+
+## Coupons before the new frame
+
+1. Print generated `print/test-saddle.3mf`, marked **TEST ONLY**. Place one actual hip servo on the two saddles; its body must enter freely and both tabs must rest flat without being bent. Try the two proper tab screws in the existing pilots. Do not drill either the servo or coupon.
+2. Use `print/test-only.3mf` for the retained horn/nut interfaces and `print/mating-test.3mf` for one front-left leg. Their historical pocket tests do not validate the new open saddle.
+3. Check that the correct one-arm horn seats and remains retained, the M3 nut fits its well without spinning, and screws engage without splitting or stripping plastic.
+4. Confirm screw **types and lengths**, not only total count. The current build needs sixteen tab screws, eight horn-arm self-tappers and eight centre screws; see [BOM.md](BOM.md). A centre screw is not a replacement for a horn-arm screw.
+
+## New r5 body
+
+| Check | Acceptable result |
+|---|---|
+| Lower actual PCB into lower frame | It rests flat on all four seats; all mounting holes align without force |
+| B1–B4 nuts and screws | Nuts remain captured; correct M3×6 screws engage without bottoming |
+| Lower upper frame onto the columns | It seats fully without trapping the LCD/LED harnesses |
+| J1–J3 frame joints | Correct M3×12 screws engage the Ø2.7 pilots; no cracks or stripping |
+| Hip servo saddles | Both tabs sit flat; body and gear boss clear every bar; two correct screws retain each servo |
+| USB-C cable | Housing ≤12.5 ×7 ×25 mm fits the +Y side opening; cable ≤4.5 mm follows the outside-rail route, clear of moving legs. Keep the projecting head free |
+| All eight servo leads | Each reaches its correct header by an open route with the moulded plug intact |
+| Knee service loops | At least 40 mm free lead between the thigh/frame ties; no tension or rubbing throughout gentle joint inspection |
+| Bank and strap | Bank can slide out when the strap is removed and stays retained when the assembly is gently tilted |
+| LCD and LED ties | Components are retained without bending the LCD glass; tails do not obstruct motion |
+| BOOT / RESET | Reach the marked buttons using the overview's pin path; remove the upper frame if necessary, rather than bending the LED bridge |
+| Joint movement, unpowered | No rubbing on frame, screws, cables or straps; never force a geared joint |
+| Frame without skin | It carries the devices without cracks, excessive play or a cosmetic shell providing support |
+
+Before powered centring, uncouple already installed horns/legs from the output shafts. Centre the unloaded servos using the firmware procedure, attach the legs in the shown neutral pose, then install the proper centre screws. Verify directions one joint at a time using the wiring/firmware guide; the nominal signs are unchanged.
+
+The complete first prototype still needs QR readability, Wi-Fi range, bank shutoff/load, regulator temperature, LED data-level, floor grip and walking checks. No such result is inferred from the owner's previous LILYGO QR test or from CAD animations.

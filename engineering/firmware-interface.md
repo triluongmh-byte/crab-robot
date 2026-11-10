@@ -39,3 +39,9 @@ to i80. Original LILYGO firmware remains a separate target.
 LED may retain its last colour through MCU reset. Firmware must send black
 at startup. Physical LED acceptance of3.3V DIN and power-bank surge response
 remain original bench assumptions. No board has been flashed or powered.
+
+Note9 USB relocation (2026-11-10): J1 now opens toward board-local+Y,
+centreX21.45, mouthY+32.8 (native origin21.45,-28, rotation180°). Use the
+case side opening and ordinary USB-C cable route after final case recheck.
+All nets/GPIOs and wire destinations are unchanged; no firmware source change
+or binary rebuild is needed. LCD stays rotated180° per current firmware.

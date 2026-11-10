@@ -28,7 +28,7 @@ TOL = 0.05          # mm3 overlap tolerated as numerical noise
 CORNERS = ('FL', 'FR', 'RL', 'RR')
 HIP = {'FL': (53.25, 22.8), 'FR': (53.25, -22.8), 'RL': (-53.25, 22.8), 'RR': (-53.25, -22.8)}
 SIGN = {'FL': (1, 1), 'FR': (1, -1), 'RL': (-1, 1), 'RR': (-1, -1)}
-BODY = ('base', 'lid', 'cap_front', 'cap_rear')
+BODY = ('frame_lower', 'frame_upper')
 
 _cache = {}
 
@@ -93,8 +93,10 @@ def intended(part, label):
     if not label.startswith('screw ') or 'SG90' in label:
         return False
     sid = label.split(' ', 1)[1]
-    if sid[0] == 'L' and part == 'base':
-        return True       # M3x8 cuts its own thread in the Ø2.7 pilot (intended engagement)
+    if sid[0] == 'J' and part == 'frame_lower':
+        return True       # M3x12 cuts its own thread in the Ø2.7 pilot (intended engagement)
+    if sid[0] == 'T' and part == 'frame_upper':
+        return True       # SG90 bag screw bites its Ø1.6 pilot in the tab saddle (intended engagement)
     if sid[0] in 'HK':
         corner = sid[1:3]
         kind = part.split('_')[0]
@@ -190,7 +192,7 @@ def body_obstacles():
     labels = ref_labels()
     hw = solids('ref_DO_NOT_PRINT_hardware')
     for lab, s in zip(labels['ref_DO_NOT_PRINT_hardware'], hw):
-        if lab.startswith('screw C') or lab.startswith('screw L'):
+        if lab.startswith('screw T') or lab.startswith('screw J'):
             obs.append((lab, s))
     sv = solids('ref_DO_NOT_PRINT_servos')
     for lab, s in zip(labels['ref_DO_NOT_PRINT_servos'], sv):
@@ -253,19 +255,17 @@ POSTS = [
 ]
 
 
-# Thickness rays (mm) from a probe point inside the member, along two axes; horizontal sections no longer isolate
-# these members.  (name, part, point, axisA, axisB, free height, mode, note)
+# Thickness rays (mm) from a probe point inside the member, along two axes (name, part, point, axisA, axisB, free height, mode, note).
+# 'bar' = tied at both ends, >= 3 mm on every side. 'post' = column/boss, >= 6 x 6 and h <= 3 x min side.
 def _rays():
     import model as M
-    r = [('cap-screw block C1', 'base', (46.0, 28.0, 33.0), 'x', 'y', 18.4, 'post', 'clear of the M3 hole and nut slot'),
-         ('hip pocket inner wall', 'base', (45.5, 15.0, 30.0), 'x', 'z', 18.4, 'wall', 'load-bearing wall, tied to side walls')]
-    for h in M.BOARD_HOLES:
-        x, y = h['xy']
-        px = x + 4.0 * (1 if x < 0 else -1)
-        r.append((f"board seat {h['id']}", 'base', (px, y, M.BOARD_ZB - 0.6), 'y', 'z', round(M.BOARD_ZB - M.DECK_Z1, 2), 'wall',
-                  'deck-rooted seat block (2.5 mm tall, not a free post); nut in a drop-in hex well'))
-    for (x, y) in M.LID_SCREWS:
-        r.append((f'lid pad ({x:+.0f},{y:+.0f})', 'base', (x + (3.2 if x < 0 else -3.2), y + (-1.0 if y < 0 else 1.0), 38.5), 'x', 'y', 7.0, 'wall', 'wall thickening at the rail end, tied into the end wall; M3x8 self-tap pilot Ø2.7'))
+    r = []
+    for sx, sy, lab in ((1, 1, 'FL'), (1, -1, 'FR'), (-1, 1, 'RL'), (-1, -1, 'RR')):
+        r.append((f'corner column {lab}', 'frame_lower', (sx * 60.0, sy * 34.3, 28.0), 'x', 'y', round(M.SADDLE_Z0 - M.DECK_Z1, 2), 'post', 'tied at the deck rail, carries the corner saddle'))
+        if not (sx < 0 and sy > 0):
+            r.append((f'joint column {lab}', 'frame_lower', (sx * 35.2, sy * 32.0, 26.0), 'x', 'y', round(M.COL_TOP - M.DECK_Z1, 2), 'post', 'bolted joint with frame_upper; M3x12 pilot beside this probe'))
+    for sy, lab in ((1, 'trái'), (-1, 'phải')):
+        r.append((f'mid column {lab}', 'frame_lower', (6.0, sy * 34.3, 28.0), 'x', 'y', round(M.COL_TOP - M.DECK_Z1, 2), 'post', 'carries the long side rail at mid-span'))
     return r
 
 
@@ -287,22 +287,33 @@ def ray_job(r):
         return [{'feature': name, 'part': part, 'error': 'probe point outside the solid', 'pass': False}]
     ta, tb = span(a), span(b)
     t = min(ta, tb)
-    ok = t >= 3.0 - 0.06 if mode == 'wall' else (t >= 6.0 - 0.06 and h <= 3 * t + 0.2)
+    ok = t >= 3.0 - 0.06 if mode in ('wall', 'bar') else (t >= 6.0 - 0.06 and h <= 3 * t + 0.2)
     return [{'feature': name, 'part': part, 'minSectionMm': sorted((ta, tb)), 'axes': [a, b], 'freeHeightMm': h or None,
              'heightToMinSide': round(h / t, 2) if h else None, 'mode': mode, 'pass': ok, 'note': note}]
 
 
-# Skeleton members, measured on vertical cuts through the exported STEP: (name, part, plane, offset, probe, limit, note)
+# Skeleton bars, measured on section cuts through the exported STEP: (name, part, plane, offset, probe, limit, note)
 # plane 'YZ' cuts at x=offset (probe = (y, z)); plane 'XZ' cuts at y=offset (probe = (x, z)).
 MEMBERS = [
-    ('side rail -Y (mid span)', 'base', 'YZ', 0.0, (-35.5, 40.0), (3.0, 6.0), '3 x 7 rail, clamped between the hip blocks'),
-    ('side rail -Y (near rear)', 'base', 'YZ', -34.0, (-35.5, 40.0), (3.0, 6.0), 'same rail near its end, outside the pad'),
-    ('side rail +Y (mid span)', 'base', 'YZ', 0.0, (35.5, 40.0), (3.0, 6.0), '3 x 7 rail, clamped between the hip blocks'),
-    ('side rail +Y (near rear)', 'base', 'YZ', -34.0, (35.5, 40.0), (3.0, 6.0), 'same rail near its end, outside the pad'),
-    ('lid -Y stringer', 'lid', 'YZ', 0.0, (-35.0, 45.0), (3.0, 3.0), 'rests on the -Y rail'),
-    ('lid +Y edge', 'lid', 'YZ', 6.0, (35.5, 45.0), (3.0, 3.0), 'rests on the +Y rail'),
-    ('lid front end member', 'lid', 'XZ', -20.0, (36.5, 45.0), (3.0, 3.0), 'lid end member'),
-    ('lid rear end member', 'lid', 'XZ', -20.0, (-36.5, 45.0), (3.0, 3.0), 'lid end member'),
+    ('bottom rail +Y', 'frame_lower', 'YZ', 10.0, (35.0, 3.0), (3.0, 3.0), 'tied at both ends'),
+    ('bottom rail -Y', 'frame_lower', 'YZ', 10.0, (-35.0, 3.0), (3.0, 3.0), 'tied at both ends'),
+    ('deck rail +Y', 'frame_lower', 'YZ', 10.0, (34.0, 20.0), (3.0, 3.0), 'tied at both ends'),
+    ('deck rail -Y', 'frame_lower', 'YZ', 10.0, (-34.0, 20.0), (3.0, 3.0), 'tied at both ends'),
+    ('truss diagonal +Y', 'frame_lower', 'YZ', 15.0, (35.0, 12.0), (3.0, 3.0), 'side truss'),
+    ('floor cross bar', 'frame_lower', 'XZ', 3.0, (28.0, 1.5), (3.0, 3.0), 'bank rests here, tied to both bottom rails'),
+    ('deck cross bar (inner, front)', 'frame_lower', 'XZ', -18.0, (45.4, 20.0), (3.0, 3.0), 'clear of the servo body, carries the open bay'),
+    ('side rail upper +Y', 'frame_upper', 'YZ', 5.0, (35.5, 37.0), (3.0, 5.0), 'tied at both towers'),
+    ('side rail upper -Y', 'frame_upper', 'YZ', 5.0, (-35.5, 37.0), (3.0, 5.0), 'tied at both towers'),
+    ('inner end bar, front', 'frame_upper', 'XZ', 18.0, (44.5, 37.0), (3.0, 5.0), 'carries the tab saddles'),
+    ('inner end bar, rear (-Y half)', 'frame_upper', 'XZ', -18.0, (-44.5, 37.0), (3.0, 5.0), 'carries the -Y saddles and the centre saddle; +Y half removed for the display, see D27'),
+    ('outer end bar, front', 'frame_upper', 'XZ', 18.0, (61.5, 37.0), (3.0, 5.0), 'carries the tab saddles'),
+    ('centre tab saddle, front', 'frame_upper', 'YZ', 49.0, (0.0, 36.0), (10.0, 5.9), 'open below; tied to both end bars; both inner tabs screw here'),
+    ('corner tab saddle, front left', 'frame_upper', 'YZ', 56.0, (32.0, 34.0), (3.0, 5.9), 'open below; carries the outer tab'),
+    ('LED beam +Y', 'frame_upper', 'YZ', 34.0, (7.9, 37.0), (3.0, 5.0), 'carries the strip to the tower'),
+    ('LED beam -Y', 'frame_upper', 'YZ', -34.0, (-7.9, 37.0), (3.0, 5.0), 'carries the strip to the tower'),
+    ('LED strip -Y wall beside the RESET relief (not load-bearing)', 'frame_upper', 'YZ', -8.0, (-6.8, 45.0), (0.7, 2.5), 'local relief for RESET, the bar is carried by the beams at both strip ends; D27'),
+    ('LED strip wall -Y', 'frame_upper', 'YZ', 0.0, (-7.9, 45.0), (3.0, 3.0), 'strip spine'),
+    ('screen rim +Y', 'frame_upper', 'YZ', -9.3, (35.5, 45.0), (3.0, 3.0), 'over the +Y side rail'),
 ]
 
 
@@ -327,108 +338,121 @@ def member_job(m):
 
 
 # ----------------------------------------------------------------------------- 6. skeleton revision checks
-def frozen_zone_job(z):
-    """Symmetric difference (mm3) between the r1 base and this base inside a zone that must not change, minus the
-    named intended changes (D17 board slots, D18 USB tunnel, board seats)."""
+def hip_retention():
+    """Each hip servo held only by its own two tabs on open saddles (notes 7, 8), measured on the exported frame_upper and the SG90 model."""
     import cadquery as cq
-    name, (x0, x1, y0, y1, z0, z1), exclude = z
-    old = cq.importers.importStep(str(ROOT / 'case/ref/baseline-A1V4-r1/base.step')).val()
-    new = load('base').val()
-    bx = lambda a: cq.Workplane('XY').box(a[1] - a[0], a[3] - a[2], a[5] - a[4], centered=False).translate((a[0], a[2], a[4])).val()
-    zone = bx((x0, x1, y0, y1, z0, z1))
-    a, b = old.intersect(zone), new.intersect(zone)
-    for e in exclude:
-        ex = bx(e)
-        a = a.cut(ex)
-        b = b.cut(ex)
-    return {'zone': name, 'oldVolumeMm3': round(a.Volume(), 2), 'newVolumeMm3': round(b.Volume(), 2), 'excludedBoxes': exclude,
-            'symmetricDiffMm3': round(a.cut(b).Volume() + b.cut(a).Volume(), 3)}
+    import model as M
+    up = load('frame_upper').val()
+    low = load('frame_lower').val()
+    bx = lambda x0, x1, y0, y1, z0, z1: cq.Workplane('XY').box(x1 - x0, y1 - y0, z1 - z0, centered=False).translate((x0, y0, z0)).val()
+    rows = []
+    worst = 1e9
+    for c in CORNERS:
+        sx, sy = SIGN[c]
+        cx = sx * M.HIP_X
+        ya, yb = sorted((sy * M.SERVO_Y0, sy * M.SERVO_Y1))
+        body = bx(cx - M.SERVO_HALF_W, cx + M.SERVO_HALF_W, ya, yb, M.SERVO_Z0, M.SERVO_Z0 + M.SG['H'])
+        dist = min(min_distance(body, up), min_distance(body, low))
+        worst = min(worst, dist)
+        # tabs: the seat under each tab is plastic, the tab plane stays free
+        tabs = []
+        for yy in M.TAB_HOLE_Y:
+            y = sy * yy
+            land = bx(cx - 4.0, cx + 4.0, y - 1.5, y + 1.5, M.TAB_Z0 - 0.2, M.TAB_Z0)
+            filled = up.intersect(land).Volume() / land.Volume() * 100
+            pilot = cq.Workplane('XY').circle(M.TAB_PILOT / 2 - 0.02).extrude(M.TAB_Z0 + 0.05 - M.SADDLE_Z0).translate((cx, y, M.SADDLE_Z0)).val()
+            ring = cq.Workplane('XY').circle(M.TAB_PILOT / 2 + 1.0).circle(M.TAB_PILOT / 2 + 0.05).extrude(M.TAB_Z0 - M.SADDLE_Z0).translate((cx, y, M.SADDLE_Z0)).val()
+            depth_ok = up.intersect(pilot).Volume() < 0.05 and up.intersect(ring).Volume() > 0.8 * ring.Volume()
+            tabs.append({'holeY': round(y, 2), 'seatFilledPct': round(filled, 1), 'pilotDepthMm': round(M.TAB_Z0 - M.SADDLE_Z0, 2), 'pilotDiaMm': M.TAB_PILOT, 'pilotOk': depth_ok})
+        # nothing printed over the servo body or gear boss; the tab tops are not covered either
+        tw = 5.9
+        ty0, ty1 = sorted((sy * 1.2, sy * 33.4))
+        over = up.intersect(bx(cx - tw, cx + tw, ty0, ty1, M.TAB_Z1 + 0.02, 60.0)).Volume()
+        ok = dist >= 0.6 and over < 0.05 and all(t['seatFilledPct'] > 85 and t['pilotOk'] for t in tabs)
+        rows.append({'servo': c, 'bodyToFrameMm': round(dist, 2), 'plasticAboveTabsMm3': round(over, 3), 'tabs': tabs, 'pass': ok})
+    return {'method': 'each servo held by its own 2 tabs on open saddles, SG90 bag screws into Ø1.6 printed pilots; no clamp, strap or bar over the servo; no drilling',
+            'minBodyToFrameMm': round(worst, 2), 'clearanceRuleMm': 0.6, 'servos': rows,
+            'clearanceNote': 'Measured against the nominal SG90 model (12.2 x 22.8). A real clone may be up to 0.3 mm wider per side (GIẢ ĐỊNH); the servos are unmeasured and the owner already saw a tight fit fail.',
+            'pass': all(r['pass'] for r in rows)}
 
 
 def interface_checks():
-    """Measured on the exported lid/base solids: openings that must stay open and members that must stay."""
+    """Measured on the exported frame solids: openings that must stay open and features that must exist."""
     import cadquery as cq
     import model as M
-    lid = load('lid').val()
-    base = load('base').val()
+    up = load('frame_upper').val()
+    low = load('frame_lower').val()
     bx = lambda x0, x1, y0, y1, z0, z1: cq.Workplane('XY').box(x1 - x0, y1 - y0, z1 - z0, centered=False).translate((x0, y0, z0)).val()
-    res = {}
-    # screen: the required 44 x 24 clear opening, centred on the board's screen active area
+    res = {'hipRetention': hip_retention()}
     w = M.DISP_WIN
     ax, ay = M.DISP_ACTIVE_C
     hx, hy = M.DISP['active'][0] / 2, M.DISP['active'][1] / 2
-    v = lid.intersect(bx(ax - 22, ax + 22, ay - 12, ay + 12, M.DISP_ZM + M.DISP['glass'], M.LID_Z1 + 1)).Volume()
+    v = up.intersect(bx(ax - 22, ax + 22, ay - 12, ay + 12, M.DISP_ZM + M.DISP['glass'], M.LID_Z1 + 1)).Volume()
     res['screenWindow'] = {'requiredMm': [44, 24], 'windowMm': [round(w['x1'] - w['x0'], 2), round(w['y1'] - w['y0'], 2)],
                            'activeCentre': [round(ax, 2), round(ay, 2)], 'plasticInOpeningMm3': round(v, 3),
                            'activeAreaInsideWindow': ax - hx >= w['x0'] and ax + hx <= w['x1'] and ay - hy >= w['y0'] and ay + hy <= w['y1'],
                            'pass': v < 0.05 and ax - hx >= w['x0'] and ax + hx <= w['x1'] and ay - hy >= w['y0'] and ay + hy <= w['y1']}
-    # THT tails (1.855 below the board bottom) must clear the deck and the seats
-    tail_v = sum(base.intersect(cq.Workplane('XY').circle(0.75).extrude(1.9).translate((tx, ty, M.BOARD_ZB - 1.875)).val()).Volume() for tx, ty in M.BOARD_TAILS)
+    tail_v = sum(low.intersect(cq.Workplane('XY').circle(0.75).extrude(1.9).translate((tx, ty, M.BOARD_ZB - 1.875)).val()).Volume() for tx, ty in M.BOARD_TAILS)
     res['boardTailsClear'] = {'tails': len(M.BOARD_TAILS), 'plasticMm3': round(tail_v, 3), 'pass': tail_v < 0.05}
-    # board: seat under every mounting hole, and the board overall inside the body
-    x0, y0, x1, y1 = M.BOARD_OUTLINE
     seats = []
     for h in M.BOARD_HOLES:
         x, y = h['xy']
-        ring = cq.Workplane('XY').circle(4.8).circle(3.5).extrude(0.2).translate((x, y, M.BOARD_ZB - 0.2)).val()
+        ring = cq.Workplane('XY').circle(4.0).circle(3.5).extrude(0.2).translate((x, y, M.BOARD_ZB - 0.2)).val()
         a = ring.Volume()
-        v = base.intersect(ring).Volume()
-        seats.append({'hole': h['id'], 'annulusMm': [3.5, 4.8], 'seatFilledPct': round(100 * v / a, 1), 'pass': v > 0.6 * a})
+        v = low.intersect(ring).Volume()
+        seats.append({'hole': h['id'], 'annulusMm': [3.5, 4.0], 'seatFilledPct': round(100 * v / a, 1), 'pass': v > 0.6 * a})
     res['boardSeats'] = {'seats': seats, 'count': len(seats), 'pass': bool(seats) and all(s['pass'] for s in seats)}
-    res['boardInsideBody'] = {'outlineMm': [round(v, 2) for v in M.BOARD_OUTLINE], 'zBottom': M.BOARD_ZB, 'zTallestTop': round(M.BOARD_TOP_Z, 2),
-                              'slotXMm': M.SLOT_X, 'slotYMm': M.SLOT_Y,
-                              'pass': abs(x0) <= M.SLOT_X and abs(x1) <= M.SLOT_X and abs(y0) <= M.SLOT_Y and abs(y1) <= M.SLOT_Y and M.BOARD_TOP_Z <= M.LID_Z1}
-    # exposed from above: what share of each servo-header/connector footprint the lid frame covers
+    # open frame: see-through share of the body silhouette, rays along Y (side) and Z (top) through both frame parts
+    def see_through(axis, us, vs):
+        total = openc = 0
+        for u in us:
+            for v in vs:
+                total += 1
+                o = (u, -80.0, v) if axis == 'y' else (u, v, -5.0)
+                d = (0, 1, 0) if axis == 'y' else (0, 0, 1)
+                blocked = any(part.facesIntersectedByLine(o, d) for part in (up, low))
+                openc += 0 if blocked else 1
+        return round(100.0 * openc / total, 1), total
+    side, nside = see_through('y', [-61.0 + 3.0 * i for i in range(41)], [1.0 + 2.0 * i for i in range(23)])
+    top_area = sum(f.Area() for f in cq.Workplane('XY', origin=(0, 0, 45.0)).add(up).section().faces().vals())
+    top_pct = round(100.0 * top_area / (125.0 * 74.0), 1)
+    res['openFrame'] = {'sideSeeThroughPct': side, 'sideRays': nside, 'topPlasticPctAtZ45': top_pct, 'minSidePct': 35.0, 'maxTopPlasticPct': 25.0,
+                        'note': 'Side: see-through share of the silhouette, rays along Y through both frame parts only (no electronics or servos). Top: plastic share of the head plane z = 45, the LED strip and screen rim only.',
+                        'pass': side >= 35.0 and top_pct <= 25.0}
     cov = []
     for p in M.BOARD_PARTS:
         name = (p.get('value', '') or '') + ' ' + p.get('footprint', '')
         if p['heightMm'] < 6 or not any(k in name for k in ('CH', 'LED')) or p['ref'] == 'J12':
             continue
         xa, ya, xb, yb = p['robotBox']
-        area = (xb - xa) * (yb - ya) * (M.LID_Z1 - M.LID_Z0)
-        cov.append({'part': p['ref'], 'coveredPct': round(100 * lid.intersect(bx(xa, xb, ya, yb, M.LID_Z0, M.LID_Z1)).Volume() / area, 1)})
-    for jy in M.J12_SCREW_Y:
-        pass
-    res['terminalScrewAccess'] = {'holes': len(M.J12_SCREW_Y), 'plasticMm3': round(sum(lid.intersect(cq.Workplane('XY').circle(1.5).extrude(4).translate((M.J12_SCREW_X, jy, M.LID_Z0 - 0.5)).val()).Volume() for jy in M.J12_SCREW_Y), 3),
-                                 'pass': sum(lid.intersect(cq.Workplane('XY').circle(1.5).extrude(4).translate((M.J12_SCREW_X, jy, M.LID_Z0 - 0.5)).val()).Volume() for jy in M.J12_SCREW_Y) < 0.05}
+        area = (xb - xa) * (yb - ya) * 8.0
+        cov.append({'part': p['ref'], 'coveredPct': round(100 * up.intersect(bx(xa, xb, ya, yb, M.BOARD_ZT + p['heightMm'] + 0.5, M.BOARD_ZT + p['heightMm'] + 8.5)).Volume() / area, 1)})
     res['partsExposedFromAbove'] = {'parts': cov, 'limitPct': 25, 'pass': all(c['coveredPct'] <= 25 for c in cov)}
-    # LED: channel void and a uniform skin, symmetric about the body centre
+    jv = sum(up.intersect(bx(M.J12_SCREW_X - 2, M.J12_SCREW_X + 2, jy - 2, jy + 2, M.BOARD_ZT + 10, M.LID_Z1 + 1)).Volume() for jy in M.J12_SCREW_Y)
+    res['terminalScrewAccess'] = {'driverColumnMm': 4.0, 'plasticMm3': round(jv, 3), 'pass': jv < 0.05}
     ch = M.LED_CH_HALF_Y
-    v = lid.intersect(bx(-29, 29, -ch, ch, M.LID_Z0, M.LID_Z1 - 0.8)).Volume()
-    skin = lid.intersect(bx(-29, 29, -ch, ch, M.LID_Z1 - 0.8, M.LID_Z1)).Volume()
+    v = up.intersect(bx(-29, 29, -ch, ch, M.LID_Z0, M.LID_Z1 - 0.8)).Volume()
+    skin = up.intersect(bx(-29, 29, -ch, ch, M.LID_Z1 - 0.8, M.LID_Z1)).Volume()
     full = 58 * 2 * ch * 0.8
-    pts = [lid.isInside(cq.Vector(0, sy * (ch + 0.4), 44.0)) for sy in (1, -1)]
+    pts = [up.isInside(cq.Vector(24.0, sy * (ch + 1.5), 45.0)) for sy in (1, -1)]
     res['ledDiffuserCentred'] = {'channelHalfMm': [29, ch], 'plasticInChannelMm3': round(v, 3), 'skinFilledPct': round(100 * skin / full, 1),
                                  'wallBothSides': pts, 'pass': v < 0.05 and skin > 0.98 * full and all(pts)}
-    # RESET: vertical 2.4 column through the lid. BOOT sits under the LED bar: a 1.4 mm pin at 23 deg from the -Y notch.
+    # BOOT and RESET: a thin pin at an angle from the open -Y side, between the J3 and J4 plugs and below the LED strip
     resul = {}
     for k, i in M.BOARD_IF.items():
         if not k.startswith('button:'):
             continue
         x, y = M.board_xy(*i['centerMm'])
         ztop = M.BOARD_ZT + i.get('zMm', 4.3)
-        if 'RESET' in k:
-            v = lid.intersect(cq.Workplane('XY').circle(1.2).extrude(4).translate((x, y, M.LID_Z0 - 0.5)).val()).Volume()
-            resul['RESET'] = {'mode': 'straight pin', 'plasticMm3': round(v, 3), 'pass': v < 0.05}
-        else:
-            yt = y - (M.LID_Z1 + 1 - ztop) * math.tan(math.radians(23))
-            pin = cq.Solid.makeCylinder(0.7, (M.LID_Z1 + 1 - ztop) / math.cos(math.radians(23)), cq.Vector(x, y, ztop),
-                                        cq.Vector(0, yt - y, M.LID_Z1 + 1 - ztop))
-            led = bx(-28, 28, -6, 6, 39.5, 43.5)
-            vl, vb = pin.intersect(lid).Volume(), pin.intersect(led).Volume()
-            resul['BOOT'] = {'mode': '1.4 mm pin at 23 deg from the notch', 'plasticMm3': round(vl, 3), 'ledBarMm3': round(vb, 3), 'pass': vl < 0.05 and vb < 0.05}
-    res['bootAccess'] = {**resul, 'pass': bool(resul) and all(v['pass'] for v in resul.values())}
-    # side windows: clear of plastic across the wall thickness; rail kept above each
-    wins = []
-    for sy, x0, x1 in M.SIDE_WINDOWS:
-        a, b = sorted((sy * M.INNER_Y, sy * M.BY))
-        ins = M.WIN_R
-        v = base.intersect(bx(x0 + ins, x1 - ins, a, b, M.DECK_Z1 + 0.05, M.RAIL_Z0 - 0.05)).Volume()
-        rail = base.intersect(bx(x0 + ins, x1 - ins, a, b, M.RAIL_Z0 + 0.05, M.LID_Z0 - 0.05)).Volume()
-        expect = (x1 - x0 - 2 * ins) * (b - a) * (M.LID_Z0 - M.RAIL_Z0 - 0.1)
-        wins.append({'sideY': sy, 'xMm': [x0, x1], 'openingMm': [x1 - x0, M.RAIL_Z0 - M.DECK_Z1], 'plasticInWindowMm3': round(v, 3),
-                     'railFilledPct': round(100 * rail / expect, 1), 'pass': v < 0.05 and rail > 0.98 * expect})
-    res['sideWindows'] = {'windows': wins, 'pass': all(w['pass'] for w in wins)}
+        ang, dia, length = (45.0, 1.4, 30.0) if 'BOOT' in k else (15.0, 1.4, 28.0)
+        dz, dy = length * math.cos(math.radians(ang)), length * math.sin(math.radians(ang))
+        pin = cq.Solid.makeCylinder(dia / 2, length, cq.Vector(x, y, ztop + 0.05), cq.Vector(0, -dy, dz))
+        vs = {n: round(pin.intersect(s).Volume(), 3) for n, s in (('frame_upper', up), ('frame_lower', low))}
+        led = bx(-28, 28, -6, 6, 39.5, 43.5)
+        v = pin.intersect(led).Volume()
+        resul[k.split(':')[1].strip().split()[-1]] = {'mode': f'{dia} mm pin, {ang:.0f} deg from vertical toward -Y, {length:.0f} mm long', 'plasticMm3': vs, 'ledBarMm3': round(v, 3),
+                                                      'pass': all(a < 0.05 for a in vs.values()) and v < 0.05}
+    res['bootAccess'] = {**resul, 'pass': bool(resul) and all(v['pass'] for v in resul.values() if isinstance(v, dict))}
     return res
 
 
@@ -494,9 +518,9 @@ def main():
     coarse = '--coarse' in sys.argv
     files = sorted(OUT.glob('*.step')) + sorted(OUT.glob('*.stl'))
     h = hashlib.sha256()
-    for f in files + [Path(__file__), ROOT / 'case/hardware.py', ROOT / 'case/model.py',
+    for f in files + [Path(__file__), ROOT / 'case/hardware.py', ROOT / 'case/model.py', ROOT / 'case/assembly_access.py' if False else ROOT / 'tools/case/assembly_access.py',
                       Path(__file__).parent / 'plate2_freeze.py', ROOT / 'case/frozen-plate2-A1V4-r1.json',
-                      ROOT / 'case/ref/baseline-A1V4-r1/base.step']:
+                      ROOT / 'tools/case/route_check.py']:
         h.update(f.name.encode()); h.update(f.read_bytes())
     key = h.hexdigest() + ('-coarse' if coarse else '')
     target = REP / 'mechanical.json'
@@ -511,18 +535,7 @@ def main():
     prod = [p['name'] for p in manifest['parts'] if p.get('printable', True) and p['role'] != 'coupon']
     labels = ref_labels()
     jobs = []
-    # the r2 base must equal r1 below the deck top and in both hip-block zones (frozen caps mate here)
     import model as M
-    sl = lambda sg: tuple(sorted((sg * 40.0, sg * M.SLOT_X))) + (-M.SLOT_Y, M.SLOT_Y, M.BOARD_ZB - 0.05, M.SLOT_TOP)
-    corr = lambda sg: tuple(sorted((sg * 40.0, sg * 44.0))) + (-6.0, 6.0, M.BOARD_ZB - 0.05, M.TAB_Z0 + 2.2)
-    t = M.USB_TUNNEL
-    seats = lambda sg: tuple(sorted((sg * 40.0, sg * 43.99))) + (-M.SLOT_Y - 3, M.SLOT_Y + 3, 18.6, M.BOARD_ZB + 0.05)
-    u1 = (M.U1_KEEPOUT[0] - 0.1, -40.0, M.U1_KEEPOUT[1] - 0.1, 40.0, M.BOARD_ZT - 0.05, M.BOARD_ZT + M.U1_KEEPOUT[4] + 0.1)
-    heads = lambda sg: tuple(sorted((sg * 40.0, sg * 42.3))) + (-29.5, 29.5, M.SLOT_TOP - 0.15, M.BOARD_ZT + 3.1)
-    frozen_zones = [('belly (bank tunnel, floor, strap ribs, below the deck)', (-70, 70, -40, 40, -1, 18.5), []),
-                    ('front hip blocks (|x|>=40), mating features', (40, 70, -40, 40, -1, 60), [sl(1), corr(1), seats(1), heads(1)]),
-                    ('rear hip blocks (|x|>=40), mating features', (-70, -40, -40, 40, -1, 60),
-                     [sl(-1), corr(-1), seats(-1), heads(-1), u1, (-70, -40, -t['y'] - 0.05, t['y'] + 0.05, t['z0'] - 0.05, t['z1'] + 0.05)])]
     for a, b in itertools.combinations(prod, 2):
         jobs.append((a, b, None))
     for a in prod:
@@ -545,13 +558,11 @@ def main():
         fut_sec = ex.map(section_job, POSTS)
         fut_mem = ex.map(member_job, MEMBERS)
         fut_ray = ex.map(ray_job, _rays())
-        fut_zone = ex.map(frozen_zone_job, frozen_zones)
         neutral = [x for r in fut_n for x in r]
         sweeps = list(fut_s)
         pair_res = list(fut_p)
         sections = [x for r in fut_sec for x in r]
         members = [x for r in fut_mem for x in r] + [x for r in fut_ray for x in r]
-        zones = list(fut_zone)
     sections += members
     # intended mates: self-tapping bag screws in their pilot holes
     errors, intended_list = [], []
@@ -577,7 +588,6 @@ def main():
     frozen_errs = F.verify_files()
     iface = interface_checks()
     checks = {
-        'frozenZonesUnchanged': {'zones': zones, 'limitMm3': 1.0, 'pass': all(z['symmetricDiffMm3'] <= 1.0 for z in zones)},
         'frozenPlate2Files': {'errors': frozen_errs, 'pass': not frozen_errs},
         **iface,
         'bodyEnvelopeMm': {'measured': env, 'limit': [126, 75, 47], 'pass': env[0] <= 126 and env[1] <= 75 and env[2] <= 47},
@@ -611,9 +621,7 @@ def main():
     report['sweepCollisions'] = sweep_coll
     import assembly_access as AA
     acc = AA.run(write=True)
-    report['assemblyAccess'] = {'report': 'assembly-access.json', 'boardDropsStraightIn': acc['published']['dropStraight'],
-                                'boardScrewsReachable': f"{acc['published']['screwsReachable']}/{acc['published']['screwsTotal']}", 'pass': acc['assemblable'],
-                                'note': 'Seated-pose checks (passed) do not prove the board can be installed; this entry does. See DEVIATIONS D18.'}
+    report['assemblyAccess'] = {'report': 'assembly-access.json', 'pass': acc['pass'], 'ordinaryUsbCableFits': acc['ordinaryUsbCableFits']}
     report['assemblable'] = acc['assemblable']
     target.write_text(json.dumps(report, indent=1, ensure_ascii=False) + '\n')
     with open(REP / 'sections.csv', 'w') as f:

@@ -14,3 +14,9 @@
   THT assembly, plus none for supplied display lead. SMT is factory only.
 - Original passive-carrier documentation under carrier-* is historical note3;
   active product/spec/main board will exclusively represent integrated V0.
+
+- Note9: same two-layer stackup retained. USB full-speed prototype paths are
+  90.532/91.718mm, skew1.187mm, but controlled90Ω±10% is not established.
+  This differs from Espressif layout guidance; see USB-RELOCATION.md for
+  evidence/limits and mandatory first-board USB acceptance. No compliance,
+  physical enumeration or whole-product readiness claim. Pins/parts unchanged.
