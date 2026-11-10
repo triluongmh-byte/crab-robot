@@ -48,3 +48,6 @@ design/Local.3dshapes/
 
 engineering/usb-relocation-audit.json
 firmware/NATIVE-CHECKS.json
+
+# Private per-device flash attempt pointer
+firmware/flash-result.json

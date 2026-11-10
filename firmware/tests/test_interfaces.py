@@ -27,7 +27,10 @@ assert len(phrases)>=8
 for phrase in phrases:assert all(ord(c) in points for c in phrase),phrase
 for asset in ['wiring.svg','integrated-wiring.svg']:ET.parse(root/'firmware/assets'/asset)
 ino=(root/'firmware/crab/crab.ino').read_text();assert 'Serial.print' not in ino
-assert 'putString("ssid"' in ino and 'if(network.saveRequested)' in ino
+net=(root/'firmware/crab/network_http.h').read_text()
+assert 'putString("ssid"' in net and 'if(network.saveRequested)' in net
+assert 'serviceNetwork(now)' in ino and '#include "network_http.h"' in ino
+assert 'stopMotion' not in net.split('void serviceNetwork',1)[1]
 setup=ino.split('void setup(){',1)[1]
 assert setup.index('servos.inhibit()')<setup.index('screen.begin()')<setup.index('servos.begin()')
 for doc in ['firmware/README.md','firmware/WIRING.md']:

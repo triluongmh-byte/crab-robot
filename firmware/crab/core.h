@@ -36,28 +36,34 @@ inline std::string wifiQr(const std::string& ap){return "WIFI:T:nopass;S:"+ap+";
 inline std::string webQr(const std::string& ip){return "http://"+ip+"/";}
 // Vietnamese strings are shared by the display, HTTP status and host tests.
 namespace msg {
-constexpr const char* SETUP="Quét QR để cài Wi-Fi";
+constexpr const char* SETUP="Quét QR để nối cua";
 constexpr const char* JOINING="Đang vào Wi-Fi...";
 constexpr const char* ONLINE="Đã vào Wi-Fi";
 constexpr const char* FAILED="Sai mật khẩu hoặc mất sóng";
-constexpr const char* LOST="Mất Wi-Fi. Hãy cài lại";
+constexpr const char* LOST="Mất Wi-Fi. Vẫn dùng cua";
 constexpr const char* ERASED="Đã xóa Wi-Fi";
 constexpr const char* DRIVER="Kiểm tra dây PCA9685";
 }
 enum class NetState {Setup,Connecting,Online};
 struct Network {
  NetState state=NetState::Setup;
- bool pending=false, saved=false, saveRequested=false, retryRequested=false;
+ bool pending=false, saved=false, saveRequested=false, retryRequested=false, pauseRequested=false;
  uint32_t since=0,retryAt=0;
  const char* message=msg::SETUP;
  void begin(bool hasSaved,uint32_t now){saved=hasSaved;if(saved)connect(false,now);}
  void connect(bool candidate,uint32_t now){state=NetState::Connecting;pending=candidate;since=now;message=msg::JOINING;}
- void tick(uint32_t now,bool connected,bool hardFail=false){
+ // Single-radio policy: do not start/restart saved-network association while
+ // AP clients are attached. Cancel an in-flight background attempt on AP join.
+ void pauseRetry(uint32_t now){
+  if(state==NetState::Connecting&&!pending){state=NetState::Setup;message=msg::SETUP;retryAt=now;retryRequested=false;pauseRequested=true;}
+ }
+ void tick(uint32_t now,bool connected,bool hardFail=false,bool apClients=false){
+  if(apClients&&!connected)pauseRetry(now);
   if(state==NetState::Connecting){
    if(connected){state=NetState::Online;message=msg::ONLINE;saveRequested=pending; saved=saved||pending;pending=false;}
    else if(hardFail||elapsed(now,since)>=18000){state=NetState::Setup;message=msg::FAILED;pending=false;retryAt=now;}
   }else if(state==NetState::Online&&!connected){state=NetState::Setup;message=msg::LOST;retryAt=now;}
-  else if(state==NetState::Setup&&saved&&elapsed(now,retryAt)>=30000){retryRequested=true;connect(false,now);}
+  else if(state==NetState::Setup&&saved&&!apClients&&elapsed(now,retryAt)>=30000){retryRequested=true;connect(false,now);}
  }
  void erase(uint32_t now){*this=Network{};retryAt=now;message=msg::ERASED;}
 };

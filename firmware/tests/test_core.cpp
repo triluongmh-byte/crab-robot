@@ -16,6 +16,16 @@ static void test_network(){
  n.tick(53000,true);assert(n.state==NetState::Online&&!n.saveRequested);
  n.erase(54000);assert(!n.saved&&!n.pending&&n.state==NetState::Setup);n.tick(90000,false);assert(!n.retryRequested);
  n.begin(true,0xfffffff0);n.tick(0x00005000,false);assert(n.state==NetState::Setup); // timer wrap
+ Network ap;ap.begin(true,0);ap.tick(100,false,false,true);
+ assert(ap.state==NetState::Setup&&ap.pauseRequested&&!ap.retryRequested);
+ ap.pauseRequested=false;
+ for(uint32_t t=1000;t<180000;t+=1000){ap.tick(t,false,false,true);assert(ap.state==NetState::Setup&&!ap.retryRequested);}
+ ap.tick(180000,false,false,false);assert(ap.retryRequested&&ap.state==NetState::Connecting);
+ ap.retryRequested=false;ap.tick(180100,false,false,true);assert(ap.pauseRequested&&ap.state==NetState::Setup);
+ ap.connect(true,181000);ap.tick(182000,false,false,true);assert(ap.pending&&ap.state==NetState::Connecting); // manual join still allowed
+ ap.tick(182100,false,true,true);assert(ap.state==NetState::Setup&&!ap.pending&&std::string(ap.message)==msg::FAILED);
+ ap.tick(220000,false,false,true);assert(!ap.retryRequested); // error remains visible on AP
+
 }
 static void test_button(){HoldButton b;assert(!b.tick(false,0));assert(!b.tick(true,100));assert(!b.tick(true,8099));assert(b.tick(true,8100));assert(!b.tick(true,8200));assert(!b.tick(false,8300));assert(!b.tick(true,9000));assert(b.tick(true,17000));}
 static void test_case_knee_lift(){

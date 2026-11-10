@@ -1,5 +1,7 @@
 # What to buy and ask the assembler to fit
 
+**Deferred plan:** the owner currently has no budget for additional purchases. No PCB order or replacement-servo purchase is being made. This page remains a future post-order checklist; the current work uses the owned LILYGO/PCA modules and does not promise angle holding from continuous motors.
+
 Order **assembled PCBA** for the integrated controller. The ESP32-S3 module, PCA9685, regulator and USB-C belong on that one PCB. Read the current [build validation](../BUILD-VALIDATION.md) before using a manufacturing packet; no order has been placed by the project.
 
 ## Include in the assembly quotation

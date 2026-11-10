@@ -1,6 +1,6 @@
 # Crab Robot — integrated controller and open skeleton
 
-One **88 × 62 mm custom PCB** contains the ESP32-S3-WROOM-1-N16R8, PCA9685 servo controller, 3.3 V regulator, native USB-C and BOOT/RESET buttons. Eight SG90 servos, a small cabled Waveshare LCD, LED stick and an ordinary closed USB power bank complete the robot. This is the integrated hardware branch; the original modular build remains on `main`.
+One **88 × 62 mm custom PCB** contains the ESP32-S3-WROOM-1-N16R8, PCA9685 servo controller, 3.3 V regulator, native USB-C and BOOT/RESET buttons. Eight positional 180° SG90-class servos, a small cabled Waveshare LCD, LED stick and an ordinary closed USB power bank complete the robot. This is the integrated hardware branch; the original modular build remains on `main`.
 
 The new body has **two open bar frames** and individual servo-tab mounts. It reuses the four thighs and four feet already printed. The two interfering clamp bars are retired. Skin is deferred until the owner asks for it.
 
@@ -21,7 +21,7 @@ The custom-PCB J2–J12 tables below describe the future integrated variant. Kee
 
 ## What it does
 
-On first start the LCD displays a setup QR. Connect a phone, choose Wi-Fi and enter its password, then open the web controller. The firmware implements driving directions, speed, LED control and servo-centre/trim controls. Hold the running application's BOOT button for eight seconds to return to setup.
+Connect the phone directly to `CuaRobot-XXXX`, keep the connection when the phone reports no internet, and open `http://192.168.4.1/`. Home Wi-Fi is optional: open **Wi-Fi** manually when you want to configure it. The direct-AP fix preserves the selected page during status polling. Driving and joint-centre controls require compatible positional servos; the owner's continuous motors cannot use the angular gait. The LED works independently. Hold the running application's BOOT button for eight seconds to clear saved Wi-Fi.
 
 The USB-C connector is on the PCB's **+Y side**, where an ordinary data cable can pass through the open frame. The display mount preserves its 180° orientation and leaves room for its mating plug and all eight wires. Each servo lead has alternative open routes; long routes may need an extension rather than a stretched cable.
 
@@ -37,11 +37,11 @@ For the new frame, the generated **Print all** file retains the complete ten-par
 
 Read the current source-build result in [BUILD-VALIDATION.md](BUILD-VALIDATION.md). Native electrical/manufacturing checks, CAD checks and firmware host tests are desktop evidence. The new PCB has not been manufactured, powered or flashed; the new frame has not been printed or physically fit-tested. The earlier successful QR setup was on the LILYGO board. No new-board walking, temperature, radio-range or servo-load result is claimed.
 
-**Owned-module update, 2026-11-10:** the owner can open the LILYGO web controller and now reports powered servos spinning, with all purchased units described as a 360° variant. This firmware requires **positional SG90-class servos calibrated for 180°**, not continuous-rotation speed-controlled units. The exact purchased variant still needs checking: “360°” alone does not distinguish continuous rotation from positional control. Keep servo power off until that is resolved; do not buy replacements solely from the generic label. The owner also reports reversed terminal polarity; component condition remains unverified. See [the servo-type requirement](case/BOM.md#required-servo-type).
+**Owned-module update, 2026-11-10:** the owner can open the LILYGO web controller and reports that the LED works. The seller's supplied description now confirms the bought SG90 360° variant controls **speed and direction, not angle**. The existing angular walking/centring commands therefore do not establish a usable gait for these motors. The owner has no budget for additional purchases; replacements and the future PCB order are deferred. The current work prioritizes direct access through the robot's own Wi-Fi, then an explicitly experimental single-servo neutral/speed test using owned parts. Neither is evidence of angle holding or successful walking. A previous terminal polarity reversal was reported; affected-component condition remains unverified. See [the servo-type requirement](case/BOM.md#required-servo-type).
 
 Check the **three servo-screw types** before assembly: sixteen tab screws, eight horn-arm screws and eight centre screws. Spare centre screws do not replace missing horn-arm screws. The mechanical list provides at least eleven thin zip ties, plus bank retention. Ask the assembler to include the eleven through-hole connectors (**37 PCB joints**) if the PCBA quote covers only SMT.
 
-The first prototype still needs inspection of soldering/mounting insulation, servo/horn fit, cable slack, frame strength, QR visibility, Wi-Fi range, bank shutoff/surges and floor grip. Direct 3.3 V WS2812 data remains an actual-light-bar check. For the owner's current drilled body, inspect rough wire-hole rims, screw holes and servo tabs before power; see the physical checklist.
+The assembler must confirm C11 capacitor polarity in the placement preview. A future test print must check the thin servo-tab pilots and narrow LCD-rim strips described in the case deviations. The first prototype still needs inspection of soldering/mounting insulation, servo/horn fit, cable slack, frame strength, QR visibility, Wi-Fi range, bank shutoff/surges and floor grip. Direct 3.3 V WS2812 data remains an actual-light-bar check. For the owner's current drilled body, inspect rough wire-hole rims, screw holes and servo tabs before power; see the physical checklist.
 
 ## Build from source
 

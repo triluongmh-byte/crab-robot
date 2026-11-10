@@ -37,11 +37,14 @@ def cpp(group,profile):
  dest=OUT if profile=='lilygo' else OUT/profile;dest.mkdir(parents=True,exist_ok=True)
  paths=[ROOT/'firmware/crab'/n for n in ['config.h','hardware.h']]+[ROOT/f'firmware/tests/test_{group}.cpp']
  flags=PROFILES[profile];args=[]
- if group in ('core','drivers'):paths += [ROOT/'firmware/crab/core.h']
+ if group in ('core','drivers','http'):paths += [ROOT/'firmware/crab/core.h']
  if group in ('core','display'):paths += [ROOT/'firmware/crab'/n for n in ['qrcodegen.c','qrcodegen.h']]
  if group=='display':paths += [ROOT/'firmware/crab'/n for n in ['display.h','waveshare_panel.h','font_vi.h']]
  if group in ('drivers','display'):
   paths += ([ROOT/'firmware/crab/drivers.h'] if group=='drivers' else [])+[p for p in (ROOT/'firmware/tests/stubs').rglob('*') if p.is_file()]
+  args += ['-I'+str(ROOT/'firmware/tests/stubs')]
+ if group=='http':
+  paths += [ROOT/'firmware/crab'/n for n in ['network_http.h','web_ui.h']]+[ROOT/'firmware/tests/http_stubs.h',ROOT/'firmware/tests/stubs/pgmspace.h']
   args += ['-I'+str(ROOT/'firmware/tests/stubs')]
  # Include this runner (flags/compile recipe), not unrelated docs, in every key.
  d=hashlib.sha256((digest(paths+[Path(__file__)])+json.dumps(flags)+run(['clang++','--version'])).encode()).hexdigest()
@@ -75,8 +78,9 @@ def drivers():return '; '.join(r[0] for r in pooled(lambda p:cpp('drivers',p),PR
 def display():
  results=pooled(lambda p:cpp('display',p),PROFILES)
  return '; '.join(r[0] for r in results)+'; '+run([sys.executable,'firmware/tests/test_panel_vendor.py'])
+def http():return '; '.join(r[0] for r in pooled(lambda p:cpp('http',p),PROFILES))
 def targets():return '; '.join(r[0] for r in pooled(lambda p:cpp('targets',p),PROFILES))
-checks={'core':core,'web':web,'interfaces':static,'drivers':drivers,'targets':targets,'display':display}
+checks={'core':core,'web':web,'interfaces':static,'drivers':drivers,'targets':targets,'display':display,'http':http}
 selected=sys.argv[1:] or list(checks)
 outputs={}
 # The interface/doc-link check consumes GAIT-REPORT.json, produced by core.
