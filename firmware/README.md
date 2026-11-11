@@ -2,7 +2,9 @@
 
 The application implements QR setup, nearby 2.4 GHz Wi-Fi selection, saved credentials, eight hold-to-move directions, a light switch and servo centring/trim controls. Everything is served by the robot; there are no accounts, cloud services or downloaded web dependencies. The screen and web UI remain Vietnamese.
 
-**Current owned motors:** keep the eight continuous-rotation SG90s already bought; no replacement purchase is selected. Use the [360° manual-reference experiment](CONTINUOUS360.md) for one-channel calibration and bounded estimated-angle jogs. This is speed/direction control with human observations, not encoder feedback or a walking gait. All outputs start off. On 2026-11-11 the owner reported all eight servos worked individually and all joints were manually placed at the 90° reference. Per-direction speed calibration and a fresh runtime confirmation remain necessary; these reports do not auto-arm anything.
+**Bench outcome:** the owner reports that both the timed crawl and the following hips-only trial moved erratically; the crawl also caused leg collisions. The latest source is retained as an unsuccessful experiment. Loaded360° joint testing is paused; see [status and alternatives](EXPERIMENT-STATUS.md).
+
+**Current owned motors:** eight continuous-rotation SG90s. The owner now requests **only four hips**, with knees receiving no pulses: forward CH0 CCW, CH2 CW, CH6 CCW, CH4 CW; reverse flips all four. Only Forward/Backward are enabled for this experiment. Each fresh press runs one outward stroke and its inverse compensation. Releasing stops PWM; the next press only repays unfinished signed ON-time, rather than restarting from a false neutral. No automatic recovery movement follows release, session change or loss of heartbeat. **ASSUMPTIONS:** rear-left also30°, directions viewed into output shafts;205count CCW and409count CW; nominal30° uses60ms based on the seller's unloaded0.12s/60° claim. Equal reverse time does not guarantee equal reverse angle. No measured speed, position feedback, angle holding or physical walking is claimed. LED startup remains on at16/255.
 
 ## Choose the correct target
 

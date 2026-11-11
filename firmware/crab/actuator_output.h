@@ -13,6 +13,18 @@ class ActuatorOutput {
   if(motion.continuous.active&&!motion.continuous.validOutput())return fault(motion,driver);
   int ch=motion.tick(now);
   if(motion.continuous.active&&!motion.continuous.validOutput()){motion.stop();return fault(motion,driver);}
+  if(motion.drive.active){
+   if(mode!=4||generation!=motion.drive.generation){
+    if(!driver.disableOutputs())return fault(motion,driver);
+    mode=4;generation=motion.drive.generation;lastChannel=lastCounts=-1;
+    for(int hip=0;hip<4;hip++){
+     const int counts=motion.drive.counts[hip];
+     if(counts!=205&&counts!=409)return fault(motion,driver);
+     if(!driver.pulseCounts(hip*2,counts))return fault(motion,driver);
+    }
+   }
+   return true;
+  }
   const int wanted=motion.inhibit?0:(motion.continuous.opened&&motion.continuous.active?3:(motion.positional()?1:(motion.test.opened&&motion.test.active?2:0)));
   if(wanted==3){
    if(mode!=3||lastChannel!=motion.continuous.channel||generation!=motion.continuous.generation){

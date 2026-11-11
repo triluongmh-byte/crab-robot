@@ -9,7 +9,8 @@ int main(){
  server.request("/api/session");assert(server.code==200&&motion.session==42);
  clockMs=2200;
  server.request("/api/move",{{"token","42"},{"seq","1"},{"dir","1"},{"fresh","1"}});
- assert(server.code==409&&server.body.find("Servo 360")!=String::npos&&!motion.lease);
+ assert(server.code==200&&motion.drive.active&&!motion.lease);
+ motion.stop();motion.lastSeq=0;
  server.request("/api/centre",{{"token","42"}});assert(server.code==409&&!motion.raw);
  server.request("/api/light",{{"token","42"}});assert(server.code==200&&light.on);light.on=false;lightOn=false;
  server.request("/api/assembly",{{"token","42"},{"active","1"}});assert(server.code==200);

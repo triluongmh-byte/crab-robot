@@ -45,7 +45,7 @@ static void test_case_knee_lift(){
 static void test_unknown(){
  Motion m;m.begin(0);m.newSession(3);
  for(uint32_t t=10;t<5000;t+=10)assert(m.tick(t)==-1);
- assert(m.enabled==0&&!m.positional()&&!m.command(3,1,1,5000));
+ assert(m.enabled==0&&!m.positional()&&m.command(3,1,1,5000));m.stop();
  assert(!m.centre()&&!m.trim(0,1));assert(m.setAssembly(true));assert(!m.centre());
  assert(!m.openTest(true));m.setAssembly(false);assert(m.openTest(true));
  assert(!m.selectActuator(true,5000));assert(m.test.config(7,327));
@@ -108,7 +108,7 @@ static void test_manual90(){
  assert(m.openTest(true));assert(m.test.config(0,307));assert(m.testCommand(2,1,4,100,true));assert(!m.continuous.referenceValid); // untracked motion
 }
 static void test_motion(){
- Motion m;m.newSession(12);m.begin(0);assert(!m.command(12,1,1,0));assert(m.enabled==0);ready(m);
+ Motion m;m.newSession(12);m.begin(0);assert(m.command(12,1,1,0));m.stop();assert(m.enabled==0);ready(m);
  assert(m.command(12,2,1,2200,true));assert(m.velocity.x==1);assert(!m.command(12,1,2,2210));
  m.tick(2699);assert(m.velocity.x==1);m.tick(2709);assert(m.velocity.x==0&&!m.lease);
  assert(!m.command(12,3,1,2710,false));assert(m.command(12,4,1,2720,true));

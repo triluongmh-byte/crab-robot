@@ -50,3 +50,11 @@ The owner renewed original-LILYGO flash authorization. Physical motor isolation 
 ## Continuous 360° manual-reference update — fresh source build pending
 
 The new runtime has independent firmware and integration approval in native r018 for the manual-reference/calibration/budget work. It was imported byte-for-byte into this source repository, retaining the portable build adapters. Focused public core, driver, HTTP and web checks passed for both profiles, including independent QR decoding. Final owner-evidence/release metadata and a complete new empty-clone `./build.sh` proof are still pending; the preceding source-build record does not validate this update. No new candidate has been flashed by this publication step.
+
+## Publication checkpoint —2026-11-11: scoped firmware proof and full-build manual step
+
+The earlier full empty-clone success above applies to the named older commit. A later empty-clone run of source8ee1855 executed `./build.sh` and failed at `tools/case/print_check.py` with `print-check passed: False errors:0`. The updated official case checker requires explicit joint/wire/fit intent declarations and leaves the result unverified/manual-review required, including thin-feature review. The official tool checkout changed during that run; a later unmodified pin was retained locally. No checker was patched and no full-build pass is claimed for the current publication.
+
+**Manual step still required:** maintainers must provide/review the case intent and measured-feature evidence required by the current official checker, then rerun `./build.sh` in an empty clone. The source publication includes this limitation; generated case outputs are not committed to cover it.
+
+The latest hips-only firmware passed scoped `core drivers http web` host regressions and the LILYGO target compiled. A fresh source clone of this publication is checked separately for those firmware dependencies; no new full CAD/plate build is required or claimed for this checkpoint. The previous case/source proof does not certify physical motion. Both360° whole-robot trials failed the owner's practical test, as recorded in [the experiment status](firmware/EXPERIMENT-STATUS.md). Wait for parts before resuming loaded joint experiments.

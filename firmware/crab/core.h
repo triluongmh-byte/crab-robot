@@ -96,10 +96,14 @@ struct ServoTest {
   counts=neutral+step;last=now;active=true;return true;
  }
 };
+} // namespace crab
+#include "drive360.h"
+namespace crab {
 struct Motion {
  Actuator actuator=Actuator::Unknown;
  ServoTest test;
  Continuous360 continuous;
+ Drive360 drive;
  bool positional()const{return actuator==Actuator::Positional&&!test.opened&&!continuous.opened;}
  bool sequence(uint32_t id,uint32_t seq){if(!id||id!=session||seq<=lastSeq)return false;lastSeq=seq;return true;}
  bool selectActuator(bool positionalMode,uint32_t now){
@@ -131,11 +135,13 @@ struct Motion {
  int enabled=0,cursor=0;
  uint32_t outputEpoch=0; // invalidate cached output after synchronous off/settings
  void begin(uint32_t now){start=lastTick=now;enabled=0;}
- void stop(){velocity={};lease=false;test.stop();continuous.stop();}
+ void stop(){velocity={};lease=false;test.stop();continuous.stop();drive.stop();}
  bool command(uint32_t id,uint32_t seq,int dir,uint32_t now,bool fresh=true){
   if(dir<0||dir>8||!sequence(id,seq))return false;
   if(dir==0){stop();return true;}
-  if(!positional()||inhibit||assembly||enabled<8)return false;
+  if(inhibit||assembly||test.opened||continuous.opened)return false;
+  if(actuator==Actuator::Unknown)return drive.command(dir,now,fresh);
+  if(!positional()||enabled<8)return false;
   if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
   velocity=direction(dir);lastCommand=now;lease=true;return true;
  }
@@ -146,8 +152,8 @@ struct Motion {
  // One channel update per 10 ms; 300 ms gaps on initial enable.
  // angle+offset slew is enforced in the driver, so trim also moves smoothly.
  int tick(uint32_t now){
-  test.tick(now);continuous.tick(now);
-  if(inhibit){test.stop();continuous.stop();}
+  test.tick(now);continuous.tick(now);drive.tick(now);
+  if(inhibit){test.stop();continuous.stop();drive.stop();}
   if(!positional()||inhibit){velocity={};lease=false;return -1;}
   if(elapsed(now,lastTick)<10)return -1;
   const float dt=std::min(elapsed(now,lastTick)*.001f,.05f);lastTick=now;

@@ -18,7 +18,7 @@ SemaphoreHandle_t motionLock;
 std::atomic<bool> driverReady(false);
 std::atomic<bool> eraseHold(false),stationHasIp(false);
 String ap,storedSsid,storedPass,candidateSsid,candidatePass;
-bool lightOn=false,displayOk=false;
+bool lightOn=true,displayOk=false;
 uint32_t lastDraw=0;String drawnKey;
 struct Guard{Guard(){xSemaphoreTake(motionLock,portMAX_DELAY);}~Guard(){xSemaphoreGive(motionLock);}};
 #include "network_http.h"
@@ -39,7 +39,7 @@ void setup(){
  servos.inhibit();
  pinMode(cfg::BOOT_PIN,INPUT_PULLUP);
  motionLock=xSemaphoreCreateMutex();
- displayOk=screen.begin();light.begin();driverReady=servos.begin();
+ displayOk=screen.begin();light.begin();light.set(lightOn);driverReady=servos.begin();
  wifiStore.begin("cua-wifi",false);trimStore.begin("cua-trim",false);
  {Guard g;if(trimStore.getBytesLength("offsets")==sizeof(motion.offsets)){trimStore.getBytes("offsets",motion.offsets,sizeof(motion.offsets));for(auto& v:motion.offsets)if(!std::isfinite(v)||std::fabs(v)>cfg::TRIM_LIMIT)v=0;}motion.begin(millis());}
  xTaskCreatePinnedToCore(motionTask,"cua-motion",4096,nullptr,3,nullptr,1);

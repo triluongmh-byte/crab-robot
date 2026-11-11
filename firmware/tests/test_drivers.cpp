@@ -85,7 +85,52 @@ static void test_continuous360(){
  assert(b.continuous.confirmReference());assert(b.continuous.move(7,2,20,2000,true));Wire.fail=true;assert(!bo.service(b,budgetDriver,2000));assert(b.inhibit&&!b.continuous.referenceValid&&!b.continuous.active);Wire.fail=false;
  crab::Motion reset;assert(!reset.continuous.channels[1].confirmed&&!reset.continuous.active); // RAM only
 }
+static void test_drive360(){
+ for(int dir=1;dir<=2;dir++){
+  Wire.writes.clear();ServoDriver d;assert(d.begin());ActuatorOutput o;crab::Motion m;m.newSession(51);uint32_t seq=0;
+  assert(o.service(m,d,0)&&activeOutputs()==0);
+  assert(!m.command(51,++seq,3,1,true));
+  assert(m.command(51,++seq,dir,10,true));size_t start=Wire.writes.size();
+  int positive[4]={205,409,409,205};
+  for(uint32_t t=10;t<=130;t+=10){
+   assert(o.service(m,d,t));
+   if(t<130){assert(activeOutputs()==4);for(int hip=0;hip<4;hip++)assert(m.drive.counts[hip]==(((dir==1)==(t<70))?positive[hip]:614-positive[hip]));}
+  }
+  assert(!m.drive.active&&activeOutputs()==0&&m.drive.balanceMs==0);
+  int pulses[8]={};for(size_t i=start;i<Wire.writes.size();i++){
+   auto w=Wire.writes[i];if(w.size()==5){int ch=(w[0]-6)/4;assert(ch%2==0&&ch<8);pulses[ch]++;}
+  }
+  for(int ch=0;ch<8;ch++)assert(pulses[ch]==(ch%2?0:2));
+  assert(!m.command(51,++seq,dir,140,false)); // holding cannot start another cycle
+  assert(m.command(51,++seq,dir,200,true));assert(o.service(m,d,200));assert(o.service(m,d,220));
+  assert(m.command(51,++seq,0,225,false));assert(o.service(m,d,230));
+  const int partial=m.drive.balanceMs;assert(partial==(dir==1?30:-30)&&activeOutputs()==0);
+  // Next press, including the opposite direction, only repays the old debt.
+  assert(m.command(51,++seq,3-dir,300,true));assert(o.service(m,d,300));assert(m.drive.returning);
+  assert(o.service(m,d,330));assert(!m.drive.active&&m.drive.balanceMs==0&&activeOutputs()==0);
+  assert(m.command(51,++seq,dir,400,true));assert(o.service(m,d,400));
+  m.newSession(52);assert(o.service(m,d,410)&&activeOutputs()==0);assert(m.drive.balanceMs==(dir==1?10:-10));
+  assert(m.command(52,1,dir,500,true));assert(o.service(m,d,500));assert(o.service(m,d,510));assert(!m.drive.active&&m.drive.balanceMs==0);
+  assert(m.command(52,2,dir,1000,true));assert(o.service(m,d,1000));
+  assert(o.service(m,d,1500));assert(!m.drive.active&&activeOutputs()==0); // late/missing heartbeat never starts compensation
+  int debt=m.drive.balanceMs;assert(debt==(dir==1?500:-500));assert(o.service(m,d,1600)&&m.drive.balanceMs==debt&&activeOutputs()==0);
+ }
+}
+static void test_hip_interruption_jitter(){
+ Wire.writes.clear();ServoDriver d;assert(d.begin());ActuatorOutput o;crab::Motion m;m.newSession(53);
+ assert(m.command(53,1,1,100,true));assert(o.service(m,d,100));assert(o.service(m,d,129));
+ assert(m.command(53,2,0,131,false));assert(o.service(m,d,137));assert(m.drive.balanceMs==37);
+ assert(m.command(53,3,2,200,true));assert(o.service(m,d,200));assert(m.drive.returning);
+ assert(o.service(m,d,239));assert(!m.drive.active&&!m.drive.unfinished&&m.drive.balanceMs==-2);
+ assert(m.command(53,4,2,300,true));assert(o.service(m,d,300));assert(!m.drive.returning); // residual must not trap every press in tiny compensation
+ assert(o.service(m,d,800));assert(!m.drive.active&&activeOutputs()==0);
+ const int debt=m.drive.balanceMs;assert(debt< -400);
+ assert(m.command(53,5,1,900,true));assert(o.service(m,d,900));assert(m.drive.returning);
+ assert(o.service(m,d,960));assert(!m.drive.active&&m.drive.unfinished&&m.drive.balanceMs==debt+60&&activeOutputs()==0); // no long automatic sweep
+}
 int main(){
+ test_drive360();test_hip_interruption_jitter();Wire.writes.clear();gpioCalls.clear();
+ std::cout<<"PASS: owner hips-only CH0/2/4/6, forward/inverse counts, no knee pulses, equal-time return, partial release recovery, scheduler residual, bounded recovery, no automatic restart\n";
  ServoDriver p;
  assert(!p.pulse(0,1500));assert(Wire.writes.empty());
  assert(p.begin());assert(Wire.sda==18&&Wire.scl==17&&Wire.hz==100000);assert(Wire.writes.size()==20);

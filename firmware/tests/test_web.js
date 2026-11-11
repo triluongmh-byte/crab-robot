@@ -18,7 +18,7 @@ const continuousButtons=[1,2].map(action=>{let e=new Element();e.dataset.continu
 const events={},timers=[],calls=[],beacons=[];let failMove=false,deferMove=null;
 let statusReply={message:'Quét QR để nối cua',url:'http://192.168.4.1/',online:false,driver:true,assembly:false,positional:true};
 let failStatus=false;
-const document={hidden:false,getElementById:el,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:(s==='[data-test-step]'?steps:continuousButtons),addEventListener:(n,f)=>events[n]=f};
+const document={hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:(s==='[data-test-step]'?steps:continuousButtons),addEventListener:(n,f)=>events[n]=f};
 const fetch=async(path,options={})=>{
  const data=Object.fromEntries(options.body||[]);calls.push({path,data});
  if(path==='/api/move'&&deferMove)await deferMove;
@@ -93,6 +93,10 @@ const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
  // Note14: continuous mode disables arrows; separate manual bounded calibration.
  statusReply={...statusReply,positional:false,continuousActive:false,continuousRequested:267,continuousEmitted:267,continuousEmittedChannel:3};
  await poll(1);assert(dirs.every(b=>b.disabled));assert(!el('driveReason').hidden);
+ statusReply.drive360=true;await poll(1);assert(dirs.every(b=>!b.disabled));
+ dirs[0].fire('pointerdown');await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.dir,'1');dirs[0].fire('pointerup');
+ statusReply.hipsOnly=true;await poll(1);assert(dirs.filter(b=>Number(b.dataset.dir)<=2).every(b=>!b.disabled));assert(dirs.filter(b=>Number(b.dataset.dir)>2).every(b=>b.disabled));statusReply.hipsOnly=false;
+ statusReply.drive360=false;await poll(1);
  const nMove=calls.length;dirs[0].fire('pointerdown');await flush();assert.equal(calls.length,nMove);
  await el('show360').onclick();await flush();assert.equal(page(),'continuous');
  assert(calls.some(c=>c.path==='/api/360'&&c.data.active==='1'));

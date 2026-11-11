@@ -6,6 +6,12 @@ The new body has **two open bar frames** and individual servo-tab mounts. It reu
 
 ![Integrated controller connections](docs/images/integrated-connections.svg)
 
+## Current bench status — 2026-11-11
+
+**The continuous-rotation walking experiments did not work reliably on the owner's assembled robot.** The first timed crawl produced leg collisions; the subsequent owner-specified hips-only Forward/Backward pattern also produced erratic motion. Development of loaded360° joint motion is paused while the owner waits for parts. This is a saved experimental checkpoint, not a demonstrated walking release.
+
+The latest LILYGO firmware moves only hips CH0/2/4/6, with an inverse timed return; it sends no knee pulses through those controls. The nominal30° travel and return are timing assumptions, not measured angles. LEDs start on at capped brightness; servo outputs start off. See the [experiment record and alternatives](firmware/EXPERIMENT-STATUS.md) before motor testing. Existing prints, wiring, source and the future custom PCB are retained.
+
 ## Using the LILYGO and PCA9685 you already have?
 
 Start with the **[original-module wiring guide](firmware/WIRING.md#original-lilygo-and-bought-pca9685)**. The owner reports that the PCA9685 breakout has arrived. That build uses four logic wires: **3V→VCC, GND→GND, GPIO18→SDA, GPIO17→SCL**. The pinout picture also labels GPIO18/17 as U1RXD/U1TXD; those are alternate functions, while this firmware assigns them to I²C. CH0–CH7 are servo sockets on the PCA, not ESP32 GPIO numbers.
@@ -21,7 +27,7 @@ The custom-PCB J2–J12 tables below describe the future integrated variant. Kee
 
 ## What it does
 
-Connect the phone directly to `CuaRobot-XXXX`, keep the connection when the phone reports no internet, and open `http://192.168.4.1/`. Home Wi-Fi is optional: open **Wi-Fi** manually when you want to configure it. The direct-AP fix preserves the selected page during status polling. The owner keeps continuous 360° servos. Their [experimental control page](firmware/CONTINUOUS360.md) provides per-channel measured calibration and short estimated-angle jogs from a manually confirmed reference. The arrows for the positional angular gait remain disabled in this mode; walking is not established. Boot defaults to continuous/unknown with all servo outputs off; the positional gait needs explicit compatible-servo selection. The LED works independently. Hold the running application's BOOT button for eight seconds to clear saved Wi-Fi.
+Connect the phone directly to `CuaRobot-XXXX`, keep the connection when the phone reports no internet, and open `http://192.168.4.1/`. Home Wi-Fi is optional: open **Wi-Fi** manually when you want to configure it. The direct-AP fix preserves the selected page during status polling. The owner keeps continuous 360° servos. Their [experimental control page](firmware/CONTINUOUS360.md) provides per-channel measured calibration and short estimated-angle jogs from a manually confirmed reference. The latest normal360° page enables only the experimental Forward/Backward hip commands; the positional angular gait is separate and requires compatible motors. Both loaded360° trials failed the owner's practical test; walking is not established. Boot defaults to continuous/unknown with all servo outputs off; the positional gait needs explicit compatible-servo selection. The LED works independently. Hold the running application's BOOT button for eight seconds to clear saved Wi-Fi.
 
 The USB-C connector is on the PCB's **+Y side**, where an ordinary data cable can pass through the open frame. The display mount preserves its 180° orientation and leaves room for its mating plug and all eight wires. Each servo lead has alternative open routes; long routes may need an extension rather than a stretched cable.
 

@@ -37,7 +37,7 @@ def cpp(group,profile):
  dest=OUT if profile=='lilygo' else OUT/profile;dest.mkdir(parents=True,exist_ok=True)
  paths=[ROOT/'firmware/crab'/n for n in ['config.h','hardware.h']]+[ROOT/f'firmware/tests/test_{group}.cpp']
  flags=PROFILES[profile];args=[]
- if group in ('core','drivers','http'):paths += [ROOT/'firmware/crab/core.h',ROOT/'firmware/crab/continuous360.h']
+ if group in ('core','drivers','http'):paths += [ROOT/'firmware/crab/core.h',ROOT/'firmware/crab/continuous360.h',ROOT/'firmware/crab/drive360.h']
  if group in ('core','display'):paths += [ROOT/'firmware/crab'/n for n in ['qrcodegen.c','qrcodegen.h']]
  if group=='display':paths += [ROOT/'firmware/crab'/n for n in ['display.h','waveshare_panel.h','font_vi.h']]
  if group in ('drivers','display'):
