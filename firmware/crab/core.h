@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Non-blocking adaptation of Kame32's amplitude/offset/phase oscillator design.
 #pragma once
+#include "continuous360.h"
 #include "config.h"
 #include <algorithm>
 #include <cstdio>
@@ -75,7 +76,7 @@ struct HoldButton {
   if(!fired&&elapsed(now,since)>=cfg::BOOT_HOLD_MS){fired=true;return true;}return false;
  }
 };
-// All methods called under the firmware's mutex; network task never writes PWM.
+// All methods called under the firmware's mutex; network task may hard-off under the same mutex; only output task pulses.
 enum class Actuator {Unknown,Positional};
 // PCA9685 nominal 50 Hz quantisation. Actual oscillator tolerance is unmeasured.
 inline int pwmCounts(int us){return (us*4096L+10000)/20000;}
@@ -98,20 +99,29 @@ struct ServoTest {
 struct Motion {
  Actuator actuator=Actuator::Unknown;
  ServoTest test;
- bool positional()const{return actuator==Actuator::Positional&&!test.opened;}
+ Continuous360 continuous;
+ bool positional()const{return actuator==Actuator::Positional&&!test.opened&&!continuous.opened;}
  bool sequence(uint32_t id,uint32_t seq){if(!id||id!=session||seq<=lastSeq)return false;lastSeq=seq;return true;}
  bool selectActuator(bool positionalMode,uint32_t now){
-  if(positionalMode&&(assembly||test.opened))return false;
-  stop();test=ServoTest{};assembly=raw=false;actuator=positionalMode?Actuator::Positional:Actuator::Unknown;
+  if(positionalMode&&(assembly||test.opened||continuous.opened))return false;
+  stop();test=ServoTest{};continuous=Continuous360{};assembly=raw=false;actuator=positionalMode?Actuator::Positional:Actuator::Unknown;
   amplitude=phase=0;for(auto& p:position)p=0;begin(now);return true;
  }
  bool openTest(bool active){
-  if(active&&(actuator!=Actuator::Unknown||assembly||inhibit))return false;
+  if(active&&(actuator!=Actuator::Unknown||assembly||inhibit||continuous.opened))return false;
   stop();test.opened=active;return true;
+ }
+ bool openContinuous(bool active){
+  if(active&&(actuator!=Actuator::Unknown||assembly||inhibit||test.opened))return false;
+  stop();continuous.opened=active;return true;
+ }
+ bool continuousCommand(uint32_t id,uint32_t seq,int ch,int action,uint32_t ms,uint32_t now,bool fresh){
+  if(!sequence(id,seq)||inhibit||assembly||actuator!=Actuator::Unknown||test.opened)return false;
+  return continuous.hold(ch,action,ms,now,fresh);
  }
  bool testCommand(uint32_t id,uint32_t seq,int step,uint32_t now,bool fresh){
   if(!sequence(id,seq)||inhibit||assembly||actuator!=Actuator::Unknown)return false;
-  return test.hold(step,now,fresh);
+  continuous.stop();return test.hold(step,now,fresh);
  }
  float offsets[8]={},position[8]={};
  Vec velocity{};
@@ -119,8 +129,9 @@ struct Motion {
  bool assembly=false,raw=false,inhibit=false,lease=false;
  uint32_t session=0,lastSeq=0,lastCommand=0,start=0,lastTick=0;
  int enabled=0,cursor=0;
+ uint32_t outputEpoch=0; // invalidate cached output after synchronous off/settings
  void begin(uint32_t now){start=lastTick=now;enabled=0;}
- void stop(){velocity={};lease=false;test.stop();}
+ void stop(){velocity={};lease=false;test.stop();continuous.stop();}
  bool command(uint32_t id,uint32_t seq,int dir,uint32_t now,bool fresh=true){
   if(dir<0||dir>8||!sequence(id,seq))return false;
   if(dir==0){stop();return true;}
@@ -128,15 +139,15 @@ struct Motion {
   if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
   velocity=direction(dir);lastCommand=now;lease=true;return true;
  }
- void newSession(uint32_t id){stop();test.opened=false;session=id;lastSeq=0;}
- bool setAssembly(bool active){if(active&&test.opened)return false;stop();assembly=active;raw=false;return true;}
+ void newSession(uint32_t id){stop();test.opened=false;continuous.opened=false;session=id;lastSeq=0;}
+ bool setAssembly(bool active){if(active&&(test.opened||continuous.opened))return false;stop();assembly=active;raw=false;return true;}
  bool centre(){if(!positional())return false;stop();assembly=true;raw=true;return true;}
  bool trim(int ch,int delta){if(!positional()||!assembly||ch<0||ch>7||std::abs(delta)!=1)return false;raw=false;offsets[ch]=clamp(offsets[ch]+delta,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT);return true;}
  // One channel update per 10 ms; 300 ms gaps on initial enable.
  // angle+offset slew is enforced in the driver, so trim also moves smoothly.
  int tick(uint32_t now){
-  test.tick(now);
-  if(inhibit)test.stop();
+  test.tick(now);continuous.tick(now);
+  if(inhibit){test.stop();continuous.stop();}
   if(!positional()||inhibit){velocity={};lease=false;return -1;}
   if(elapsed(now,lastTick)<10)return -1;
   const float dt=std::min(elapsed(now,lastTick)*.001f,.05f);lastTick=now;

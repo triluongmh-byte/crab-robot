@@ -32,7 +32,7 @@ session ordering and the persistent assembly lock are unchanged.
 
 ## Servo mode stays independent
 
-The accepted AP behavior is retained with the new default-off actuator policy. Boot selects continuous/unknown and emits no servo pulses. The light and page navigation remain available. Only the manually opened [one-servo experiment](SERVO-TEST.md) can command a continuous servo, and it is not angle control or a walking gait. Positional walking/raw-centre require an explicit compatible-positional selection. The owned supply remains unverified; no motor operation is authorized by flashing.
+Boot leaves all 16 outputs off. The light and page navigation remain available independently. Open [360° thử nghiệm](CONTINUOUS360.md) for per-channel measured calibration, a manual-reference confirmation and bounded estimated-angle jogs. Stored/RAM values never auto-arm after reboot. The legacy diagnostic is under **Chi tiết → Thử cũ** and invalidates the reference. Continuous servos cannot use the retained positional angular gait; drive arrows remain disabled. No physical motor operation is part of building or flashing.
 
 Build: `python3 tools/firmware/build.py --target all` from the project root.
 Host checks: `python3 tools/firmware/check.py`; focused AP checks:

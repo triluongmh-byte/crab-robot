@@ -1,0 +1,67 @@
+{
+  "releaseNote": 18,
+  "releaseChainTip": "4cadb190eb0b3a92a9e7805c9956f41af7b085d71a2e18de54edbae19829277c",
+  "date": "2026-11-11",
+  "source": "Release notes 17 and 18 exact owner messages; physical owner reports only",
+  "exactOwnerMessage": "đã nắn hết khớp về như tao nói. Mạnh mẽ code nạp rồi push nhe",
+  "basis": "owner report only",
+  "physicalAssembly": "Original LILYGO T-Display-S3 + bought PCA9685; old cropped/drilled orange body",
+  "installedChannels": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "individuallyReportedOK": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "testMethodAndCounts": "not stated",
+  "servoType": "eight owned continuous-rotation SG90s per note14; speed/direction only",
+  "servoPlugsCurrentlyConnected": true,
+  "hardwareTested": false,
+  "calibrationSeeded": false,
+  "isolationConfirmed": false,
+  "cwViewpoint": "pending",
+  "notEstablished": [
+    "per-channel neutral/stop counts",
+    "per-channel forward/reverse counts",
+    "degrees per ms per channel/direction",
+    "actual PWM frequency (25 MHz oscillator assumption retained)",
+    "servo supply rating",
+    "stopping on release",
+    "loaded joint clearance",
+    "new candidate firmware operation",
+    "integrated PCB operation",
+    "walking"
+  ],
+  "runtimeEffect": "None. Owner reports manual 90° pose set on all joints; this never sets the runtime reference. Explicit Đã đặt 90° UI confirmation is still required after firmware/reset/power loss/session/settings/calibration change or untracked motion. No reference or calibration from chat/NVS; all16 outputs off at boot.",
+  "beforeEntryDeviceAccess": "Fresh confirmation: all servo plugs removed, PCA V+ disconnected, USB only. Older isolation statements are obsolete.",
+  "ownerReports": [
+    {
+      "releaseNote": 17,
+      "releaseNoteSha256": "f9cf5c11cc129e750f7b2a987aaf78f545eb50604a71f98bd0f73e2eca8c699b",
+      "exactOwnerMessage": "ok fen, thêm nữa là tao đã gắn tất cả servors và test từng cái oke rồi đó.",
+      "observation": "All 8 installed, each tested OK (owner report); method and counts not stated."
+    },
+    {
+      "releaseNote": 18,
+      "releaseNoteSha256": "4cadb190eb0b3a92a9e7805c9956f41af7b085d71a2e18de54edbae19829277c",
+      "exactOwnerMessage": "đã nắn hết khớp về như tao nói. Mạnh mẽ code nạp rồi push nhe",
+      "observation": "manual 90° pose set on all joints (owner report)"
+    }
+  ],
+  "ownerReportedManual90PoseSet": true,
+  "runtimeReferenceConfirmed": false,
+  "runtimeConfirmationRequired": true
+}

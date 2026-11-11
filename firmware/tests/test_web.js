@@ -14,10 +14,11 @@ const elements={};const el=id=>elements[id]??=(new Element(id));
 for(const id of [...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]))el(id);
 const dirs=Array.from({length:8},(_,i)=>{let e=new Element();e.dataset.dir=String(i+1);return e;});
 const steps=[-20,-4,-1,0,1,4,20].map(step=>{let e=new Element();e.dataset.testStep=String(step);return e;});
+const continuousButtons=[1,2].map(action=>{let e=new Element();e.dataset.continuousAction=String(action);return e;});
 const events={},timers=[],calls=[],beacons=[];let failMove=false,deferMove=null;
-let statusReply={message:'Quét QR để nối cua',url:'http://192.168.4.1/',online:false,driver:true,assembly:false};
+let statusReply={message:'Quét QR để nối cua',url:'http://192.168.4.1/',online:false,driver:true,assembly:false,positional:true};
 let failStatus=false;
-const document={hidden:false,getElementById:el,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:steps,addEventListener:(n,f)=>events[n]=f};
+const document={hidden:false,getElementById:el,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:(s==='[data-test-step]'?steps:continuousButtons),addEventListener:(n,f)=>events[n]=f};
 const fetch=async(path,options={})=>{
  const data=Object.fromEntries(options.body||[]);calls.push({path,data});
  if(path==='/api/move'&&deferMove)await deferMove;
@@ -26,6 +27,8 @@ const fetch=async(path,options={})=>{
  if(path==='/api/status'){if(failStatus)throw Error('offline');response=statusReply;}
  if(path==='/api/scan')response={busy:false,networks:['Nhà tôi','<script>danger</script>']};
  if(path==='/api/trim')response={offset:1};
+ if(path==='/api/360/reference')response={referenceValid:true,cwViewpoint:1,reason:'Đã xác nhận đặt 90° bằng tay'};
+ if(path==='/api/360/move')response={moveDuration:200,clipped:true,estimatedAngle:0,reason:'Đã cắt thời gian theo ngân sách'};
  return {ok:true,json:async()=>response};
 };
 const ctx=vm.createContext({document,window:{confirm:()=>true,addEventListener:(n,f)=>events[n]=f},navigator:{sendBeacon:(path,data)=>beacons.push({path,data:Object.fromEntries(data)})},fetch,URLSearchParams,setInterval:(f,ms)=>timers.push({f,ms}),console});
@@ -87,9 +90,40 @@ const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
  await el('testDone').onclick();await flush();assert.equal(page(),'control');assert(calls.some(c=>c.path==='/api/test'&&c.data.active==='0'));
  el('actuatorMode').value='positional';await el('applyActuator').onclick();await flush();assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
  el('actuatorMode').value='unknown';await el('applyActuator').onclick();await flush();assert(calls.some(c=>c.path==='/api/actuator'&&c.data.value==='unknown'));
+ // Note14: continuous mode disables arrows; separate manual bounded calibration.
+ statusReply={...statusReply,positional:false,continuousActive:false,continuousRequested:267,continuousEmitted:267,continuousEmittedChannel:3};
+ await poll(1);assert(dirs.every(b=>b.disabled));assert(!el('driveReason').hidden);
+ const nMove=calls.length;dirs[0].fire('pointerdown');await flush();assert.equal(calls.length,nMove);
+ await el('show360').onclick();await flush();assert.equal(page(),'continuous');
+ assert(calls.some(c=>c.path==='/api/360'&&c.data.active==='1'));
+ el('continuousChannel').value='3';await el('continuousChannel').onchange();
+ el('continuousStop').value='320';el('continuousForward').value='347';el('continuousReverse').value='267';
+ await el('continuousSave').onclick();assert(calls.some(c=>c.path==='/api/360/config'&&c.data.ch==='3'&&c.data.stop==='320'&&c.data.forward==='347'&&c.data.reverse==='267'));
+ el('continuousDuration').value='200';el('moveDegrees').value='5';
+ const noRef=calls.length;continuousButtons[0].fire('pointerdown');await flush();assert.equal(calls.length,noRef,'no reference means no move');
+ el('cwViewpoint').value='1';await el('saveViewpoint').onclick();assert(calls.some(c=>c.path==='/api/360/viewpoint'&&c.data.value==='1'));
+ el('calDirection').value='1';el('calCounts').value='347';el('calDegrees').value='10';el('calMs').value='1000';
+ const beforeCalibration=calls.filter(c=>c.path==='/api/360/move').length;
+ await el('saveCalibration').onclick();assert(calls.some(c=>c.path==='/api/360/calibrate'&&c.data.ch==='3'&&c.data.direction==='1'&&c.data.counts==='347'&&c.data.degrees==='10'&&c.data.ms==='1000'));
+ assert.equal(calls.filter(c=>c.path==='/api/360/move').length,beforeCalibration,'calibration entry emits no motion');
+ statusReply={...statusReply,referenceValid:false,cwViewpoint:1,reason:'Chưa hiệu chỉnh',continuousCalibration:Array.from({length:8},()=>({stop:320,forward:347,reverse:267,confirmed:true,cwCalibrated:true,ccwCalibrated:true,estimated:2,cwBudget:35,ccwBudget:35}))};
+ await poll(1);assert(el('referenceState').textContent.includes('Chưa xác nhận'));
+ assert(el('estimatedAngle').textContent.includes('2.00°')&&el('estimatedAngle').textContent.includes('trôi'));
+ for(const b of continuousButtons){await el('confirm90').onclick();assert(calls.some(c=>c.path==='/api/360/reference'&&c.data.confirm==='manual90'));b.fire('pointerdown');await flush();const c=calls.at(-1);assert.equal(c.path,'/api/360/move');assert.equal(c.data.direction,b.dataset.continuousAction);assert.equal(c.data.degrees,'5');assert.equal(c.data.cap,'200');assert.equal(c.data.fresh,'1');
+  await timers.find(t=>t.ms===150).f();await flush();assert.equal(calls.at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(vm.runInContext('continuousHeld',ctx),null);assert(!vm.runInContext('referenceReady',ctx));}
+ await el('confirm90').onclick();continuousButtons[1].fire('pointerdown');await flush();vm.runInContext('continuousSince=Date.now()-200',ctx);await timers.find(t=>t.ms===150).f();await flush();assert.equal(vm.runInContext('continuousHeld',ctx),null);
+ for(const event of ['blur','pagehide']){await el('confirm90').onclick();continuousButtons[1].fire('pointerdown');await flush();events[event]();assert.equal(vm.runInContext('continuousHeld',ctx),null);assert(!vm.runInContext('referenceReady',ctx));}
+ await el('confirm90').onclick();continuousButtons[1].fire('pointerdown');await flush();el('continuousStop').onchange();assert.equal(vm.runInContext('continuousHeld',ctx),null);
+ const burstCount=calls.filter(c=>c.path==='/api/360/move').length;await poll();assert.equal(page(),'continuous');assert.equal(calls.filter(c=>c.path==='/api/360/move').length,burstCount);
+ assert(el('continuousCounts').textContent.includes('đã gửi 267 count trên CH3'));
+ // Pending viewpoint blocks hips, but not symmetric knees; uncalibrated directions blocked.
+ el('continuousChannel').value='0';statusReply={...statusReply,referenceValid:true,cwViewpoint:0};await poll(1);assert(continuousButtons.every(b=>b.disabled));
+ el('continuousChannel').value='1';await poll(1);assert(continuousButtons.every(b=>!b.disabled));
+ statusReply.continuousCalibration[1].ccwCalibrated=false;await poll(1);assert(!continuousButtons[0].disabled&&continuousButtons[1].disabled);
+ await el('continuousDone').onclick();await flush();assert.equal(page(),'control');assert(calls.some(c=>c.path==='/api/360'&&c.data.active==='0'));
  // Captive probe URL/reload executes this same script: no hidden setup redirect.
  const reopened=vm.createContext({document,window:{addEventListener:()=>{}},navigator:{sendBeacon:()=>{}},fetch,URLSearchParams,setInterval:()=>{},console});
  vm.runInContext(code,reopened);await flush();assert.equal(vm.runInContext('page',reopened),'control');
  assert(!/https?:\/\/(?!192\.168\.4\.1)/.test(html));assert(!/\b(?:src|href)=["']https?:/.test(html));
- console.log('PASS: manual one-servo page/count display/hold/release/2s local cap/blur/cancel/config/RAM selection, direct AP first load, 40 repeated offline polls on control/Ráp/setup, manual setup, wrong password, reconnect; shipped UI, 8 hold directions, keepalive, release/cancel/blur/hide, offline, Ráp lock/trim, Wi-Fi and password clearing');
+ console.log('PASS: manual90 confirmation/observed calibration/pending viewpoint/estimated drift/calibration entry no motion/continuous360 config205-409/2directions/200ms cap/global off/settings/blur/pagehide/disabled arrows/emitted count display; manual one-servo page/count display/hold/release/2s local cap/blur/cancel/config/RAM selection, direct AP first load, 40 repeated offline polls on control/Ráp/setup, manual setup, wrong password, reconnect; shipped UI, 8 hold directions, keepalive, release/cancel/blur/hide, offline, Ráp lock/trim, Wi-Fi and password clearing');
 })().catch(e=>{console.error(e);process.exit(1);});

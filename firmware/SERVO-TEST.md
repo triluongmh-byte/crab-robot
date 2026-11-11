@@ -1,11 +1,13 @@
-# One-servo neutral/speed experiment
+# Legacy one-servo neutral/speed diagnostic
 
 This uses the owned continuous servos as speed-controlled motors. **It cannot hold a joint angle or make the positional walking gait work.** No additional purchase is planned. The current inventory has no servo supply of established rating; the exposed 18650 and unidentified module are not recommended or wired as a supply. A prior polarity reversal also leaves component health uncertain. Resolve the supply before any physical test. Flash permission does not authorize motor operation.
+
+Use **360° thử nghiệm** and the [manual-reference guide](CONTINUOUS360.md) for the current workflow. This legacy diagnostic is under **Chi tiết → Thử cũ**. Opening or operating it invalidates the manual reference; never use it as a shortcut for bounded joint travel.
 
 ## Controls after the physical prerequisites are met
 
 1. Use exactly one unloaded servo, with its horn and leg removed and its lead free to rotate. Unplug the other servo connectors. Do not run this on an assembled joint.
-2. Join `CuaRobot-XXXX` and open `http://192.168.4.1/`. Keep **360° / chưa rõ loại** selected. Exit Assembly with **Xong ráp**, then open **Thử 1 servo**.
+2. Join `CuaRobot-XXXX` and open `http://192.168.4.1/`. Keep **360° / chưa rõ loại** selected. Exit Assembly with **Xong ráp**, then open **Chi tiết → Thử cũ**.
 3. Select one CH0–7 and check the actual channel shown in the status line before holding a button. The dropdown can show CH0 after a reload while the server retains an earlier channel. Opening the page, changing channel or neutral does not emit pulses.
 4. Hold **Giữ tâm** briefly and release. Adjust **Tâm −1 count / Tâm +1 count** within 287–327 and repeat. The ±1 and ±4 buttons compare speeds/directions around neutral. A stable neutral may not exist; stop if it cannot be found. Neutral stop is not position holding.
 5. Optional observation aid: briefly hold **Thấp −20 count**, release, then **Cao +20 count** and release. Continuous turning while the pulse remains active suggests continuous rotation. A positional stop may suggest a positional servo, but no motion, a jammed/damaged servo, disabled output or weak supply cannot classify it. Record observations per channel; firmware neither infers nor saves a servo type.
@@ -22,4 +24,4 @@ Neutral is 287–327 counts. Held offsets are −20, −4, −1, 0, +1, +4 and +
 
 Full-off is neither a supply disconnect nor guaranteed braking/holding. The handwired LILYGO has no MCU-controlled OE wire: after an I²C failure it cannot guarantee the PCA receives an off command. The integrated target also asserts its existing OE. Neither can cut servo power. The motion task runs at 10 ms intervals; I²C, scheduler and stalled HTTP-error replies can delay software stopping. These are software limits, not measured hard real-time guarantees. ±20 buttons can also cancel early on a finger scroll/long press.
 
-Host tests exercise the production core, HTTP handlers, output service and PCA registers for both profiles. Real phone/radio, supply, servo health/type, neutral stability, frequency and stopping response remain unverified. No physical motor test or walking result is claimed.
+Host tests exercise the production core, HTTP handlers, output service and PCA registers for both profiles. Real phone/radio, supply, servo health/type, neutral stability, frequency and stopping response remain unverified. The owner reports individual operation of all eight servos on the earlier installed firmware. That observation does not validate this new candidate, speed calibration, a supply rating, loaded travel or walking.

@@ -229,6 +229,63 @@
     "settingStorage": "RAM only; reboot defaults unknown",
     "positional": "explicit verified-180 setting retains prior startup/gait/Ráp",
     "experiment": "manual; exactly one unloaded CH0-7; integer counts267-347; 2000ms cap;500ms lease",
-    "physicalTested": false
-  }
+    "physicalTested": false,
+    "continuous360Experiment": {
+      "control": "single-channel timed estimate; no positional feedback or walking gait",
+      "rawCountBounds": [
+        205,
+        409
+      ],
+      "burstMsBounds": [
+        50,
+        500
+      ],
+      "deadmanMs": 500,
+      "manualReference": "explicit runtime confirmation; never seeded from chat, stored calibration or boot",
+      "perDirectionCalibration": "observed degrees/ms for each channel/direction at the exact configured count; uncalibrated moves refuse",
+      "hipViewpoint": "explicit pending setting, never silently mirrored",
+      "ownerContactLimitsDeg": {
+        "frontHips": {
+          "cw": 30,
+          "ccw": 60
+        },
+        "rearHips": {
+          "cw": 60,
+          "ccw": 30
+        },
+        "knees": {
+          "cw": 40,
+          "ccw": 40
+        }
+      },
+      "marginDeg": 5,
+      "softwareBudgetDeg": {
+        "frontHips": {
+          "cw": 25,
+          "ccw": 55
+        },
+        "rearHips": {
+          "cw": 55,
+          "ccw": 25
+        },
+        "knees": {
+          "cw": 35,
+          "ccw": 35
+        }
+      },
+      "limitsEvidence": "owner hand estimates; physical loaded clearance and actual PWM unmeasured",
+      "referenceInvalidatedBy": [
+        "release/off",
+        "expiry/deadman",
+        "settings/calibration/mode/session change",
+        "untracked diagnostics",
+        "fault",
+        "reset/power loss"
+      ],
+      "walkingEstablished": false,
+      "releaseChainTip": "4cadb190eb0b3a92a9e7805c9956f41af7b085d71a2e18de54edbae19829277c"
+    }
+  },
+  "ownerEvidence": "firmware/OWNER-EVIDENCE.json",
+  "ownerEvidenceReleaseNoteSha256": "4cadb190eb0b3a92a9e7805c9956f41af7b085d71a2e18de54edbae19829277c"
 }

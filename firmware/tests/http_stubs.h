@@ -8,13 +8,15 @@
 #include <cstring>
 #include <cassert>
 #include <type_traits>
+#include <sstream>
+#include <iomanip>
 class String:public std::string{
 public:
  using std::string::string;
  String(const std::string& s):std::string(s){}
  template<typename T,typename std::enable_if<std::is_arithmetic<T>::value,int>::type=0>
  String(T n):std::string(std::to_string(n)){}
- String(float n,int):std::string(std::to_string(int(n))){}
+ String(float n,int places){std::ostringstream out;out<<std::fixed<<std::setprecision(places)<<n;assign(out.str());}
  bool startsWith(const char* p)const{return find(p)==0;}
  float toFloat()const{return std::stof(*this);}
  int toInt()const{return std::stoi(*this);}
@@ -24,7 +26,9 @@ constexpr int WIFI_SCAN_FAILED=-2,WIFI_SCAN_RUNNING=-1;
 uint32_t clockMs=0;
 uint32_t millis(){return clockMs;}
 uint32_t esp_random(){return 42;}
-struct Guard{Guard(){}~Guard(){}};
+int lockDepth=0;
+struct Guard{Guard(){lockDepth++;}~Guard(){lockDepth--;}};
+struct Servos{int offCalls=0;bool disableOutputs(){assert(lockDepth>0);offCalls++;return true;}} servos;
 struct Server{
  std::map<std::string,std::function<void()>> handlers;
  std::map<std::string,String> args;
@@ -36,7 +40,7 @@ struct Server{
  String arg(const char* name){return args[name];}
  String uri(){return currentUri;}
  void sendHeader(const char*,const char*){}
- void send(int c,const char*,const String& s){code=c;body=s;}
+ void send(int c,const char*,const String& s){assert(lockDepth==0);code=c;body=s;}
  void send_P(int c,const char* mime,const char* s){send(c,mime,s);}
  void request(const char* path,std::map<std::string,String> a={}){
   args=a;currentUri=path;body="";code=0;

@@ -51,6 +51,7 @@ echo '5/7: Both firmware targets, host tests and final board reconciliation'
 "$KICAD_HARNESS_PYTHON" tools/firmware/bind_board.py
 "$KICAD_HARNESS_PYTHON" tools/firmware/build.py --target all
 "$KICAD_HARNESS_PYTHON" tools/firmware/reconcile.py
+"$KICAD_HARNESS_PYTHON" tools/firmware/candidate.py
 "$KICAD_HARNESS_PYTHON" tools/firmware/check.py
 echo '6/7: Complete product packet checks, including actual PCB insertion'
 "$KICAD_HARNESS_PYTHON" tools/verify_release.py

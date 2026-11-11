@@ -51,3 +51,6 @@ firmware/NATIVE-CHECKS.json
 
 # Private per-device flash attempt pointer
 firmware/flash-result.json
+
+# Source-built candidate metadata; regenerated before interface checks
+firmware/FLASH-CANDIDATE.json

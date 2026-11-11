@@ -9,7 +9,7 @@ For electronics assembly and the exact through-hole service, use [AFTER-ORDER.md
 | `frame_lower`, `frame_upper` | One each | New r5 structural parts; unprinted |
 | `thigh_FL/FR/RL/RR`, `foot_FL/FR/RL/RR` | Eight total | Reuse existing prints; exact physical source revision unmeasured |
 | Previous `cap_front`, `cap_rear` | Two | Printed, removed for servo interference, unused; not in Print all |
-| Positional SG90-class **180°** servos and matching one-arm horns | Eight required; two spares optional | Owned units are reported as 360°; exact control type still needs verifying. Do not count continuous-rotation units as compatible |
+| SG90-class servos and matching one-arm horns | Eight owned | Keep the confirmed continuous 360° units for the experimental controller. The legacy angular gait requires a separate positional configuration; no replacement purchase is selected. |
 | M3×6 screws / M3 nuts | Four / four | PCB mounts B1–B4 |
 | M3×12 screws | Three | Frame joints J1–J3; printed self-tapping pilots, no nuts |
 
@@ -17,13 +17,13 @@ Confirm the screw lengths in the owned stock; the existence of an M3 assortment 
 
 ## Required servo type
 
-The existing gait commands joint **angles** and is calibrated for **180° positional SG90-class 9 g servos**. Buy/search terms: `SG90 9g 180 degree positional servo`, `holds commanded angle`, `not continuous rotation`. Match the reference body, tab geometry, shaft/horn fit and screw types; check one sample against the existing printed interfaces before buying the full set. The prior generic “SG90” wording did not distinguish these variants.
+**Current owned assembly:** keep the eight confirmed continuous-rotation SG90s; no 180° purchase is selected. On 2026-11-11 the owner reported each installed servo worked when tested individually and all hips/elbows were manually placed at the 90° reference. Use the [360° manual-reference experiment](../firmware/CONTINUOUS360.md), which commands bounded, single-channel, estimated-angle jogs after observed calibration. It does not establish loaded walking or angle holding.
 
-The owner reports all purchased units as “360°” and describes repeated spinning. Their exact seller variant is not yet independently confirmed. **Continuous-rotation** units interpret PWM as speed/direction and do not hold a requested joint angle; centring/trimming does not turn them into positional servos. A **positional 360°** unit is different and could potentially be supported if its control interface is compatible, followed by separate pulse-to-angle calibration and bench verification. Serial/bus servos are not automatically compatible with PCA9685 PWM outputs. It is not supported by the current 180° calibration. Verify the purchase variant before deciding whether replacement is needed.
+The retained positional angular gait is a different configuration and requires compatible positional servos. Continuous PWM servos control speed/direction; a manual reference and time estimate do not add position feedback. Do not enable the positional setting for the owned continuous motors.
 
-Keep the existing frame and leg prints pending a real fit check of any replacement. Do not redesign or reprint them solely because of the reported control type. No powered rotation, centring or walking result is claimed for the current assembly. After the reported reverse-polarity event, inspect the unpowered parts before any isolated test; do not reconnect all eight assembled legs.
+The frame and leg geometry is retained. The owner's current body is the earlier manually cropped/drilled print; the new r5 frame remains unprinted. Servo dimensions, supply capacity and loaded clearance remain unmeasured. No replacement, reprint, order or full-robot motion is implied by the individual tests.
 
-Reference: [Adafruit explains continuous-rotation control and the absence of position feedback](https://learn.adafruit.com/adafruit-motor-selection-guide/continuous-rotation-servos).
+Reference: [Adafruit's explanation of continuous-rotation control](https://learn.adafruit.com/adafruit-motor-selection-guide/continuous-rotation-servos).
 
 ## Servo screws — count by type
 

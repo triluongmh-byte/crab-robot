@@ -46,3 +46,7 @@ Default-off startup and the bounded single-servo experiment are implemented and 
 There is no established servo supply in the photographed inventory; no exposed-cell/module wiring or purchase is introduced. Prior reverse polarity leaves component health uncertain. Actual supply, neutral stability, emitted frequency, stop response and walking remain untested. The [test guide](firmware/SERVO-TEST.md) records timing, I²C/OE and client-stall limits; software full-off is not a supply disconnect or guaranteed brake.
 
 The owner renewed original-LILYGO flash authorization. Physical motor isolation confirmation and a new full-flash readback/verify with recovery command remain prerequisites; no device write or motor operation is claimed by this source-build result.
+
+## Continuous 360° manual-reference update — fresh source build pending
+
+The new runtime has independent firmware and integration approval in native r018 for the manual-reference/calibration/budget work. It was imported byte-for-byte into this source repository, retaining the portable build adapters. Focused public core, driver, HTTP and web checks passed for both profiles, including independent QR decoding. Final owner-evidence/release metadata and a complete new empty-clone `./build.sh` proof are still pending; the preceding source-build record does not validate this update. No new candidate has been flashed by this publication step.

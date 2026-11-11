@@ -59,6 +59,54 @@ static void test_unknown(){
  assert(m.openTest(true));assert(m.testCommand(4,1,0,0xffffff00,true));m.tick(0x100);assert(!m.test.active); // wrap +512 ms deadman
  assert(pwmCounts(1500)==307&&std::fabs(nominalUs(307)-1499.0234f)<.01f);
 }
+// Notes15/16: exercise the production policy, no invented shop speed.
+static void test_manual90(){
+ Continuous360 c;assert(!c.referenceValid&&c.viewpoint==Continuous360::Viewpoint::Pending);
+ c.opened=true;
+ for(int ch=0;ch<8;ch++)assert(c.configure(ch,307,267,347));
+ assert(c.confirmReference());assert(!c.move(0,1,5,0,true)); // uncalibrated
+ assert(std::string(c.reason).find("Chưa hiệu chỉnh")!=std::string::npos);
+ assert(c.calibrate(0,1,267,20,100));assert(!c.referenceValid&&!c.active);
+ assert(c.confirmReference());assert(!c.move(0,1,20,0,true)); // pending viewpoint
+ assert(std::string(c.reason).find("Góc nhìn")!=std::string::npos);
+ assert(c.setViewpoint(1));assert(!c.referenceValid&&!c.channels[0].cw.calibrated);
+ // Check both directions on every hip and knee against independent expected budgets.
+ const float cw[8]={25,35,25,35,55,35,55,35},ccw[8]={55,35,55,35,25,35,25,35};
+ for(int ch=0;ch<8;ch++)for(int dir=1;dir<=2;dir++){
+  assert(c.calibrate(ch,dir,dir==1?267:347,20,100));assert(!c.active&&!c.referenceValid);
+  assert(c.confirmReference());assert(c.move(ch,dir,60,1000,true));
+  float expected=dir==1?cw[ch]:ccw[ch];
+  assert(c.clipped&&c.duration==uint32_t(expected/.2f));
+  assert(c.validOutput());assert(!c.move((ch+1)%8,dir,60,1010,false));
+  c.tick(1050);assert(std::fabs(c.estimated[ch]-(dir==1?10:-10))<.001);
+  assert(c.move(ch,dir,60,1050,false)); // renewal never extends hard cap
+  c.tick(1000+c.duration);assert(!c.active&&!c.referenceValid);
+  assert(std::fabs(c.estimated[ch]-(dir==1?expected:-expected))<.001);
+  assert(!c.move(ch,dir,60,2000,true)); // cannot chain bursts after expiry
+  assert(c.confirmReference());c.estimated[ch]=(dir==1?1:-1)*(expected-1);
+  assert(!c.move(ch,dir,60,3000,true)); // <50ms budget refuses, does not overrun
+ }
+ // Estimate integrates to partial time, then every manual off invalidates the pose.
+ assert(c.confirmReference());assert(c.move(0,1,5,4000,true,100)==false); // <50ms at .2deg/ms
+ assert(c.move(0,1,20,4000,true,50));assert(c.duration==50&&c.clipped);
+ c.tick(4010);assert(std::fabs(c.estimated[0]-2)<.001);c.stop();assert(!c.referenceValid&&!c.active);
+ assert(!c.move(0,1,20,4020,false));
+ assert(c.confirmReference());assert(c.estimated[0]==0);assert(c.configure(0,307,267,347));assert(!c.referenceValid);
+ assert(c.confirmReference());assert(c.calibrate(0,1,267,20,100));assert(!c.referenceValid);
+ assert(!c.calibrate(0,2,267,20,100)); // no identical counts for opposite observed directions
+ assert(!c.calibrate(0,2,347,NAN,100));assert(!c.calibrate(0,2,347,INFINITY,100));
+ assert(!c.calibrate(0,2,347,20,0));assert(!c.calibrate(0,2,347,180,50));
+ assert(c.confirmReference());assert(c.setViewpoint(2));assert(!c.referenceValid);
+ assert(c.setViewpoint(0)); // knees symmetric, do not require pending hip viewpoint
+ assert(c.calibrate(1,1,267,20,100));assert(c.confirmReference());assert(c.move(1,1,20,0xfffffff0,true));c.tick(0x54);assert(!c.referenceValid); // expiry across wrap
+ Continuous360 reset;assert(!reset.referenceValid&&!reset.channels[0].cw.calibrated); // reset / power loss
+ Motion m;m.newSession(1);assert(m.openContinuous(true));assert(m.continuous.confirmReference());
+ m.newSession(2);assert(!m.continuous.referenceValid);
+ assert(m.openContinuous(true));assert(m.continuous.confirmReference());m.inhibit=true;m.tick(1);assert(!m.continuous.referenceValid); // fault
+ m.inhibit=false;assert(m.continuous.confirmReference());m.stop();assert(!m.continuous.referenceValid); // disconnect / global off
+ assert(m.continuous.confirmReference());assert(m.openContinuous(false));assert(!m.continuous.referenceValid); // mode/settings
+ assert(m.openTest(true));assert(m.test.config(0,307));assert(m.testCommand(2,1,4,100,true));assert(!m.continuous.referenceValid); // untracked motion
+}
 static void test_motion(){
  Motion m;m.newSession(12);m.begin(0);assert(!m.command(12,1,1,0));assert(m.enabled==0);ready(m);
  assert(m.command(12,2,1,2200,true));assert(m.velocity.x==1);assert(!m.command(12,1,2,2210));
@@ -118,4 +166,4 @@ static void simulation(const std::string& dir){
  }
  report<<"],\"sidewaysSupportedByModel\":true,\"hardwareTested\":false}\n";
 }
-int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_motion();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, gait direction and diagonal foot support, pulse bounds, QR encoding\n";}
+int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, gait direction and diagonal foot support, pulse bounds, QR encoding\n";}

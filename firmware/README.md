@@ -2,7 +2,7 @@
 
 The application implements QR setup, nearby 2.4 GHz Wi-Fi selection, saved credentials, eight hold-to-move directions, a light switch and servo centring/trim controls. Everything is served by the robot; there are no accounts, cloud services or downloaded web dependencies. The screen and web UI remain Vietnamese.
 
-**Current owned motors:** the seller confirms the purchased SG90 360° units are continuous-rotation motors. They control speed/direction and cannot hold the joint angles required by this gait. The default is now **360° / unknown, all sixteen PCA outputs off**. Walking and raw-centre commands are refused until an explicit positional selection. A manually opened [one-servo experiment](SERVO-TEST.md) provides bounded neutral/speed commands; it does not turn these motors into positional servos. No additional purchase or physical motor test is being made.
+**Current owned motors:** keep the eight continuous-rotation SG90s already bought; no replacement purchase is selected. Use the [360° manual-reference experiment](CONTINUOUS360.md) for one-channel calibration and bounded estimated-angle jogs. This is speed/direction control with human observations, not encoder feedback or a walking gait. All outputs start off. On 2026-11-11 the owner reported all eight servos worked individually and all joints were manually placed at the 90° reference. Per-direction speed calibration and a fresh runtime confirmation remain necessary; these reports do not auto-arm anything.
 
 ## Choose the correct target
 
@@ -46,13 +46,17 @@ If necessary, hold BOOT, press/release RESET, then release BOOT to enter the dow
 
 Desktop request/browser tests do not prove that every phone will retain an internet-free AP connection or that the real radio will remain uninterrupted. Physical direct-AP verification remains separate from compilation and host tests.
 
-## Default outputs and the one-servo experiment
+## Continuous 360° control with a manual reference
 
-Every reset starts as **360° / chưa rõ loại — mặc định tắt** (continuous/unknown, off). The actuator selection and test settings live in RAM only; stored positional trims cannot enable the outputs. Home Wi-Fi and the light remain available independently of the actuator mode.
+Open **360° thử nghiệm**. The [complete guide](CONTINUOUS360.md) explains the per-channel stop/forward/reverse counts (205–409), assignment to observed clockwise/counterclockwise rotation, measured degrees and elapsed milliseconds, pending hip-viewpoint selector, and **Đã đặt 90°** confirmation. Entering or saving observations never starts a servo. No stop value or motor speed is assumed correct by default.
 
-**Thử 1 servo** opens the experimental test. Opening it, changing channel or adjusting neutral does not move a servo. A held button can command exactly one CH0–7; release, stop, session change or timeout requests full-off. Each press has a 2000 ms cap and 500 ms command lease. Integer PCA counts are displayed with a labelled nominal microsecond conversion. Read the [complete test guide and limits](SERVO-TEST.md) before any physical test. The current owned inventory has no servo supply of established rating, and flash permission does not authorize motor operation.
+Only one CH0–7 can receive a timed command. Duration is clipped to a selected 50–500 ms cap and remaining software travel budget; the 500 ms keep-alive cannot extend it. Front hip budgets are CW25°/CCW55°, rear hips CW55°/CCW25°, and knees ±35°: the owner's hand-reported limits minus a 5° margin. The UI displays estimated displacement and requested/last emitted PCA counts. These are software/I²C observations, not measured shaft angle or a collision guarantee.
 
-The positional gait and centring code remain available only for **eight confirmed compatible positional servos**. On **Lái cua**, choose **Định vị 180° — đã xác nhận cả 8**, then **Áp dụng loại servo**. This intentionally starts positional pulses. Never select it for the owner's continuous motors. Reboot returns to unknown/off.
+Expiry, release/off, disconnect, settings/calibration/session/mode changes, a fault or untracked motion invalidate the reference. Physically restore the pose and confirm again before another run; the button is not automatic homing or a way to bypass the travel budget. Settings remain in RAM, and reboot starts with all 16 outputs off. **Drive arrows stay disabled for continuous servos** because there is no validated loaded walking pattern for this joint geometry.
+
+The previous [single-servo diagnostic](SERVO-TEST.md) remains under **Chi tiết → Thử cũ** for an unloaded servo only. It is untracked motion and invalidates the manual reference. The light and direct Wi-Fi remain independent of actuator mode.
+
+The positional gait is retained for a separate compatible configuration using eight confirmed positional servos. Never choose that setting for the owner's continuous motors.
 
 ## Centre before attaching horns — positional servos only
 
@@ -62,8 +66,8 @@ In positional mode channels initially enable 300 ms apart and subsequent command
 
 ## Desktop checks and limits
 
-`python3 tools/firmware/check.py` runs core, web, HTTP, interface, driver, target and display groups for both hardware profiles, including independent QR decoding with Apple Vision. It checks actual HTTP routes and PCA register output for default-off startup, one channel, count bounds, timeout/dead-man/session transitions and the retained positional behavior. [TEST-RESULTS.json](TEST-RESULTS.json) is generated only after the suite passes. The board reconciler checks exact PCB/XML pins and reviewed evidence separately.
+`python3 tools/firmware/check.py` runs all seven host groups for both hardware profiles, including independent QR decoding with Apple Vision. Tests cover reference invalidation, uncalibrated and pending-viewpoint gates, front/rear hip and knee budgets in both directions, duration clipping, actual PCA register writes, output limits, stopping/session/settings behavior, and direct-AP navigation. [TEST-RESULTS.json](TEST-RESULTS.json) is generated after the complete suite passes. Board reconciliation separately checks actual PCB/XML pins.
 
-The positional gait test samples 720 points per cycle in eight directions, with alternating diagonal pairs. Its ideal-contact model does not establish stability, friction, servo lag, power capacity or walking. CAD collision checks are separate. The continuous-servo test neither holds angle nor establishes a walking gait. Software full-off is not a power cut or a guaranteed brake; I²C failure and scheduling/network delays remain physical limitations, as detailed in the test guide.
+The existing positional gait model does not establish stability or physical walking. The continuous experiment is an estimated, single-joint motion tool. Software full-off is not braking, holding or a power disconnect; a lost I²C link on the original LILYGO cannot guarantee receipt of an off command. The supply rating and actual pulse/frequency/load behavior remain unmeasured. See [the full limits](CONTINUOUS360.md) and [flashing policy](FLASH-POLICY.md).
 
 [Sources and licences](SOURCES.md) · [Interface metadata](INTEGRATION.json) · [Mechanical checklist](../case/CHECKLIST-RAP.md)

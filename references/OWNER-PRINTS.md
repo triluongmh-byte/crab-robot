@@ -37,3 +37,7 @@ After the four-wire hookup instructions, the owner reports that both boards ligh
 ## Servo rotation and reversed polarity — 2026-11-10
 
 The owner subsequently reports no motion on a forward command, finds reversed terminal polarity, then reports the servos spinning and confirms that all purchased units were the “360°” variant. The exact seller classification is not yet verified. Continuous rotation is suspected from the description; positional 360° and effects of the reversed-polarity event cannot be excluded from the generic SG90 labels in the photos. No controlled joint-angle or walking success is established. The current design remains calibrated for positional 180° servos. The supplied photos also show a separate bare-cell/charger setup, rather than the specified closed bought USB bank; no output voltage, current capability, protection or polarity is inferred from those photographs. Keep power disconnected while resolving the actuator type and wiring.
+
+## Owner follow-up — 2026-11-11
+
+The owner reports that all eight continuous SG90s are installed and each worked when tested separately on the original LILYGO/PCA9685 assembly. The owner also reports manually setting every hip and elbow at the proposed 90° reference. These observations concern the old modified body and retained leg prints, not the unprinted r5 frames or integrated PCB. Exact pulse/stop values, per-direction speed measurements, supply rating, stopping on release, loaded clearance and walking are not established by these reports. No new print is reported.

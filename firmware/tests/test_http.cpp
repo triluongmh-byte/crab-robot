@@ -72,5 +72,40 @@ int main(){
  assert(network.state==crab::NetState::Online&&wifiStore.data["ssid"]=="Good"&&wifiStore.data["pass"]=="private-password");
  server.request("/api/status");assert(server.body.find("private-password")==String::npos);
  motion.tick(clockMs+501);assert(!motion.lease);
- std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<": actual HTTP routes, unknown gait/centre/trim/save refusal, RAM-only actuator/test routes, ordered release, AP-only control/light/Ráp/status, captive landing, STA loss independent, saved retries paused, manual scan/preemption, wrong password, NVS success, watchdog\n";
+ // Note14 actual routes; every response is checked by Server::send outside Guard.
+ motion=crab::Motion{};motion.newSession(42);uint32_t n=0;
+ server.request("/api/360",{{"token","42"},{"seq",String(++n)},{"active","1"}});assert(server.code==200&&motion.continuous.opened);
+ server.request("/api/360/hold",{{"token","42"},{"seq",String(++n)},{"ch","0"},{"action","1"},{"duration","200"},{"fresh","1"}});assert(server.code==409); // candidates never armed
+ for(int ch=0;ch<8;ch++){
+  server.request("/api/360/config",{{"token","42"},{"seq",String(++n)},{"ch",String(ch)},{"stop",String(300+ch)},{"forward","347"},{"reverse","267"}});assert(server.code==200&&!motion.continuous.active);
+  if(ch==0){server.request("/api/360/viewpoint",{{"token","42"},{"seq",String(++n)},{"value","1"}});assert(server.code==200);}
+  for(int dir=1;dir<=2;dir++){server.request("/api/360/calibrate",{{"token","42"},{"seq",String(++n)},{"ch",String(ch)},{"direction",String(dir)},{"counts",dir==1?"347":"267"},{"degrees","10"},{"ms","2000"}});assert(server.code==200&&!motion.continuous.referenceValid&&!motion.continuous.active);}
+  server.request("/api/360/reference",{{"token","42"},{"seq",String(++n)},{"confirm","manual90"}});assert(server.code==200&&motion.continuous.referenceValid);
+  int offCalls=servos.offCalls;
+  server.request("/api/360/hold",{{"token","42"},{"seq",String(++n)},{"ch",String(ch)},{"action","1"},{"duration","200"},{"fresh","1"}});assert(server.code==200&&motion.continuous.counts==347);
+  server.request("/api/status");assert(server.body.find("\"continuousRequested\":347")!=String::npos&&server.body.find("\"forward\":347")!=String::npos);
+  server.request("/api/360/config",{{"token","42"},{"seq",String(++n)},{"ch",String(ch)},{"stop","320"},{"forward","267"},{"reverse","347"}});assert(server.code==200&&!motion.continuous.active&&servos.offCalls>offCalls);
+ }
+ for(const char* bad:{"204","410","4294967295","-1","307.5"}){server.request("/api/360/config",{{"token","42"},{"seq",String(++n)},{"ch","0"},{"stop",bad},{"forward","267"},{"reverse","347"}});assert(server.code==400);}
+ server.request("/api/360/hold",{{"token","42"},{"seq",String(++n)},{"ch","0"},{"action","1"},{"duration","501"},{"fresh","1"}});assert(server.code==400);
+ server.request("/api/360/hold",{{"token","99"},{"seq",String(++n)},{"ch","0"},{"action","1"},{"duration","200"},{"fresh","1"}});assert(server.code==409);
+ server.request("/api/360/calibrate",{{"token","42"},{"seq",String(++n)},{"ch","0"},{"direction","1"},{"counts","267"},{"degrees","10"},{"ms","2000"}});assert(server.code==200);
+ server.request("/api/360/reference",{{"token","42"},{"seq",String(++n)},{"confirm","manual90"}});assert(server.code==200);
+ server.request("/api/360/hold",{{"token","42"},{"seq",String(++n)},{"ch","0"},{"action","1"},{"duration","200"},{"fresh","1"}});assert(server.code==200);
+ server.request("/api/move",{{"token","42"},{"seq",String(++n)},{"dir","0"},{"fresh","0"}});assert(server.code==200&&!motion.continuous.active);
+ server.request("/api/360/hold",{{"token","42"},{"seq",String(n-1)},{"ch","0"},{"action","1"},{"duration","200"},{"fresh","1"}});assert(server.code==409);
+ server.request("/api/centre",{{"token","42"}});assert(server.code==409&&!motion.raw);
+ int offCalls=servos.offCalls;server.request("/api/session");assert(server.code==200&&!motion.continuous.opened&&servos.offCalls>offCalls);
+ motion=crab::Motion{};motion.newSession(42);assert(motion.openContinuous(true));n=0;
+ server.request("/api/360/move",{{"token","42"},{"seq",String(++n)},{"ch","1"},{"direction","1"},{"degrees","60"},{"cap","500"},{"fresh","1"}});assert(server.code==409&&server.body.find("Chưa hiệu chỉnh")!=String::npos);
+ server.request("/api/360/reference",{{"token","42"},{"seq",String(++n)},{"confirm","yes"}});assert(server.code==400&&!motion.continuous.referenceValid);
+ server.request("/api/360/config",{{"token","42"},{"seq",String(++n)},{"ch","1"},{"stop","307"},{"forward","267"},{"reverse","347"}});assert(server.code==200);
+ server.request("/api/360/calibrate",{{"token","42"},{"seq",String(++n)},{"ch","1"},{"direction","1"},{"counts","267"},{"degrees","20"},{"ms","100"}});assert(server.code==200&&!motion.continuous.active);
+ server.request("/api/360/move",{{"token","42"},{"seq",String(++n)},{"ch","1"},{"direction","1"},{"degrees","60"},{"cap","500"},{"fresh","1"}});assert(server.code==409&&server.body.find("90°")!=String::npos);
+ server.request("/api/360/reference",{{"token","42"},{"seq",String(++n)},{"confirm","manual90"}});assert(server.code==200&&!motion.continuous.active);
+ server.request("/api/360/move",{{"token","42"},{"seq",String(++n)},{"ch","1"},{"direction","1"},{"degrees","60"},{"cap","500"},{"fresh","1"}});assert(server.code==200&&server.body.find("\"clipped\":true")!=String::npos&&motion.continuous.duration==175);
+ motion.tick(clockMs+100);server.request("/api/status");assert(server.body.find("\"estimated\":20.00")!=String::npos);
+ server.request("/api/speed",{{"token","42"},{"value","0.4"}});assert(server.code==200&&!motion.continuous.active&&!motion.continuous.referenceValid);
+ server.request("/api/360/move",{{"token","42"},{"seq",String(++n)},{"ch","1"},{"direction","1"},{"degrees","60"},{"cap","501"},{"fresh","1"}});assert(server.code==400);
+ std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<": continuous360 routes/config8CH/unconfirmed refusal/count-duration bounds/ordered stop/session-off/HTTP never under mutex; actual HTTP routes, unknown gait/centre/trim/save refusal, RAM-only actuator/test routes, ordered release, AP-only control/light/Ráp/status, captive landing, STA loss independent, saved retries paused, manual scan/preemption, wrong password, NVS success, watchdog\n";
 }

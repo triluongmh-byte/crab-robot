@@ -7,6 +7,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 RECIPES = {'lilygo': ('flash.json', 'BUILD.json'),
            'integrated': ('flash-integrated.json', 'BUILD-integrated.json')}
+RELEASE_TIP = '4cadb190eb0b3a92a9e7805c9956f41af7b085d71a2e18de54edbae19829277c'
+IMPLEMENTED_NOTES = [10,11,12,13,14,15,16,17,18]
+
+def release_metadata():
+    return {'releaseChainTip': RELEASE_TIP, 'implementedFirmwareNotes': IMPLEMENTED_NOTES,
+            'ownerEvidence': 'firmware/OWNER-EVIDENCE.json'}
 
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -28,6 +34,11 @@ def build(target, toolchain):
         and all((out/n).is_file() and (out/n).stat().st_size == r['bytes']
                 and sha(out/n) == r['sha256'] for n, r in artifacts.items()))
     if unchanged:
+        # Documentation-only notes change release authority, not compiled bytes.
+        # Refresh only after every source/config/toolchain/binary hash matches.
+        current = dict(previous, **release_metadata())
+        if current != previous:
+            manifest.write_text(json.dumps(current, indent=2)+'\n')
         print(f'SKIP {target}: sources/config/toolchain and all binary hashes unchanged', flush=True)
         return
     # Each compile uses all CPUs. Targets compile sequentially to avoid competing
@@ -38,6 +49,7 @@ def build(target, toolchain):
     artifacts = {p.name: {'sha256': sha(p), 'bytes': p.stat().st_size} for p in sorted(out.glob('*.bin'))}
     assert all(n in artifacts for n in ['crab.ino.bin', 'crab.ino.bootloader.bin', 'crab.ino.partitions.bin'])
     manifest.write_text(json.dumps({'target': target, 'hardwareTested': False,
+        **release_metadata(),
         'interfaceStatus': 'final SPI/OE interface; see BOARD-RECONCILIATION.json' if target == 'integrated' else 'LILYGO baseline',
         'sourceDigest': digest, 'sourceInputs': sources, 'toolchain': toolchain,
         'fqbn': recipe['fqbn'], 'compileArgs': recipe.get('compileArgs', []),

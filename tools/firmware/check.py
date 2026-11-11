@@ -37,7 +37,7 @@ def cpp(group,profile):
  dest=OUT if profile=='lilygo' else OUT/profile;dest.mkdir(parents=True,exist_ok=True)
  paths=[ROOT/'firmware/crab'/n for n in ['config.h','hardware.h']]+[ROOT/f'firmware/tests/test_{group}.cpp']
  flags=PROFILES[profile];args=[]
- if group in ('core','drivers','http'):paths += [ROOT/'firmware/crab/core.h']
+ if group in ('core','drivers','http'):paths += [ROOT/'firmware/crab/core.h',ROOT/'firmware/crab/continuous360.h']
  if group in ('core','display'):paths += [ROOT/'firmware/crab'/n for n in ['qrcodegen.c','qrcodegen.h']]
  if group=='display':paths += [ROOT/'firmware/crab'/n for n in ['display.h','waveshare_panel.h','font_vi.h']]
  if group in ('drivers','display'):
@@ -91,8 +91,11 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
  results={name:pool.submit(checks[name]) for name in selected if name!='core'}
  for name,f in results.items():outputs[name]=f.result();print(name+': '+outputs[name],flush=True)
 if set(selected)==set(checks):
- paths=list((ROOT/'firmware/crab').glob('*'))+[p for p in (ROOT/'firmware/tests').rglob('*') if p.is_file()]+[ROOT/p for p in ['PILOT_CONTRACT.json','firmware/INTEGRATION.json','firmware/BUILD.json','firmware/BUILD-integrated.json','firmware/WIRING.md','firmware/README.md','firmware/flash.json','firmware/flash-integrated.json','tools/firmware/check.py','tools/firmware/reconcile.py']]
+ paths=list((ROOT/'firmware/crab').glob('*'))+[p for p in (ROOT/'firmware/tests').rglob('*') if p.is_file()]+[ROOT/p for p in ['PILOT_CONTRACT.json','firmware/INTEGRATION.json','firmware/BUILD.json','firmware/BUILD-integrated.json','firmware/WIRING.md','firmware/README.md','firmware/OWNER-EVIDENCE.json','firmware/flash.json','firmware/flash-integrated.json','tools/firmware/check.py','tools/firmware/reconcile.py']]
  (ROOT/'firmware/TEST-RESULTS.json').write_text(json.dumps({'passed':True,'hardwareTested':False,
   'scope':'host regressions and binary integrity for both targets; board reconciliation separate',
+  'releaseChainTip':'4cadb190eb0b3a92a9e7805c9956f41af7b085d71a2e18de54edbae19829277c',
+  'implementedFirmwareNotes':[10,11,12,13,14,15,16,17,18],
+  'ownerEvidence':'firmware/OWNER-EVIDENCE.json',
   'checks':outputs,'inputDigest':digest(paths),
   'integratedBoardStatus':json.loads((ROOT/'firmware/INTEGRATION.json').read_text())['integratedInterface']['status']},ensure_ascii=False,indent=2)+'\n')

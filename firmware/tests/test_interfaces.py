@@ -60,4 +60,32 @@ for target,recipe_name,manifest_name,output in [
 lily=json.loads((root/'firmware/BUILD.json').read_text())
 board=json.loads((root/'firmware/BUILD-integrated.json').read_text())
 assert lily['artifacts']['crab.ino.bin']['sha256']!=board['artifacts']['crab.ino.bin']['sha256'],'target binary selection was lost'
+# Current release authority must describe exactly the delivered binaries.
+candidate=json.loads((root/'firmware/FLASH-CANDIDATE.json').read_text())
+assert candidate['releaseChainTip']=='4cadb190eb0b3a92a9e7805c9956f41af7b085d71a2e18de54edbae19829277c'
+assert {15,16,17,18}.issubset(candidate['implementedNotes'])
+evidence=json.loads((root/'firmware/OWNER-EVIDENCE.json').read_text())
+assert evidence['releaseChainTip']==candidate['releaseChainTip']
+assert evidence['installedChannels']==list(range(8)) and evidence['individuallyReportedOK']==list(range(8))
+assert evidence['basis']=='owner report only' and not evidence['hardwareTested']
+assert evidence['ownerReportedManual90PoseSet'] and evidence['runtimeConfirmationRequired']
+assert not evidence['runtimeReferenceConfirmed'] and not evidence['calibrationSeeded'] and not evidence['isolationConfirmed']
+assert evidence['releaseNote']==18 and evidence['servoPlugsCurrentlyConnected']
+reports={r['releaseNote']:r for r in evidence['ownerReports']}
+assert reports[17]['exactOwnerMessage']=='ok fen, thêm nữa là tao đã gắn tất cả servors và test từng cái oke rồi đó.'
+assert reports[18]['exactOwnerMessage']=='đã nắn hết khớp về như tao nói. Mạnh mẽ code nạp rồi push nhe'
+assert reports[18]['releaseNoteSha256']==candidate['releaseChainTip']
+assert reports[18]['observation']=='manual 90° pose set on all joints (owner report)'
+assert candidate['ownerEvidenceSha256']==sha(root/'firmware/OWNER-EVIDENCE.json')
+assert integration['ownerEvidence']=='firmware/OWNER-EVIDENCE.json'
+assert integration['ownerEvidenceReleaseNoteSha256']==candidate['releaseChainTip']
+for target in ['lilygo','integrated']:
+ record=candidate['binaries'][target]
+ manifest=root/record['manifest']
+ assert sha(manifest)==record['manifestSha256']
+ assert json.loads(manifest.read_text())['releaseChainTip']==candidate['releaseChainTip']
+ assert json.loads(manifest.read_text())['ownerEvidence']=='firmware/OWNER-EVIDENCE.json'
+ assert 18 in json.loads(manifest.read_text())['implementedFirmwareNotes']
+ assert sha(root/record['path'])==record['sha256']
+ assert record['flashCandidate']==(target=='lilygo')
 print('PASS: sealed contract, note4 target metadata, embedded UI/glyphs/SVG/guide links, earliest OE inhibit, separate recipes and two complete binary/source manifests; final board reconciliation remains separate')
