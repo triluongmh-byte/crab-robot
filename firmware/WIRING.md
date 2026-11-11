@@ -1,68 +1,116 @@
-# Wiring — use the printed labels
+# Wire the existing crab
 
-Two variants are supported. The original LILYGO and separate PCA9685 use the first table; the integrated PCB already contains those functions. Disconnect both bank outputs before changing any wire. Wire colours are suggestions; matching labels at both ends decide the connection.
+**LILYGO T-Display-S3 non-touch + separate PCA9685.** This is the hardware on the owner's bench. Use the built-in screen and USB-C to identify the LILYGO, and the sixteen three-pin servo sockets to identify the PCA.
+
+[Back to README](../README.md#wire-it) · [All wiring on one sheet](../docs/images/wiring-quick-reference.svg) · [Servo map](#eight-servos-mean-eight-three-wire-plugs) · [Troubleshooting](#if-something-does-not-work)
 
 ## Original LILYGO and bought PCA9685
 
-Reference: LILYGO T-Display-S3 **non-touch**, schematic 2024-04-29, with soldered headers; PCA9685 breakout at default address 0x40. Clone pin positions can differ. Read the labels rather than copying the Arduino Uno pin numbers in a shop picture.
+Unplug LILYGO USB **and** the separate servo supply before changing wires. Wire colours below are suggestions; printed labels at both ends decide the connection.
 
-![Owner-supplied LILYGO pinout, USB-C downward and component side visible](../references/user-images/2026-11-10-owner-supplied-lilygo-pinout.png)
+[![Keep this whole sheet beside the robot: real LILYGO pin photo, signal leads, PCA photo, power, LED and servo map](../docs/images/wiring-quick-reference.svg)](../docs/images/wiring-quick-reference.svg)
 
-In this picture, **18 is on the right below 44; 17 is directly below 18**. Use the upper-left **3V** pin for logic power and a pin marked **G/GND** for ground. U1RXD/U1TXD are alternate functions, not fixed wiring requirements: this application configures GPIO18 as SDA and GPIO17 as SCL. The four connections below match the compiled LILYGO pin profile. The picture is a supplied reference diagram, not a photograph of the received PCA board.
+### 1. Find the pins on the real board
 
-First connect only these four logic wires with both supplies unplugged. Keep all servo plugs and the second bank output disconnected, then power LILYGO by USB and restart to check PCA detection.
+The photo on the sheet shows the **back/component side of the LILYGO, USB-C down**. It uses the same owner-supplied reference as [the full original pinout](../references/user-images/2026-11-10-owner-supplied-lilygo-pinout.png), with only the needed pins called out.
 
-![Original module wiring](assets/wiring.svg)
+| Photo tag | Pin to find | Plug its other end into | Suggested wire |
+|---|---|---|---|
+| **A** | Upper-left **`3V`** | PCA **`VCC`** | Thin red |
+| **B** | Left **`G` / `GND`**, just above `5V` | PCA **`GND`** | Black |
+| **C** | Right **`18`**, just below `44` | PCA **`SDA`** | Green |
+| **D** | Right **`17`**, just below `18` | PCA **`SCL`** | Blue |
+| **E** | Left **`1`**, just below upper `3V` | LED input **`DIN` / `IN`** | Yellow |
 
-| Suggested colour | From LILYGO | To |
+The PCA's six-pin control header has labels **`GND`, `OE`, `SCL`, `SDA`, `VCC`, `V+`** on the Adafruit-style reference breakout. Equivalent headers can appear at both short ends; use a labelled header you can reach. Header orientation varies between clones, so use the printed names. The board photograph on the sheet is the owner's received breakout; the adjacent connection list identifies functions, not an invented hole-by-hole clone pinout.
+
+Use female-to-female Dupont leads. **`U1RXD` / `U1TXD` beside LILYGO 18/17 are alternate functions:** this application assigns 18 to SDA and 17 to SCL. Do not copy Arduino Uno `A4`/`A5` wiring from a seller's illustration. Leave `OE` unconnected on this reference breakout. No other LILYGO GPIO is needed for this module setup.
+
+**First check:** connect A–D only, with servo plugs and servo power still disconnected. Power LILYGO by USB. Open the web controller and check that it does not report **Kiểm tra dây PCA9685**. After correcting a PCA connection while unpowered, restart LILYGO: an I²C fault remains latched until reboot.
+
+### 2. Connect power — two different PCA labels
+
+| Cable or wire | From | To |
 |---|---|---|
-| Green | `18` | PCA input `SDA` |
-| Blue | `17` | PCA input `SCL` |
-| Thin red | `3V` | PCA input `VCC` — **3.3 V logic** |
-| Black | `G` / `GND` | PCA input `GND` |
-| Yellow | `1` | LED input `DIN` / `IN`, directly |
+| USB cable | Closed 5 V USB supply, output 1 | LILYGO USB-C |
+| Servo positive | Separate 5 V USB output through a labelled terminal adapter, **`+`** | PCA screw terminal **`V+` / `+`** |
+| Servo negative | The same adapter, **`−` / `GND`** | PCA screw terminal **`GND` / `−`** |
+| Common ground B | LILYGO **`G` / `GND`** | PCA **`GND`** — keep this lead connected |
 
-Use female-to-female Dupont leads. Leave PCA `OE` unconnected on the reference breakout and leave unused pins alone. **PCA VCC and V+ are different:** VCC is 3.3 V logic; V+ is the separate 5 V servo supply. Never join them. Do not use GPIO16/43/44/3/4/21 or display pins for this variant.
+**PCA `VCC` =3.3 V logic from A. PCA `V+` = 5 V servo/LED power.** Do not bridge them or feed the eight servos through LILYGO's power pins. Read terminal `+`/`−` marks; the apparent left/right positions change when you rotate the board. Clamp bare metal, not insulation, and leave no loose strand between terminals.
 
-Bank port 1 → data-capable USB-A/USB-C cable → LILYGO USB-C. Bank port 2 → labelled USB-to-terminal adapter → PCA screw terminal: `+` to `V+`, `−` to `GND`, using the specified parallel red/black power leads. Clamp metal, not insulation; gently tug each wire and inspect for a strand bridging the poles. The LILYGO–PCA GND lead must also be present.
+This is the original closed-USB-supply plan, not a claim that the photographed cell/module setup was rated or verified. A suitable output and cable must handle the servo load. If the bank shuts down or the board resets, disconnect servo power, check free movement and use an adequately rated supply before retrying.
 
-From the PCA output-side power header, `V+` → LED `5V/VCC` and `GND` → LED `GND`. LED data comes from LILYGO GPIO1, not through a PWM channel. Use the LED input end and its direction arrow. Do not power the LED from LILYGO 3V/5V.
+### 3. Connect the light
 
-**ASSUMPTIONS:** the PCA has the Adafruit-style labelled functions, address bridges untouched and its normal OE pull-down; the LED accepts direct 3.3 V data. If the light flickers, shorten DIN beside GND, reduce configured brightness or choose a compatible stick; leave it disconnected if unresolved. If headers or LED leads are absent, have a soldering service fit them before use.
+| LED label | Connect to |
+|---|---|
+| **`DIN` / `IN`** at the arrow's input end | LILYGO **`1`**, lead E |
+| **`5V` / `VCC`** | PCA servo-side **`V+`** |
+| **`GND` / `−`** | PCA **`GND`** |
 
-## Check positional versus continuous rotation
-
-This firmware is calibrated for **180° positional SG90-class servos**. The owner reports 360° units and spinning; verify the actual seller variant before further powered tests. Continuous-rotation speed-controlled servos cannot hold these commanded joint angles. A positional 360° servo is a different device and would need a separate calibration change. “SG90” or “360°” alone is insufficient identification. See [the required servo type](../case/BOM.md#required-servo-type). Do not use the assembled legs to test an unidentified continuous-rotation unit. Keep servo power off after the reported reversed-terminal event until the wiring and parts are checked.
+LED data is separate from the servo channels. Do not connect DIN to a PCA PWM socket. Do not power the stick from LILYGO 3V/5V. Direct 3.3 V LED data is an **ASSUMPTION** for the owned stick; if it flickers, shorten data beside GND, keep configured brightness low and leave it disconnected if unresolved. The firmware caps brightness at 16/255.
 
 ## Eight servos mean eight three-wire plugs
 
-Stand behind the robot looking forward: robot left is your left. The **hip** servo is mounted on the body; the **knee** servo is carried on the leg. CH denotes a complete socket, not a wire colour or GPIO.
+**Hip = on the body. Knee = on the leg.** Mark FRONT on the body. The following is a top view, with FRONT pointing away from you.
 
-| Leg | Hip | Knee | Integrated PCB references |
-|---|---|---|---|
-| Front left | CH0 | CH1 | J2 / J3 |
-| Front right | CH2 | CH3 | J4 / J5 |
-| Rear left | CH4 | CH5 | J6 / J7 |
-| Rear right | CH6 | CH7 | J8 / J9 |
+```text
+                         FRONT ↑
+      FRONT LEFT                       FRONT RIGHT
+      Hip  → CH0                       Hip  → CH2
+      Knee → CH1                       Knee → CH3
+                ┌──────────────────┐
+                │    ROBOT BODY    │
+                └──────────────────┘
+      REAR LEFT                        REAR RIGHT
+      Hip  → CH4                       Hip  → CH6
+      Knee → CH5                       Knee → CH7
+```
 
-For every plug, **brown → GND/−, red → V+/5V, orange → PWM/S**. Read the board labels. For example, front-left CH0/CH1 means two separate plugs, one per servo. Do not split one servo's wires between channels. Leave CH8–CH15 empty and the two spare servos loose.
+| Leg | Body-mounted hip plug | Leg-mounted knee plug |
+|---|---|---|
+| Front left | **CH0** | **CH1** |
+| Front right | **CH2** | **CH3** |
+| Rear left | **CH4** | **CH5** |
+| Rear right | **CH6** | **CH7** |
 
-Label all eight leads before routing. Keep slack across each joint and protect insulation from rough edges. On the new frame use the illustrated alternative routes and at least 40 mm free knee lead between its two ties; use an extension when necessary. These CAD routes target the integrated PCB. They do not prove complete routes for the current separate modules in the owner's modified orange body.
+| Wire in each complete servo plug | PCA row label |
+|---|---|
+| **Orange** | **`PWM` / `S`** — signal |
+| **Red**, middle wire | **`V+` / `5V`** — servo power |
+| **Brown** | **`GND` / `−`** — ground |
 
-## Integrated board
+Do not split one servo's three wires across channels. Leave CH8–CH15 empty and spare servos loose. Find the labelled GND row before seating a plug; red being in the middle does not distinguish the two possible outer-wire orientations.
 
-Follow the English [illustrated integrated wiring guide](../docs/INTEGRATED-WIRING.md) for all J10/J11/J12 pins and connector orientation.
+Label all eight leads before routing. Leave a free loop across each joint, avoid tight bends at the servo exit and keep wires away from moving horns. Protect insulation at the owner's hand-cut openings. New-frame CAD routing does not prove cable clearance in the owner's modified printed body.
 
-![Integrated electrical connections](assets/integrated-wiring.svg)
+## Check positional versus continuous rotation
 
-Bank port 1 powers **J1 USB-C**, logic and LCD. Bank port 2 powers **J12** servos/LED. Their positive rails remain separate; the PCB joins ground. The separately bought PCA9685 and LILYGO are not installed on this variant. The supplied Waveshare 23822 eight-wire LCD cable connects by signal names, not wire colour.
+The photographed SG90s are the owner's **continuous 360° motors**. The loaded timed experiments caused collisions/erratic motion and are paused; see [the actual experiment outcome](EXPERIMENT-STATUS.md). Changing wiring cannot add position feedback.
 
-J1 faces **+Y, the robot's left**. Its native PCB origin is X21.45/Y−28, rotation 180°. The ordinary-cable CAD check passes for a **12.5 × 7 × 25 mm head and Ø4.5 mm cable**. Route from bank port 1 through the rear bay/end window, along the outside of the +Y rail and into the side port. The head projects about 20 mm beyond the body; keep that space free. Actual cable fit remains a first-board check.
+Replacement parts for this jointed-leg mechanism must be **positional** servos. “SG90” alone is insufficient; the seller variant must actually move to and hold requested angles. The owner has shown a cart/description labelled 180°, not a received/tested replacement set. Test one unloaded replacement's response and fit before attaching a leg. Never select positional mode while continuous-rotation units are still connected as the other joints.
 
 ## First power and centring
 
-Have the custom-PCB assembler perform its electrical inspection first. For either variant, initially leave port 2 and the servo plugs disconnected. Power logic and check QR/Wi-Fi using the correct firmware target. If PCA is absent, a PCA wiring error is expected; correct wiring while unpowered and restart because an I²C fault remains latched until reboot.
+1. Leave servo 5V and all servo plugs disconnected. Power LILYGO only; confirm QR/web access and PCA detection.
+2. When all eight motors have been confirmed positional, prepare each one's centre with its horn/leg uncoupled from the shaft. Use the [positional-only assembly procedure](README.md) and the correct firmware mode; the360° timed controls are not this procedure.
+3. Disconnect power before attaching horns in the neutral pose. Support the body, check free hand movement and cable slack, then use small positional trims, **Lưu tâm** and **Xong ráp** as described in the firmware guide.
 
-Turn both outputs off before adding servos. **Uncouple already installed horns/legs from their output shafts**, support the body and use **Ráp → Giữa thô 1500 µs** before attaching horns in the neutral pose. Continue with **Tư thế đứng**, small trims, **Lưu tâm** and **Xong ráp**. See the [firmware instructions](README.md) and [physical checklist](../case/CHECKLIST-RAP.md). Do not force gears or use powered movement to overcome binding.
+Do not force gears or use powered movement to overcome binding. Disconnect servo power before reset/flashing; BOOT/reset is not a servo power switch. Disconnect both supplies to turn everything off.
 
-Use a closed two-output 5 V bank meeting the [mechanical BOM](../case/BOM.md). If it shuts down, choose **Chậm**, check binding and change to a suitable bank if necessary. Warm wiring requires power off and a suitable replacement. Resetting or holding BOOT does not cut servo/LED power; disconnect output 2 before reset/flashing and both outputs to turn everything off. The new PCB/frame remain physically untested.
+## If something does not work
+
+| What you see | First thing to check, with power removed before rewiring |
+|---|---|
+| Screen works; PCA error | A–D, especially18 → SDA,17 → SCL and3V → VCC; then restart |
+| PCA LED is on; no servo movement | Separate servo 5V at terminal V+, plug orientation and selected motor mode; a lit logic LED does not prove servo power |
+| Servo spins continuously | Actual motor is probably continuous-rotation; stop and identify its variant rather than trying to centre it |
+| LED does not light | Lead E at GPIO 1, LED DIN input direction, separate 5 V and common GND |
+| Reset, bank shutdown or hot/binding motor | Disconnect servo power, check binding and supply/cable suitability |
+
+## Integrated board
+
+The future PCB contains the controller and PCA already. Its J1–J12 connector map is a different setup: follow the [integrated wiring guide](../docs/INTEGRATED-WIRING.md). Do not mix its connector numbers or display pins with the LILYGO module guide above.
+
+References: [LILYGO manufacturer repository](https://github.com/Xinyuan-LilyGO/T-Display-S3), [Adafruit PCA9685 pin definitions](https://learn.adafruit.com/16-channel-pwm-servo-driver/pinouts), [the project's actual GPIO definitions](crab/hardware.h).
