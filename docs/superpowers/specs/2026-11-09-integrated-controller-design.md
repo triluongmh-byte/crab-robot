@@ -1,5 +1,7 @@
 # Integrated Crab Robot controller — design intent
 
+> Publication update,2026-11-12: the owner explicitly requested merging the complete hardware branch into `main`. The separate-branch publication plan below is historical; the current repository includes both the existing modular build and the future integrated design.
+
 The owner explicitly corrected the passive-carrier interpretation: the PCB must replace the ESP32/LILYGO development board and bought controller breakout boards, including the PCA9685 module. The passive carrier is superseded and unpublished.
 
 ## Chosen direction

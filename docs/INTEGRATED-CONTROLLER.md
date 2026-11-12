@@ -1,10 +1,10 @@
 # Future integrated controller
 
-For the owner’s currently assembled LILYGO + PCA9685 robot, use the [main README](../README.md) and [photo wiring guide](../firmware/WIRING.md). This is the custom-PCB branch: the PCB has not been manufactured or powered and its matching new frame is unprinted.
+For the owner’s currently assembled LILYGO + PCA9685 robot, use the [main README](../README.md) and [photo wiring guide](../firmware/WIRING.md). This guide covers the future custom PCB: the PCB has not been manufactured or powered and its matching new frame is unprinted.
 
 # Crab Robot — integrated controller and open skeleton
 
-One **88 × 62 mm custom PCB** contains the ESP32-S3-WROOM-1-N16R8, PCA9685 servo controller, 3.3 V regulator, native USB-C and BOOT/RESET buttons. Eight SG90-class servos, a small cabled Waveshare LCD, LED stick and an ordinary closed USB power bank complete the robot. This is the integrated hardware branch; the original modular build remains on `main`.
+One **88 × 62 mm custom PCB** contains the ESP32-S3-WROOM-1-N16R8, PCA9685 servo controller, 3.3 V regulator, native USB-C and BOOT/RESET buttons. Eight SG90-class servos, a small cabled Waveshare LCD, LED stick and an ordinary closed USB power bank complete the robot. The repository includes both hardware variants; the original modular build is documented in the main README.
 
 The new body has **two open bar frames** and individual servo-tab mounts. It reuses the four thighs and four feet already printed. The two interfering clamp bars are retired. Skin is deferred until the owner asks for it.
 
