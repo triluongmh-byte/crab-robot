@@ -1,5 +1,7 @@
 # Continuous 360° experiment with a manual reference — notes 15/16
 
+> Historical360° material. The current positional180° release has removed these web/API controls. Use [POSITIONAL180.md](POSITIONAL180.md) for the received replacement motors.
+
 The owner keeps eight continuous-rotation SG90s. No purchases or mechanical
 conversion are selected. They control speed/direction, with no angle feedback,
 homing or angle holding. The robot **does not walk**. Positional startup and

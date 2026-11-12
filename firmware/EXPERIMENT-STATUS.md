@@ -1,5 +1,7 @@
 # Owned-servo experiment status —2026-11-11
 
+> Historical360° material. The current positional180° release has removed these web/API controls. Use [POSITIONAL180.md](POSITIONAL180.md) for the received replacement motors.
+
 The owner currently has eight continuous-rotation SG90-class servos, a LILYGO T-Display-S3 and external PCA9685. The owner reported that every servo worked individually and had manually set the joints to90° before whole-robot trials. Neither that reference nor equal forward/reverse time supplies actual angle feedback.
 
 ## What was tried and observed

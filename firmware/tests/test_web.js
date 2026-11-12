@@ -1,133 +1,50 @@
-// Execute the shipped, embedded web script in a deterministic mock browser.
+// Execute the actual180-degree page; missing DOM IDs stay missing.
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const html=fs.readFileSync('firmware/assets/ui.html','utf8');
-const code=html.match(/<script>([\s\S]*?)<\/script>/)[1];
-class Element{
- constructor(id=''){this.id=id;this.value='';this.textContent='';this.listeners={};this.children=[];this.dataset={};this.hidden=false;this.classList={toggle:(name,on)=>{if(name==='hidden')this.hidden=on;}};}
- addEventListener(n,f){(this.listeners[n]??=[]).push(f);}
- appendChild(e){this.children.push(e);return e;}
- replaceChildren(){this.children=[];}
- setPointerCapture(id){this.capture=id;}
- fire(name){for(const f of this.listeners[name]||[])f({currentTarget:this,pointerId:1,preventDefault(){}});}
+const html=fs.readFileSync('firmware/assets/ui.html','utf8'),code=html.match(/<script>([\s\S]*?)<\/script>/)[1];
+const elements={};class Element{
+ constructor(){this.value='';this.textContent='';this.id='';this.listeners={};this.children=[];this.dataset={};this.disabled=false;this.classList={toggle:(n,v)=>{if(n==='hidden')this.hidden=v;}};}
+ appendChild(e){this.children.push(e);if(e.id)elements[e.id]=e;return e;}replaceChildren(){this.children=[];}
+ addEventListener(n,f){(this.listeners[n]??=[]).push(f);}setPointerCapture(){}
+ fire(n){for(const f of this.listeners[n]||[])f({currentTarget:this,pointerId:1,preventDefault(){}});}
 }
-const elements={};const el=id=>elements[id]??=(new Element(id));
-for(const id of [...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]))el(id);
-const dirs=Array.from({length:8},(_,i)=>{let e=new Element();e.dataset.dir=String(i+1);return e;});
-const steps=[-20,-4,-1,0,1,4,20].map(step=>{let e=new Element();e.dataset.testStep=String(step);return e;});
-const continuousButtons=[1,2].map(action=>{let e=new Element();e.dataset.continuousAction=String(action);return e;});
-const events={},timers=[],calls=[],beacons=[];let failMove=false,deferMove=null;
-let statusReply={message:'Quét QR để nối cua',url:'http://192.168.4.1/',online:false,driver:true,assembly:false,positional:true};
-let failStatus=false;
-const document={hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:(s==='[data-test-step]'?steps:continuousButtons),addEventListener:(n,f)=>events[n]=f};
-const fetch=async(path,options={})=>{
- const data=Object.fromEntries(options.body||[]);calls.push({path,data});
- if(path==='/api/move'&&deferMove)await deferMove;
- if(path==='/api/move'&&failMove)throw Error('offline');
- let response={};if(path==='/api/session')response={token:'42'};
- if(path==='/api/status'){if(failStatus)throw Error('offline');response=statusReply;}
- if(path==='/api/scan')response={busy:false,networks:['Nhà tôi','<script>danger</script>']};
- if(path==='/api/trim')response={offset:1};
- if(path==='/api/360/reference')response={referenceValid:true,cwViewpoint:1,reason:'Đã xác nhận đặt 90° bằng tay'};
- if(path==='/api/360/move')response={moveDuration:200,clipped:true,estimatedAngle:0,reason:'Đã cắt thời gian theo ngân sách'};
- return {ok:true,json:async()=>response};
-};
-const ctx=vm.createContext({document,window:{confirm:()=>true,addEventListener:(n,f)=>events[n]=f},navigator:{sendBeacon:(path,data)=>beacons.push({path,data:Object.fromEntries(data)})},fetch,URLSearchParams,setInterval:(f,ms)=>timers.push({f,ms}),console});
-vm.runInContext(code,ctx);
-const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
+for(const m of html.matchAll(/id="([^"]+)"/g)){const e=new Element();e.id=m[1];elements[e.id]=e;}
+const el=id=>{assert(elements[id],id+' must actually exist');return elements[id];};
+const dirs=[...html.matchAll(/data-dir="(\d+)"/g)].map(m=>{let e=new Element();e.dataset.dir=m[1];e.disabled=true;return e;});
+const events={},timers=[],calls=[],beacons=[];let failMove=false,failStatus=false,deferred=null;
+const state={message:'Đã vào Wi-Fi',online:true,url:'http://192.168.4.1/',driver:true,positional:false,enabled:0,assembly:false,offsets:Array(8).fill(0)};
+const document={hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:[],addEventListener:(n,f)=>events[n]=f};
+const fetch=async(path,opt={})=>{const data=Object.fromEntries(opt.body||[]);calls.push({path,data});let d={};
+ if(path==='/api/move'){if(deferred)await deferred;if(failMove)throw Error('offline');}
+ if(path==='/api/status'){if(failStatus)throw Error('offline');d={...state};}
+ if(path==='/api/session')d={token:'42'};
+ if(path==='/api/actuator'){state.positional=data.value==='positional';state.enabled=0;}
+ if(path==='/api/assembly')state.assembly=data.active==='1';
+ if(path==='/api/trim')state.offsets[Number(data.ch)]+=Number(data.delta);
+ if(path==='/api/scan')d={busy:false,networks:['Nhà tôi','<script>bad</script>']};
+ return {ok:true,json:async()=>d};};
+const ctx=vm.createContext({document,window:{addEventListener:(n,f)=>events[n]=f},navigator:{sendBeacon:(path,b)=>beacons.push({path,data:Object.fromEntries(b)})},fetch,URLSearchParams,setInterval:(f,ms)=>timers.push({f,ms}),console});vm.runInContext(code,ctx);
+const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 (async()=>{
- await flush();
- const page=()=>vm.runInContext('page',ctx);
- const poll=async(count=40)=>{for(let i=0;i<count;i++){await timers.find(t=>t.ms===2000).f();await flush();}};
- assert.equal(page(),'control','AP/captive portal first load must land on control');
- await poll();assert.equal(page(),'control');assert(el('status').textContent.includes('Wi-Fi nhà là tùy chọn'));
- assert(calls.some(c=>c.path==='/api/session'));assert(timers.find(t=>t.ms===150));
- dirs[0].fire('pointerdown');await flush();const releases=beacons.length;
- await poll();assert.equal(page(),'control');assert.equal(beacons.length,releases,'offline polls must not release a valid hold');
- await timers.find(t=>t.ms===150).f();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.dir,'1');dirs[0].fire('pointerup');
- for(const d of dirs){d.fire('pointerdown');await flush();const last=calls.filter(c=>c.path==='/api/move').at(-1);assert.equal(last.data.dir,d.dataset.dir);assert.equal(last.data.fresh,'1');
-  await timers.find(t=>t.ms===150).f();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.fresh,'0');
-  d.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');assert(Number(beacons.at(-1).data.seq)>Number(last.data.seq));
- }
- dirs[0].fire('pointerdown');await flush();events.blur();assert.equal(beacons.at(-1).data.dir,'0');
- dirs[1].fire('pointerdown');await flush();document.hidden=true;events.visibilitychange();assert.equal(beacons.at(-1).data.dir,'0');document.hidden=false;
- dirs[2].fire('pointerdown');await flush();events.pagehide();assert.equal(beacons.at(-1).data.dir,'0');
- dirs[3].fire('pointerdown');await flush();dirs[3].fire('pointercancel');assert.equal(beacons.at(-1).data.dir,'0');
- failMove=true;dirs[0].fire('pointerdown');await flush();assert.equal(beacons.at(-1).data.dir,'0');failMove=false;
- await el('showAssembly').onclick();await flush();assert(calls.some(c=>c.path==='/api/assembly'&&c.data.active==='1'));
- statusReply.assembly=true;await poll();assert.equal(page(),'assembly');assert(!el('assembly').hidden&&el('setup').hidden);
- const before=calls.length;dirs[0].fire('pointerdown');await flush();assert(!calls.slice(before).some(c=>c.path==='/api/move'));
- assert.equal(el('trims').children.length,8);await el('trims').children[0].children[2].onclick();await flush();assert(calls.some(c=>c.path==='/api/trim'&&c.data.ch==='0'&&c.data.delta==='1'));
- await el('centre').onclick();await el('save').onclick();await el('done').onclick();await flush();assert(calls.some(c=>c.path==='/api/assembly'&&c.data.active==='0'));
- await poll();assert.equal(page(),'control');
- await el('showSetup').onclick();assert.equal(page(),'setup');assert(!el('setup').hidden);await poll();assert.equal(page(),'setup');
- await el('scan').onclick();await flush();assert.equal(el('networks').children[1].textContent,'<script>danger</script>'); // never inserted as HTML
- el('ssid').value='Nhà tôi';el('password').value='secret-only-request';await el('connect').onclick();await flush();assert.equal(el('password').value,'');
- assert(calls.some(c=>c.path==='/api/wifi'&&c.data.password==='secret-only-request'));
- statusReply={...statusReply,message:'Sai mật khẩu hoặc mất sóng',assembly:false};
- await poll();assert.equal(page(),'setup');assert(el('status').textContent.includes('Sai mật khẩu'));
- assert(!el('status').textContent.includes('secret-only-request'));
- await el('showControl').onclick();await poll();assert.equal(page(),'control');
- await el('showAssembly').onclick();await poll();assert.equal(page(),'assembly');
- await el('done').onclick();failStatus=true;await poll(2);assert.equal(page(),'control');failStatus=false;
- await poll();assert.equal(page(),'control','reconnect must not force setup');
- statusReply={...statusReply,online:true,message:'Đã vào Wi-Fi',url:'http://192.168.1.2/'};
- await poll(2);assert.equal(page(),'control');assert(el('status').textContent.includes('192.168.1.2'));
- statusReply={...statusReply,online:false};await poll(2);assert.equal(page(),'control');
- // Note11 test page remains manual; polling does not navigate or emit pulses.
- await el('showTest').onclick();await flush();assert.equal(page(),'test');
- assert(calls.some(c=>c.path==='/api/test'&&c.data.active==='1'));
- const beforeTestPolls=calls.filter(c=>c.path==='/api/test/hold').length;
- statusReply={...statusReply,testActive:false,testChannel:0,neutralCounts:307,pulseCounts:307,emittedChannel:0};
- await poll();assert.equal(page(),'test');assert.equal(calls.filter(c=>c.path==='/api/test/hold').length,beforeTestPolls);
- assert(el('testCounts').textContent.includes('307 count ≈ 1499.0 µs'));
- for(const b of steps){b.fire('pointerdown');await flush();assert.equal(calls.at(-1).path,'/api/test/hold');assert.equal(calls.at(-1).data.step,b.dataset.testStep);assert.equal(calls.at(-1).data.fresh,'1');
-  await timers.find(t=>t.ms===150).f();assert.equal(calls.at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');}
- steps[0].fire('pointerdown');await flush();vm.runInContext('testSince=Date.now()-2000',ctx);await timers.find(t=>t.ms===150).f();await flush();assert.equal(vm.runInContext('testHeld',ctx),null);
- steps[1].fire('pointerdown');await flush();events.blur();assert.equal(vm.runInContext('testHeld',ctx),null);
- steps[1].fire('pointerdown');await flush();document.hidden=true;events.visibilitychange();document.hidden=false;assert.equal(vm.runInContext('testHeld',ctx),null);
- steps[1].fire('pointerdown');await flush();steps[1].fire('pointercancel');assert.equal(vm.runInContext('testHeld',ctx),null);
- el('testChannel').value='3';await el('testChannel').onchange();await el('neutralUp').onclick();await flush();assert(calls.some(c=>c.path==='/api/test/config'&&c.data.neutral==='308'));
- await el('testDone').onclick();await flush();assert.equal(page(),'control');assert(calls.some(c=>c.path==='/api/test'&&c.data.active==='0'));
- el('actuatorMode').value='positional';await el('applyActuator').onclick();await flush();assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
- el('actuatorMode').value='unknown';await el('applyActuator').onclick();await flush();assert(calls.some(c=>c.path==='/api/actuator'&&c.data.value==='unknown'));
- // Note14: continuous mode disables arrows; separate manual bounded calibration.
- statusReply={...statusReply,positional:false,continuousActive:false,continuousRequested:267,continuousEmitted:267,continuousEmittedChannel:3};
- await poll(1);assert(dirs.every(b=>b.disabled));assert(!el('driveReason').hidden);
- statusReply.drive360=true;await poll(1);assert(dirs.every(b=>!b.disabled));
- dirs[0].fire('pointerdown');await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.dir,'1');dirs[0].fire('pointerup');
- statusReply.hipsOnly=true;await poll(1);assert(dirs.filter(b=>Number(b.dataset.dir)<=2).every(b=>!b.disabled));assert(dirs.filter(b=>Number(b.dataset.dir)>2).every(b=>b.disabled));statusReply.hipsOnly=false;
- statusReply.drive360=false;await poll(1);
- const nMove=calls.length;dirs[0].fire('pointerdown');await flush();assert.equal(calls.length,nMove);
- await el('show360').onclick();await flush();assert.equal(page(),'continuous');
- assert(calls.some(c=>c.path==='/api/360'&&c.data.active==='1'));
- el('continuousChannel').value='3';await el('continuousChannel').onchange();
- el('continuousStop').value='320';el('continuousForward').value='347';el('continuousReverse').value='267';
- await el('continuousSave').onclick();assert(calls.some(c=>c.path==='/api/360/config'&&c.data.ch==='3'&&c.data.stop==='320'&&c.data.forward==='347'&&c.data.reverse==='267'));
- el('continuousDuration').value='200';el('moveDegrees').value='5';
- const noRef=calls.length;continuousButtons[0].fire('pointerdown');await flush();assert.equal(calls.length,noRef,'no reference means no move');
- el('cwViewpoint').value='1';await el('saveViewpoint').onclick();assert(calls.some(c=>c.path==='/api/360/viewpoint'&&c.data.value==='1'));
- el('calDirection').value='1';el('calCounts').value='347';el('calDegrees').value='10';el('calMs').value='1000';
- const beforeCalibration=calls.filter(c=>c.path==='/api/360/move').length;
- await el('saveCalibration').onclick();assert(calls.some(c=>c.path==='/api/360/calibrate'&&c.data.ch==='3'&&c.data.direction==='1'&&c.data.counts==='347'&&c.data.degrees==='10'&&c.data.ms==='1000'));
- assert.equal(calls.filter(c=>c.path==='/api/360/move').length,beforeCalibration,'calibration entry emits no motion');
- statusReply={...statusReply,referenceValid:false,cwViewpoint:1,reason:'Chưa hiệu chỉnh',continuousCalibration:Array.from({length:8},()=>({stop:320,forward:347,reverse:267,confirmed:true,cwCalibrated:true,ccwCalibrated:true,estimated:2,cwBudget:35,ccwBudget:35}))};
- await poll(1);assert(el('referenceState').textContent.includes('Chưa xác nhận'));
- assert(el('estimatedAngle').textContent.includes('2.00°')&&el('estimatedAngle').textContent.includes('trôi'));
- for(const b of continuousButtons){await el('confirm90').onclick();assert(calls.some(c=>c.path==='/api/360/reference'&&c.data.confirm==='manual90'));b.fire('pointerdown');await flush();const c=calls.at(-1);assert.equal(c.path,'/api/360/move');assert.equal(c.data.direction,b.dataset.continuousAction);assert.equal(c.data.degrees,'5');assert.equal(c.data.cap,'200');assert.equal(c.data.fresh,'1');
-  await timers.find(t=>t.ms===150).f();await flush();assert.equal(calls.at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(vm.runInContext('continuousHeld',ctx),null);assert(!vm.runInContext('referenceReady',ctx));}
- await el('confirm90').onclick();continuousButtons[1].fire('pointerdown');await flush();vm.runInContext('continuousSince=Date.now()-200',ctx);await timers.find(t=>t.ms===150).f();await flush();assert.equal(vm.runInContext('continuousHeld',ctx),null);
- for(const event of ['blur','pagehide']){await el('confirm90').onclick();continuousButtons[1].fire('pointerdown');await flush();events[event]();assert.equal(vm.runInContext('continuousHeld',ctx),null);assert(!vm.runInContext('referenceReady',ctx));}
- await el('confirm90').onclick();continuousButtons[1].fire('pointerdown');await flush();el('continuousStop').onchange();assert.equal(vm.runInContext('continuousHeld',ctx),null);
- const burstCount=calls.filter(c=>c.path==='/api/360/move').length;await poll();assert.equal(page(),'continuous');assert.equal(calls.filter(c=>c.path==='/api/360/move').length,burstCount);
- assert(el('continuousCounts').textContent.includes('đã gửi 267 count trên CH3'));
- // Pending viewpoint blocks hips, but not symmetric knees; uncalibrated directions blocked.
- el('continuousChannel').value='0';statusReply={...statusReply,referenceValid:true,cwViewpoint:0};await poll(1);assert(continuousButtons.every(b=>b.disabled));
- el('continuousChannel').value='1';await poll(1);assert(continuousButtons.every(b=>!b.disabled));
- statusReply.continuousCalibration[1].ccwCalibrated=false;await poll(1);assert(!continuousButtons[0].disabled&&continuousButtons[1].disabled);
- await el('continuousDone').onclick();await flush();assert.equal(page(),'control');assert(calls.some(c=>c.path==='/api/360'&&c.data.active==='0'));
- // Captive probe URL/reload executes this same script: no hidden setup redirect.
- const reopened=vm.createContext({document,window:{addEventListener:()=>{}},navigator:{sendBeacon:()=>{}},fetch,URLSearchParams,setInterval:()=>{},console});
- vm.runInContext(code,reopened);await flush();assert.equal(vm.runInContext('page',reopened),'control');
- assert(!/https?:\/\/(?!192\.168\.4\.1)/.test(html));assert(!/\b(?:src|href)=["']https?:/.test(html));
- console.log('PASS: manual90 confirmation/observed calibration/pending viewpoint/estimated drift/calibration entry no motion/continuous360 config205-409/2directions/200ms cap/global off/settings/blur/pagehide/disabled arrows/emitted count display; manual one-servo page/count display/hold/release/2s local cap/blur/cancel/config/RAM selection, direct AP first load, 40 repeated offline polls on control/Ráp/setup, manual setup, wrong password, reconnect; shipped UI, 8 hold directions, keepalive, release/cancel/blur/hide, offline, Ráp lock/trim, Wi-Fi and password clearing');
-})().catch(e=>{console.error(e);process.exit(1);});
+ await flush();const poll=async()=>{await timers.find(t=>t.ms===1000).f();await flush();};const hold=()=>timers.find(t=>t.ms===150).f();
+ assert(dirs.length===8&&dirs.every(b=>b.disabled));assert.equal(vm.runInContext('page',ctx),'control');
+ const before=calls.length;dirs[0].fire('pointerdown');await flush();assert.equal(calls.length,before);await el('light').onclick();assert(calls.some(c=>c.path==='/api/light'));
+ await el('arm').onclick();await flush();assert(state.positional&&dirs.every(b=>b.disabled));assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
+ state.enabled=8;await poll();assert(dirs.every(b=>!b.disabled));
+ for(const b of dirs){b.fire('pointerdown');await flush();let cmd=calls.filter(c=>c.path==='/api/move').at(-1);assert.equal(cmd.data.dir,b.dataset.dir);assert.equal(cmd.data.fresh,'1');await hold();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');}
+ for(const event of ['blur','pagehide']){dirs[0].fire('pointerdown');await flush();events[event]();assert.equal(vm.runInContext('held',ctx),0);}
+ dirs[0].fire('pointerdown');await flush();document.hidden=true;events.visibilitychange();assert.equal(vm.runInContext('held',ctx),0);document.hidden=false;
+ dirs[1].fire('pointerdown');await flush();dirs[1].fire('pointercancel');assert.equal(beacons.at(-1).data.dir,'0');
+ failMove=true;dirs[0].fire('pointerdown');await flush();assert.equal(vm.runInContext('held',ctx),0);failMove=false;
+ await el('showAssembly').onclick();assert(state.assembly&&dirs.every(b=>b.disabled));assert.equal(el('trims').children.length,8);
+ await el('centre').onclick();await el('stand').onclick();await el('trims').children[0].children[2].onclick();assert.equal(state.offsets[0],1);assert(el('trim0').textContent.includes('(1°)'));
+ await el('save').onclick();await el('showSetup').onclick();assert.equal(vm.runInContext('page',ctx),'assembly');await el('done').onclick();assert(!state.assembly&&vm.runInContext('page',ctx)==='control');
+ await el('disarm').onclick();assert(!state.positional&&dirs.every(b=>b.disabled));
+ await el('showAssembly').onclick();await el('arm').onclick();assert(state.assembly&&state.positional);await el('done').onclick();
+ state.enabled=8;await poll();let release;deferred=new Promise(r=>release=r);dirs[0].fire('pointerdown');await flush();dirs[0].fire('pointerup');release();deferred=null;await flush();assert.equal(vm.runInContext('held',ctx),0);
+ await el('showSetup').onclick();state.online=false;for(let i=0;i<40;i++)await poll();assert.equal(vm.runInContext('page',ctx),'setup');
+ await el('scan').onclick();assert.equal(el('networks').children[1].textContent,'<script>bad</script>');
+ el('ssid').value='Home';el('password').value='example-password';await el('connect').onclick();assert.equal(el('password').value,'');assert(calls.some(c=>c.path==='/api/wifi'&&c.data.ssid==='Home'));
+ failStatus=true;await poll();assert(dirs.every(b=>b.disabled));assert.equal(vm.runInContext('held',ctx),0);
+ assert(!calls.some(c=>c.path.includes('/360')||c.path.includes('/test')));assert(!html.includes('id="show360"'));
+ console.log('PASS: actual180-only UI, default off/explicit arm, enable8 readiness,8 directions/keepalive/release/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
+})().catch(e=>{console.error(e);process.exitCode=1;});

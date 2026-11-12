@@ -1,5 +1,7 @@
 # Legacy one-servo neutral/speed diagnostic
 
+> Historical360° material. The current positional180° release has removed these web/API controls. Use [POSITIONAL180.md](POSITIONAL180.md) for the received replacement motors.
+
 This uses the owned continuous servos as speed-controlled motors. **It cannot hold a joint angle or make the positional walking gait work.** No additional purchase is planned. The current inventory has no servo supply of established rating; the exposed 18650 and unidentified module are not recommended or wired as a supply. A prior polarity reversal also leaves component health uncertain. Resolve the supply before any physical test. Flash permission does not authorize motor operation.
 
 Use **360° thử nghiệm** and the [manual-reference guide](CONTINUOUS360.md) for the current workflow. This legacy diagnostic is under **Chi tiết → Thử cũ**. Opening or operating it invalidates the manual reference; never use it as a shortcut for bounded joint travel.

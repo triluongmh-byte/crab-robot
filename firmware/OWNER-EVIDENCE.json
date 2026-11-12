@@ -63,5 +63,16 @@
   ],
   "ownerReportedManual90PoseSet": true,
   "runtimeReferenceConfirmed": false,
-  "runtimeConfirmationRequired": true
+  "runtimeConfirmationRequired": true,
+  "currentRelease": {
+    "profile": "positional180-v1",
+    "date": "2026-11-12",
+    "exactOwnerMessage": "eh fen. Tao có servors 180 độ rồi. Mà xui cái là nó ship thẳng về nhà thay vì lên cty. Trong thời gian chờ đợi mài viết lại firmware rồi nạp sẵn đi. Tao rút pin servors ra hết rồi. Cứ viết nạp push. mai tao ghim",
+    "servoType": "owner reports180-degree positional replacements delivered to home; not installed or tested at company bench",
+    "servoPowerDisconnectedReported": true,
+    "allServoPlugsRemovedConfirmed": false,
+    "physicalPositionalMotionTested": false,
+    "automaticMotorClassification": false,
+    "historicalFieldsNote": "Other top-level fields are the preserved Nov11 continuous-servo report, not current setup prerequisites. Current behavior is documented in POSITIONAL180.md."
+  }
 }

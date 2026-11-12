@@ -89,12 +89,12 @@ Label all eight leads before routing. Leave a free loop across each joint, avoid
 
 The photographed SG90s are the owner's **continuous 360° motors**. The loaded timed experiments caused collisions/erratic motion and are paused; see [the actual experiment outcome](EXPERIMENT-STATUS.md). Changing wiring cannot add position feedback.
 
-Replacement parts for this jointed-leg mechanism must be **positional** servos. “SG90” alone is insufficient; the seller variant must actually move to and hold requested angles. The owner has shown a cart/description labelled 180°, not a received/tested replacement set. Test one unloaded replacement's response and fit before attaching a leg. Never select positional mode while continuous-rotation units are still connected as the other joints.
+Replacement parts for this jointed-leg mechanism must be **positional** servos. “SG90” alone is insufficient; the seller variant must actually move to and hold requested angles. The owner now reports the180° replacements delivered at home; the company-bench update has no replacement motor present for a physical test. Test one unloaded replacement's response and fit before attaching a leg. Keep every old continuous-rotation unit unplugged from this180° release.
 
 ## First power and centring
 
 1. Leave servo 5V and all servo plugs disconnected. Power LILYGO only; confirm QR/web access and PCA detection.
-2. When all eight motors have been confirmed positional, prepare each one's centre with its horn/leg uncoupled from the shaft. Use the [positional-only assembly procedure](README.md) and the correct firmware mode; the360° timed controls are not this procedure.
+2. Prepare one new motor at a time with its horn/leg uncoupled from the shaft. Follow the [180° first-connection procedure](POSITIONAL180.md): **Ráp → Bật servo180° → Giữa thô**, then wait about3seconds. Disconnect servo power before moving plugs or fitting horns.
 3. Disconnect power before attaching horns in the neutral pose. Support the body, check free hand movement and cable slack, then use small positional trims, **Lưu tâm** and **Xong ráp** as described in the firmware guide.
 
 Do not force gears or use powered movement to overcome binding. Disconnect servo power before reset/flashing; BOOT/reset is not a servo power switch. Disconnect both supplies to turn everything off.

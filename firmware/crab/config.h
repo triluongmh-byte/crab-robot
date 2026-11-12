@@ -5,7 +5,8 @@
 namespace cfg {
 constexpr uint8_t PCA_ADDR=0x40, LED_COUNT=8, LED_BRIGHTNESS=16;
 constexpr int PWM_HZ=50, CENTRE_US=1500;
-constexpr float US_PER_DEG=2000.0f/180.0f, JOINT_LIMIT=30, TRIM_LIMIT=12;
+// Conservative nominal1–2ms/180deg mapping; delivered SG90 range must be observed.
+constexpr float US_PER_DEG=1000.0f/180.0f, JOINT_LIMIT=30, TRIM_LIMIT=12;
 // Case D7: hip shafts point up; single mirrors FR/RL reverse knee sense.
 // Knees FL +1, FR -1, RL -1, RR +1; negative angle lifts each foot.
 constexpr int SIGN[8]={1,1,1,-1,1,-1,1,1};

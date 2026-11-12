@@ -34,7 +34,7 @@ static void test_case_knee_lift(){
  const int mirrorParity[4]={1,-1,-1,1};
  for(int leg=0;leg<4;leg++){
   const int ch=2*leg+1;
-  const double shaftDeg=(pulse(ch,-15,0)-1500)/(2000.0/180.0);
+  const double shaftDeg=(pulse(ch,-15,0)-1500)/(1000.0/180.0);
   const double theta=mirrorParity[leg]*shaftDeg*3.141592653589793/180;
   // FOOT_TIP relative to knee: 15 mm outward, 64.6 mm below (+t axis).
   const double lift=-15*std::sin(theta)-64.6*std::cos(theta)+64.6;
@@ -45,7 +45,7 @@ static void test_case_knee_lift(){
 static void test_unknown(){
  Motion m;m.begin(0);m.newSession(3);
  for(uint32_t t=10;t<5000;t+=10)assert(m.tick(t)==-1);
- assert(m.enabled==0&&!m.positional()&&m.command(3,1,1,5000));m.stop();
+ assert(m.enabled==0&&!m.positional()&&!m.command(3,1,1,5000));m.stop();
  assert(!m.centre()&&!m.trim(0,1));assert(m.setAssembly(true));assert(!m.centre());
  assert(!m.openTest(true));m.setAssembly(false);assert(m.openTest(true));
  assert(!m.selectActuator(true,5000));assert(m.test.config(7,327));
@@ -108,7 +108,7 @@ static void test_manual90(){
  assert(m.openTest(true));assert(m.test.config(0,307));assert(m.testCommand(2,1,4,100,true));assert(!m.continuous.referenceValid); // untracked motion
 }
 static void test_motion(){
- Motion m;m.newSession(12);m.begin(0);assert(m.command(12,1,1,0));m.stop();assert(m.enabled==0);ready(m);
+ Motion m;m.newSession(12);m.begin(0);assert(!m.command(12,1,1,0));m.stop();assert(m.enabled==0);ready(m);
  assert(m.command(12,2,1,2200,true));assert(m.velocity.x==1);assert(!m.command(12,1,2,2210));
  m.tick(2699);assert(m.velocity.x==1);m.tick(2709);assert(m.velocity.x==0&&!m.lease);
  assert(!m.command(12,3,1,2710,false));assert(m.command(12,4,1,2720,true));
@@ -118,7 +118,7 @@ static void test_motion(){
  assert(m.trim(2,1));assert(!m.raw&&m.offsets[2]==1);for(int i=0;i<99;i++)m.trim(2,1);assert(m.offsets[2]==cfg::TRIM_LIMIT);
  assert(!m.trim(8,1));assert(!m.trim(2,22));m.setAssembly(false);assert(!m.trim(2,-1));
  m.inhibit=true;assert(!m.command(12,8,1,2900));m.inhibit=false;assert(m.command(12,9,1,3000));m.newSession(99);assert(!m.lease&&!m.command(12,10,1,3010));
- for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1033&&p<=1967);}
+ for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1033&&p<=1967);const int limit=ch%2?195:139;assert(std::abs(p-1500)<=limit);}
  Motion wrap;ready(wrap,0xfffff000);wrap.newSession(2);assert(wrap.command(2,1,1,0xffffff00));wrap.tick(0x200);assert(!wrap.lease);
  // Long realistic run tests the production scheduler, lease renewal, limits, ramp and exact startup order.
  for(int dir=1;dir<=8;dir++){

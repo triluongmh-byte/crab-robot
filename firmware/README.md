@@ -1,10 +1,12 @@
-# Crab firmware — two hardware targets
+# Crab firmware —180° positional release
 
-The application implements QR setup, nearby 2.4 GHz Wi-Fi selection, saved credentials, eight hold-to-move directions, a light switch and servo centring/trim controls. Everything is served by the robot; there are no accounts, cloud services or downloaded web dependencies. The screen and web UI remain Vietnamese.
+This release is for the owner's replacement **positional180° SG90-class servos**. The owner reports delivery to home, not yet to the company bench, and reports servo power disconnected for this update. The new set has not been installed, calibrated or tested with this firmware. The earlier360° experiments failed loaded tests and are [archived as unsuccessful](EXPERIMENT-STATUS.md).
 
-**Bench outcome:** the owner reports that both the timed crawl and the following hips-only trial moved erratically; the crawl also caused leg collisions. The latest source is retained as an unsuccessful experiment. Loaded360° joint testing is paused; see [status and alternatives](EXPERIMENT-STATUS.md).
+**Current behavior:** servo PWM is off at every boot. Saved Wi-Fi/direct AP and capped-brightness LEDs remain available. Use **Bật servo180°** to enable channels one at a time,300ms apart; approximately3seconds enables all eight. The main page then offers all eight directions. **Ngắt servo** disables every output. The default speed is **Chậm**. Releasing a direction or missing its heartbeat500ms stops walking and settles gently towards standing; it does not disconnect the servo supply.
 
-**Current owned motors:** eight continuous-rotation SG90s. The owner now requests **only four hips**, with knees receiving no pulses: forward CH0 CCW, CH2 CW, CH6 CCW, CH4 CW; reverse flips all four. Only Forward/Backward are enabled for this experiment. Each fresh press runs one outward stroke and its inverse compensation. Releasing stops PWM; the next press only repays unfinished signed ON-time, rather than restarting from a false neutral. No automatic recovery movement follows release, session change or loss of heartbeat. **ASSUMPTIONS:** rear-left also30°, directions viewed into output shafts;205count CCW and409count CW; nominal30° uses60ms based on the seller's unloaded0.12s/60° claim. Equal reverse time does not guarantee equal reverse angle. No measured speed, position feedback, angle holding or physical walking is claimed. LED startup remains on at16/255.
+The360°/single-servo speed-test pages and HTTP routes are removed from this release. The unknown actuator value is retained only as the explicit PWM-off state and cannot start the old hips-only/timed gait. Historical helper sources remain in the repository, but the final actuator output boundary emits only positional pulses.
+
+Start with the [tomorrow setup steps](POSITIONAL180.md). The screen/web UI remain Vietnamese, work directly on the crab's own Wi-Fi and use no cloud or downloaded browser dependencies.
 
 ## Choose the correct target
 
@@ -16,7 +18,7 @@ The application implements QR setup, nearby 2.4 GHz Wi-Fi selection, saved crede
 Run the repository-root `./build.sh` to build and check both. To compile one target after its source dependencies are prepared:
 
 ```sh
-python3 tools/firmware/build.py --target integrated
+python3 tools/firmware/build.py --target lilygo
 ```
 
 The recipes are [flash.json](flash.json) and [flash-integrated.json](flash-integrated.json). Do not interchange images. The integrated board uses SPI SCLK8/MOSI39, CS6/DC7/RES5/BL38 and PCA OE GPIO21; GPIO15 is NC. LILYGO retains its parallel display and LCD power GPIO15. Both use SDA18/SCL17, LED GPIO1 and BOOT GPIO0. See [hardware.h](crab/hardware.h), [config.h](crab/config.h) and [wiring](WIRING.md).
@@ -38,38 +40,20 @@ arduino-cli upload \
 
 If necessary, hold BOOT, press/release RESET, then release BOOT to enter the downloader. Upload the complete built image set; do not write the application binary alone at address zero. No build/check command flashes or moves hardware.
 
-## Direct phone connection and optional home Wi-Fi
+## Direct connection and setup
 
-1. Power logic/LCD only. Scan the Wi-Fi QR to join `CuaRobot-XXXX`. Keep the connection if the phone says it has no internet. Open **http://192.168.4.1/** in a normal browser if the captive page does not open.
-2. The controller opens directly. Status polling must preserve the selected **Lái cua**, **Ráp** or **Wi-Fi** page, including when home Wi-Fi is absent, unreachable or rejects the password. The light can be used without joining a router.
-3. Home Wi-Fi is optional. Open **Wi-Fi** manually, tap **Tìm Wi-Fi quanh đây**, choose a 2.4 GHz network and tap **Kết nối** after entering its password. Wrong credentials or a timeout show an error without redirecting other pages. Credentials are stored in NVS, not source or logs. After success the second QR gives the home-network address; direct AP access remains available.
-4. For supported positional servos, hold a direction to move and release to stop. Tab changes, screen locking and a missing keep-alive for about 0.5 seconds cancel motion. Release and press again after a disconnect. Left/right mean sideways in the kinematic model, with four diagonal translations. The owner's continuous servos cannot execute this joint-angle gait; actual walking remains unproven.
-5. **Bật/tắt đèn** switches all eight LEDs, brightness limited to 16/255. Hold BOOT for eight seconds **while the application is running** to clear Wi-Fi; servo trims remain saved. BOOT is not a power switch.
+Join `CuaRobot-XXXX`, keep the connection without internet and open **http://192.168.4.1/**. Optional home Wi-Fi remains under **Wi-Fi**; successful setup saves credentials. Keep BOOT pressed for about8seconds while the app runs to forget Wi-Fi. The new trim store is separate (`cua-180-v1`) so old experiment-era trims are not silently reused. Wi-Fi is retained in its existing store.
 
-Desktop request/browser tests do not prove that every phone will retain an internet-free AP connection or that the real radio will remain uninterrupted. Physical direct-AP verification remains separate from compilation and host tests.
+Open **Ráp** for unloaded centring, horn alignment and small trims; it locks walking until **Xong ráp**. **Giữa thô** requests nominal1500µs; **Tư thế đứng** reapplies saved trims. Always remove servo power before changing plugs or fastening horns, and do not mix old continuous motors into the replacement set.
 
-## Continuous 360° control with a manual reference
+## Conservative angle assumptions
 
-Open **360° thử nghiệm**. The [complete guide](CONTINUOUS360.md) explains the per-channel stop/forward/reverse counts (205–409), assignment to observed clockwise/counterclockwise rotation, measured degrees and elapsed milliseconds, pending hip-viewpoint selector, and **Đã đặt 90°** confirmation. Entering or saving observations never starts a servo. No stop value or motor speed is assumed correct by default.
+GPIO assignments and PCA nominal50Hz configuration are unchanged. The nominal mapping now assumes1000µs across180° (about5.556µs/degree), centred at1500µs, as a deliberately small initial excursion. It is not a measured calibration. If the received unit spans180° over2000µs, actual excursions will be about half the nominal target. Pulse timing varies between brands and individual servos; [Adafruit describes calibration and the need to approach travel limits gradually](https://learn.adafruit.com/16-channel-pwm-servo-driver/using-the-adafruit-library).
 
-Only one CH0–7 can receive a timed command. Duration is clipped to a selected 50–500 ms cap and remaining software travel budget; the 500 ms keep-alive cannot extend it. Front hip budgets are CW25°/CCW55°, rear hips CW55°/CCW25°, and knees ±35°: the owner's hand-reported limits minus a 5° margin. The UI displays estimated displacement and requested/last emitted PCA counts. These are software/I²C observations, not measured shaft angle or a collision guarantee.
+The gait requests hip amplitude12° and knee lift15° nominal. Final mirror-plus-trim output is clamped symmetrically to±25° nominal on hips and±35° on knees, inside the owner's hand-reported30/60° hip and40° knee clearances. Trims are bounded to±12° nominal and cannot bypass the final clamp. Slew is limited, and only one channel updates per10ms. Mirroring uses the existing mechanism's `cfg::SIGN`; actual mounting direction still needs the first unloaded bench check. Neither these bounds nor host tests prove collision-free loaded movement on the drilled body.
 
-Expiry, release/off, disconnect, settings/calibration/session/mode changes, a fault or untracked motion invalidate the reference. Physically restore the pose and confirm again before another run; the button is not automatic homing or a way to bypass the travel budget. Settings remain in RAM, and reboot starts with all 16 outputs off. **Drive arrows stay disabled for continuous servos** because there is no validated loaded walking pattern for this joint geometry.
+## Validation scope
 
-The previous [single-servo diagnostic](SERVO-TEST.md) remains under **Chi tiết → Thử cũ** for an unloaded servo only. It is untracked motion and invalidates the manual reference. The light and direct Wi-Fi remain independent of actuator mode.
+Host core, actual PCA register output, real HTTP handlers and the shipped web script are checked for boot-off, explicit enable/disable, sequential startup,8directions, release/deadman, raw centre/trim, post-trim pulse limits, removed360 routes and unchanged AP/QR/Wi-Fi behavior. The LILYGO target is the one to flash to the owned modules. Physical stopping, horn fit, power under load and walking await the replacement motors at the bench.
 
-The positional gait is retained for a separate compatible configuration using eight confirmed positional servos. Never choose that setting for the owner's continuous motors.
-
-## Centre before attaching horns — positional servos only
-
-With supported positional mode explicitly selected, support the body securely with feet clear and uncouple installed horns/legs from their output shafts. Open **Ráp**, tap **Giữa thô 1500 µs** and wait about two seconds. Attach horns in the mechanical neutral pose. **Tư thế đứng** applies saved trims; adjust individual +/− controls in one-degree steps (±12°), then use **Lưu tâm** and **Xong ráp**. Assembly locks walking until exited. Trim compensates horn indexing, not asymmetric printed parts. These commands are refused in unknown/continuous mode.
-
-In positional mode channels initially enable 300 ms apart and subsequent commands update one channel per 10 ms with slew/amplitude ramps. These reduce command surges without imposing an electrical current limit. The experimental mode uses its separate one-channel output policy. PCA init failure is finite and does not prevent QR/web startup; it displays the driver warning.
-
-## Desktop checks and limits
-
-`python3 tools/firmware/check.py` runs all seven host groups for both hardware profiles, including independent QR decoding with Apple Vision. Tests cover reference invalidation, uncalibrated and pending-viewpoint gates, front/rear hip and knee budgets in both directions, duration clipping, actual PCA register writes, output limits, stopping/session/settings behavior, and direct-AP navigation. [TEST-RESULTS.json](TEST-RESULTS.json) is generated after the complete suite passes. Board reconciliation separately checks actual PCB/XML pins.
-
-The existing positional gait model does not establish stability or physical walking. The continuous experiment is an estimated, single-joint motion tool. Software full-off is not braking, holding or a power disconnect; a lost I²C link on the original LILYGO cannot guarantee receipt of an off command. The supply rating and actual pulse/frequency/load behavior remain unmeasured. See [the full limits](CONTINUOUS360.md) and [flashing policy](FLASH-POLICY.md).
-
-[Sources and licences](SOURCES.md) · [Interface metadata](INTEGRATION.json) · [Mechanical checklist](../case/CHECKLIST-RAP.md)
+The full repository CAD/source-build manual step remains documented in [BUILD-VALIDATION.md](../BUILD-VALIDATION.md); this firmware update does not change printed parts or the PCB.

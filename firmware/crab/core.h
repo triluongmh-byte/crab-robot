@@ -29,7 +29,9 @@ inline void gait(float phase,Vec v,float amplitude,float out[8]){
 }
 inline int pulse(int ch,float angle,float offset,bool raw=false){
  if(raw)return cfg::CENTRE_US;
- float degrees=cfg::SIGN[ch]*clamp(angle,-cfg::JOINT_LIMIT,cfg::JOINT_LIMIT)+clamp(offset,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT);
+ // Clamp AFTER mirror and trim: trim cannot bypass the owner's travel budget.
+ const float limit=ch%2?35.f:25.f; // symmetric inside reported hip30/60 and knee40, with margin
+ float degrees=clamp(cfg::SIGN[ch]*clamp(angle,-cfg::JOINT_LIMIT,cfg::JOINT_LIMIT)+clamp(offset,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT),-limit,limit);
  return int(std::lround(cfg::CENTRE_US+cfg::US_PER_DEG*degrees));
 }
 inline std::string apName(uint32_t mac){char s[24];snprintf(s,sizeof(s),"CuaRobot-%04X",unsigned(mac&0xFFFF));return s;}
@@ -107,8 +109,9 @@ struct Motion {
  bool positional()const{return actuator==Actuator::Positional&&!test.opened&&!continuous.opened;}
  bool sequence(uint32_t id,uint32_t seq){if(!id||id!=session||seq<=lastSeq)return false;lastSeq=seq;return true;}
  bool selectActuator(bool positionalMode,uint32_t now){
-  if(positionalMode&&(assembly||test.opened||continuous.opened))return false;
-  stop();test=ServoTest{};continuous=Continuous360{};assembly=raw=false;actuator=positionalMode?Actuator::Positional:Actuator::Unknown;
+  if(positionalMode&&(test.opened||continuous.opened))return false;
+  const bool keepAssembly=assembly; // disarming must not silently exit the setup page
+  stop();test=ServoTest{};continuous=Continuous360{};assembly=keepAssembly;raw=false;actuator=positionalMode?Actuator::Positional:Actuator::Unknown;
   amplitude=phase=0;for(auto& p:position)p=0;begin(now);return true;
  }
  bool openTest(bool active){
@@ -129,7 +132,7 @@ struct Motion {
  }
  float offsets[8]={},position[8]={};
  Vec velocity{};
- float amplitude=0,phase=0,speed=.65f;
+ float amplitude=0,phase=0,speed=.4f;
  bool assembly=false,raw=false,inhibit=false,lease=false;
  uint32_t session=0,lastSeq=0,lastCommand=0,start=0,lastTick=0;
  int enabled=0,cursor=0;
@@ -140,7 +143,7 @@ struct Motion {
   if(dir<0||dir>8||!sequence(id,seq))return false;
   if(dir==0){stop();return true;}
   if(inhibit||assembly||test.opened||continuous.opened)return false;
-  if(actuator==Actuator::Unknown)return drive.command(dir,now,fresh);
+  if(actuator==Actuator::Unknown)return false; //180-only release: no timed360 fallback
   if(!positional()||enabled<8)return false;
   if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
   velocity=direction(dir);lastCommand=now;lease=true;return true;

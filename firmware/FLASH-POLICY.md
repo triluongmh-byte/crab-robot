@@ -13,3 +13,7 @@ Before every write:
 Store each attempt and its receipt in a new private local recovery directory. Device dumps can contain Wi-Fi credentials and calibration data: never commit or publish them. Keep previous attempts immutable. A missing device, failed backup, unresolved serial owner or unconfirmed motor isolation is an unmet prerequisite; do not erase blindly or ask for the same flashing authorization again.
 
 Design/build checks, USB byte verification, an observed LCD QR, successful web control and physical walking are separate evidence. Report only the checks actually performed.
+
+## Owner update —2026-11-12
+
+The owner explicitly requests writing, flashing and pushing the dedicated180° firmware, and reports that servo power has been unplugged. This confirms reported supply disconnection, not removal of all servo plugs. Preserve that distinction in the flash receipt; do not invent complete physical isolation. Earlier explicit skip-fresh-readback instructions remain in effect: retain the previously written and verified image set as rollback, verify every new written image and restore the pinned set on a failed write. These owner instructions supersede the stronger isolation/readback prerequisites above for this identified original LILYGO update only. No powered servo or walking test is authorized or performed as part of this update.

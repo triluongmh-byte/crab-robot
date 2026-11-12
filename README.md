@@ -6,7 +6,7 @@
 
 ![The owner's actual orange-and-yellow crab, photographed on 11 November 2026](docs/images/crab-current.svg)
 
-*The real bench assembly, photographed on 11 November. The photo shows the existing continuous-rotation servos; replacement positional servos have not been confirmed received.*
+*The real bench assembly, photographed on 11 November. The photo shows the existing continuous-rotation servos; the replacement180° servos have now arrived at the owner’s home and await installation at the bench.*
 
 ## What is on this robot?
 
@@ -85,17 +85,17 @@ At every socket: **orange → `PWM` / `S`**, **red → `V+`**, **brown → `GND`
 
 | Working or observed | Still waiting for a physical check |
 |---|---|
-| Owner opened the QR/web controller; individual servo direction tests worked | Replacement **180° positional** servos, actual fit and loaded torque |
+| Owner opened the QR/web controller; individual servo direction tests worked | Replacement **180° positional** servos delivered home; bench fit and loaded torque not yet checked |
 | Firmware includes direct AP access and the independent light switch | Servo supply capacity, loaded stopping and stable walking |
 | Firmware starts with servo PWM off and capped-brightness LEDs on | The future integrated PCB and matching new frame |
 
-**The two loaded 360° trials did not work reliably.** The first timed crawl caused leg collisions; the following hips-only trial moved erratically. The checked-in Forward/Backward experiment is retained for reference and is **not a demonstrated walking mode**. Equal reverse time cannot restore an accurately known joint angle. Read [the experiment record](firmware/EXPERIMENT-STATUS.md).
+**The two loaded 360° trials did not work reliably.** The first timed crawl caused leg collisions; the following hips-only trial moved erratically. Those experiments are retained in history; the current release is dedicated to positional180° servos, with eight directions after explicit enable. Equal reverse time cannot restore an accurately known joint angle. Read [the experiment record](firmware/EXPERIMENT-STATUS.md).
 
-This jointed-leg mechanism needs **eight positional servos**. Positional replacements are awaited. When parts arrive, test one unloaded motor's position response and fit before replacing the whole set. Recheck centre, direction and cable slack during assembly. The existing timed 360° controls are not the setup procedure for replacement positional motors.
+This jointed-leg mechanism needs **eight positional servos**. The owner now reports delivery at home, with installation at the bench still pending. Before fitting the complete set, test one unloaded motor's position response and fit before replacing the whole set. Recheck centre, direction and cable slack during assembly. Use the new [180° first-connection procedure](firmware/POSITIONAL180.md). The current firmware starts PWM off; **Bật servo180°** enables channels gradually, and **Ngắt servo** turns PWM off. Start with **Chậm**.
 
 ### Hands-on checks that remain
 
-- Identify the actual servo variant and test one motor before attaching a leg.
+- Test one received positional servo unloaded and centre it before attaching a leg.
 - Confirm the 5 V supply and screw-terminal polarity. A power LED alone does not establish adequate servo power.
 - Check the owner's hand-cut wire openings, direct servo-tab screws, horn fit and free joint motion with power disconnected.
 - The future frame still needs first-print fit checks. Its full case build has an outstanding official-checker intent/manual-review step; see [build validation](BUILD-VALIDATION.md).

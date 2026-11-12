@@ -18,15 +18,13 @@ void pauseSavedRetry(){
  network.pauseRetry(millis());
  if(network.pauseRequested){WiFi.disconnect(false,false);stationHasIp=false;network.pauseRequested=false;}
 }
-void actuatorError(){json(409,"{\"error\":\"Servo 360° hoặc chưa rõ loại: không đi bộ, không đưa về giữa. Chỉ thử từng servo không tải.\"}");}
-String continuousState(const crab::Continuous360& c){return String("{\"referenceValid\":")+(c.referenceValid?"true":"false")+",\"cwViewpoint\":"+String(int(c.viewpoint))+",\"estimatedAngle\":"+String(c.estimated[c.channel],2)+",\"clipped\":"+(c.clipped?"true":"false")+",\"moveDuration\":"+String(c.duration)+",\"reason\":"+jsonString(c.reason);}
-void continuousReply(bool accepted,const crab::Continuous360& c){json(accepted?200:409,continuousState(c)+",\"ok\":"+(accepted?"true":"false")+",\"error\":"+jsonString(accepted?"":c.reason)+"}");}
+void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° trước, chờ bật đủ8 kênh và thoát Ráp để lái.\"}");}
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
-  String continuous="[";for(int ch=0;ch<8;ch++){const auto& c=state.continuous.channels[ch];if(ch)continuous+=",";continuous+=String("{\"stop\":")+String(c.stop)+",\"forward\":"+String(c.forward)+",\"reverse\":"+String(c.reverse)+",\"confirmed\":"+(c.confirmed?"true":"false")+",\"cwCalibrated\":"+(c.cw.calibrated?"true":"false")+",\"ccwCalibrated\":"+(c.ccw.calibrated?"true":"false")+",\"cwCounts\":"+String(c.cw.counts)+",\"ccwCounts\":"+String(c.ccw.counts)+",\"cwRate\":"+String(c.cw.degreesPerMs,6)+",\"ccwRate\":"+String(c.ccw.degreesPerMs,6)+",\"estimated\":"+String(state.continuous.estimated[ch],2)+",\"cwBudget\":"+String(crab::Continuous360::budget(ch,1),0)+",\"ccwBudget\":"+String(crab::Continuous360::budget(ch,2),0)+"}";}continuous+="]";
-  json(200,continuousState(state.continuous)+",\"drive360\":true,\"hipsOnly\":true,\"hipBalanceMs\":"+String(state.drive.balanceMs)+",\"drive360Active\":"+(state.drive.active?"true":"false")+",\"lightOn\":"+(lightOn?"true":"false")+",\"continuousOpen\":"+(state.continuous.opened?"true":"false")+",\"continuousActive\":"+(state.continuous.active?"true":"false")+",\"continuousChannel\":"+String(state.continuous.channel)+",\"continuousRequested\":"+String(state.continuous.counts)+",\"continuousEmitted\":"+String(state.continuous.emittedCounts)+",\"continuousEmittedChannel\":"+String(state.continuous.emittedChannel)+",\"continuousDuration\":"+String(state.continuous.duration)+",\"continuousCalibration\":"+continuous+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"testOpen\":"+(state.test.opened?"true":"false")+",\"testActive\":"+(state.test.active?"true":"false")+",\"testChannel\":"+String(state.test.channel)+",\"neutralCounts\":"+String(state.test.neutral)+",\"pulseCounts\":"+String(state.test.emittedCounts)+",\"emittedChannel\":"+String(state.test.emittedChannel)+",\"requestedCounts\":"+String(state.test.counts)+"}");});
+  String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
+  json(200,String("{\"firmware\":\"positional180-v1\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"offsets\":"+offsets+"}");});
  server.on("/api/session",HTTP_POST,[]{uint32_t token=esp_random()&0x7fffffff;if(!token)token=1;{Guard g;offForChangeLocked();motion.newSession(token);}json(200,"{\"token\":\""+String(token)+"\"}");});
- server.on("/api/move",HTTP_POST,[]{uint32_t token,seq,dir,fresh;if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("dir",dir)||!uintArg("fresh",fresh)||fresh>1||dir>8){error();return;}bool accepted,blocked;{Guard g;blocked=dir&&(motion.assembly||motion.test.opened||motion.continuous.opened);accepted=!blocked&&motion.command(token,seq,int(dir),millis(),fresh==1);}if(blocked){actuatorError();return;}if(accepted)ok();else error(409);});
+ server.on("/api/move",HTTP_POST,[]{uint32_t token,seq,dir,fresh;if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("dir",dir)||!uintArg("fresh",fresh)||fresh>1||dir>8){error();return;}bool accepted,blocked;{Guard g;blocked=dir&&(!motion.positional()||motion.enabled<8||motion.assembly);accepted=!blocked&&motion.command(token,seq,int(dir),millis(),fresh==1);}if(blocked){actuatorError();return;}if(accepted)ok();else error(409);});
  server.on("/api/scan",HTTP_POST,[]{
   pauseSavedRetry();
   if(network.state==crab::NetState::Connecting){json(200,"{\"busy\":true}");return;}
@@ -55,56 +53,7 @@ void configureHttp(){
   if(value=="positional"&&server.arg("confirm")!="1"){error();return;}
   bool accepted;{Guard g;accepted=motion.sequence(motion.session,seq);if(accepted){offForChangeLocked();accepted=motion.selectActuator(value=="positional",millis());}}if(!accepted){error(409);return;}ok();
  });
- server.on("/api/test",HTTP_POST,[]{
-  uint32_t active,seq;if(!owns()||!uintArg("seq",seq)||!uintArg("active",active)||active>1){error();return;}
-  bool accepted;{Guard g;accepted=motion.sequence(motion.session,seq);if(accepted){offForChangeLocked();accepted=motion.openTest(active);}}if(!accepted){error(409);return;}ok();
- });
- server.on("/api/test/config",HTTP_POST,[]{
-  uint32_t seq,ch,neutral;if(!owns()||!uintArg("seq",seq)||!uintArg("ch",ch)||ch>7||!uintArg("neutral",neutral)||neutral<287||neutral>327){error();return;}
-  bool accepted;{Guard g;accepted=motion.sequence(motion.session,seq);if(accepted){offForChangeLocked();accepted=motion.test.opened&&!motion.assembly&&motion.actuator==crab::Actuator::Unknown&&motion.test.config(ch,neutral);}}if(!accepted){error(409);return;}ok();
- });
- server.on("/api/test/hold",HTTP_POST,[]{
-  uint32_t token,seq,fresh;if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("fresh",fresh)||fresh>1){error();return;}
-  String step=server.arg("step");if(step!="-20"&&step!="-4"&&step!="-1"&&step!="0"&&step!="1"&&step!="4"&&step!="20"){error();return;}
-  bool accepted;{Guard g;accepted=motion.testCommand(token,seq,step.toInt(),millis(),fresh==1);}if(!accepted){error(409);return;}ok();
- });
- // Separate continuous speed/direction experiment; never invokes angular gait.
- server.on("/api/360",HTTP_POST,[]{
-  uint32_t active,seq;if(!owns()||!uintArg("seq",seq)||!uintArg("active",active)||active>1){error();return;}
-  bool accepted;{Guard g;accepted=motion.sequence(motion.session,seq);if(accepted){offForChangeLocked();accepted=motion.openContinuous(active);}}
-  if(!accepted){error(409);return;}ok();
- });
- server.on("/api/360/config",HTTP_POST,[]{
-  uint32_t seq,ch,neutral,forward,reverse;
-  if(!owns()||!uintArg("seq",seq)||!uintArg("ch",ch)||ch>7||!uintArg("stop",neutral)||!uintArg("forward",forward)||!uintArg("reverse",reverse)||!crab::Continuous360::validCount(neutral)||!crab::Continuous360::validCount(forward)||!crab::Continuous360::validCount(reverse)){error();return;}
-  bool accepted;{Guard g;accepted=motion.sequence(motion.session,seq);if(accepted){offForChangeLocked();accepted=motion.continuous.opened&&!motion.inhibit&&!motion.assembly&&motion.actuator==crab::Actuator::Unknown&&!motion.test.opened&&motion.continuous.configure(ch,neutral,forward,reverse);}}
-  if(!accepted){error(409);return;}ok();
- });
- server.on("/api/360/hold",HTTP_POST,[]{
-  uint32_t token,seq,ch,action,duration,fresh;
-  if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("ch",ch)||ch>7||!uintArg("action",action)||action>2||!uintArg("duration",duration)||duration<crab::Continuous360::MIN_MS||duration>crab::Continuous360::MAX_MS||!uintArg("fresh",fresh)||fresh>1){error();return;}
-  bool accepted;crab::Continuous360 result;{Guard g;accepted=motion.continuousCommand(token,seq,ch,action,duration,millis(),fresh==1);result=motion.continuous;}
-  continuousReply(accepted,result);
- });
- // Manual-reference settings are ordered, stop first and never emit a pulse.
- server.on("/api/360/viewpoint",HTTP_POST,[]{
-  uint32_t token,seq,value;if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("value",value)||value>2){error();return;}
-  bool accepted;{Guard g;accepted=motion.sequence(token,seq);if(accepted){offForChangeLocked();accepted=motion.continuous.opened&&motion.continuous.setViewpoint(value);}}if(accepted)ok();else error(409);
- });
- server.on("/api/360/calibrate",HTTP_POST,[]{
-  uint32_t token,seq,ch,dir,counts,degrees,ms;
-  if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("ch",ch)||ch>7||!uintArg("direction",dir)||dir<1||dir>2||!uintArg("counts",counts)||!crab::Continuous360::validCount(counts)||!uintArg("degrees",degrees)||degrees<1||degrees>180||!uintArg("ms",ms)||ms<50||ms>60000){error();return;}
-  bool accepted;crab::Continuous360 result;{Guard g;accepted=motion.sequence(token,seq);if(accepted){offForChangeLocked();accepted=motion.continuous.opened&&!motion.inhibit&&motion.continuous.calibrate(ch,dir,counts,degrees,ms);}result=motion.continuous;}continuousReply(accepted,result);
- });
- server.on("/api/360/reference",HTTP_POST,[]{
-  uint32_t token,seq;if(!uintArg("token",token)||!uintArg("seq",seq)||server.arg("confirm")!="manual90"){error();return;}
-  bool accepted;crab::Continuous360 result;{Guard g;accepted=motion.sequence(token,seq);if(accepted){offForChangeLocked();accepted=motion.continuous.opened&&!motion.inhibit&&motion.continuous.confirmReference();}result=motion.continuous;}continuousReply(accepted,result);
- });
- server.on("/api/360/move",HTTP_POST,[]{
-  uint32_t token,seq,ch,dir,degrees,fresh,cap;
-  if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("ch",ch)||ch>7||!uintArg("direction",dir)||dir<1||dir>2||!uintArg("degrees",degrees)||degrees<1||degrees>60||!uintArg("cap",cap)||cap<50||cap>500||!uintArg("fresh",fresh)||fresh>1){error();return;}
-  bool accepted;crab::Continuous360 result;{Guard g;accepted=motion.sequence(token,seq)&&!motion.inhibit&&!motion.assembly&&motion.actuator==crab::Actuator::Unknown&&!motion.test.opened&&motion.continuous.move(ch,dir,degrees,millis(),fresh==1,cap);result=motion.continuous;}continuousReply(accepted,result);
- });
+ // The former /api/test and /api/360 routes are intentionally not registered.
  // Captive portal probes (Android/iOS/Windows) all land on our embedded page.
  server.onNotFound([]{if(server.uri().startsWith("/api/")){error(404);return;}server.sendHeader("Cache-Control","no-store");server.send_P(200,"text/html; charset=utf-8",WEB_UI);});
  server.begin();
