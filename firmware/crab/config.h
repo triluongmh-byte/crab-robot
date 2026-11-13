@@ -17,7 +17,17 @@ constexpr uint32_t FRAME_MS=20;
 constexpr float FRAME_S=FRAME_MS*.001f, PERIOD_S=1.8f;
 constexpr float HIP_AMPLITUDE=25, KNEE_LIFT=30, SLEW_DPS=180;
 constexpr float RADIAL[4]={0.7853981634f,-0.7853981634f,2.3561944902f,-2.3561944902f};
+// Leg order FL, FR, RL, RR. Each pattern: phase group per leg, then cycle
+// fractions for grounded stance, knee lift and airborne hip return; the
+// remainder lowers the knee. Hip start offset begins mid-stance at neutral.
+struct GaitPattern {float group[4],stance,lift,swing,start;bool linearStance;};
+// Default diagonal trot FL+RR / FR+RL. Stance .56 > .5 leaves 12% of each
+// cycle with all four feet down. Linear stance keeps both grounded pairs at
+// one body velocity during that overlap. At Fast (1.8 s) the knee lift
+// (30 deg/.18 s) and smoothstep hip return (peak 1.5*50 deg/.432 s) both stay
+// under SLEW_DPS so the joints track their targets.
+constexpr GaitPattern TROT={{0,.5f,.5f,0},.56f,.1f,.24f,.28f,true};
 // Owner-requested front pair CH0/2 and rear pair CH4/6, half-cycle apart.
 // First half: grounded push. Second: lift, airborne return, lower.
-constexpr float GROUP_PHASE[4]={0,0,.5f,.5f};
+constexpr GaitPattern PAIRS={{0,0,.5f,.5f},.5f,.125f,.25f,.25f,false};
 }

@@ -2,7 +2,7 @@
 
 On desktop, Forward/Backward/Left/Right and Stop stay on the left. The right sidebar scrolls independently and contains status, enable/disable, speed, lights, Wi-Fi, assembly and the servo table. Its contents can grow without moving the driving buttons. On mobile, only the driving pad and compact readiness indicator remain visible; tap **☰** for the sidebar. Opening it stops any held direction. Close it with ☰, the backdrop or Escape.
 
-Hold a direction to move; release, cancellation, focus loss or a lost connection stops the command. Assembly still locks driving until **Xong ráp**. The first enable takes about3seconds. This UI update keeps the paired gait and its timing unchanged.
+Hold a direction to move; release, cancellation, focus loss or a lost connection stops the command. Assembly still locks driving until **Xong ráp**. The first enable takes about3seconds. The sidebar's **Dáng đi** selector chooses the diagonal trot (default) or the owner's front/rear pairs; changing it stops walking, like speed; the servos stay enabled.
 
 ## What the servo table means
 

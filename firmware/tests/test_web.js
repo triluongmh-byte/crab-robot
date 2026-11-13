@@ -15,7 +15,7 @@ for(const m of html.matchAll(/id="([^"]+)"/g)){const e=new Element();e.id=m[1];e
 const el=id=>{assert(elements[id],id+' must actually exist');return elements[id];};
 const dirs=[...html.matchAll(/data-dir="(\d+)"/g)].map(m=>{let e=new Element();e.dataset.dir=m[1];e.disabled=true;return e;});
 const events={},timers=[],calls=[],beacons=[];let failMove=false,failStatus=false,failTelemetry=false,mobile=false,deferred=null;
-const state={message:'Đã vào Wi-Fi',online:true,url:'http://192.168.4.1/',driver:true,positional:false,enabled:0,assembly:false,speed:0.65,offsets:Array(8).fill(0)};
+const state={message:'Đã vào Wi-Fi',online:true,url:'http://192.168.4.1/',driver:true,positional:false,enabled:0,assembly:false,speed:0.65,gait:'trot',offsets:Array(8).fill(0)};
 const samples=Array.from({length:8},(_,ch)=>({ch,known:true,active:false,angleDeg:null,pulseUs:null,counts:null}));
 const document={body:new Element(),hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:[],addEventListener:(n,f)=>events[n]=f};
 const fetch=async(path,opt={})=>{const data=Object.fromEntries(opt.body||[]);calls.push({path,data});let d={};
@@ -36,6 +36,8 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  const before=calls.length;dirs[0].fire('pointerdown');await flush();assert.equal(calls.length,before);await el('light').onclick();assert(calls.some(c=>c.path==='/api/light'));
  await el('arm').onclick();await flush();assert(state.positional&&dirs.every(b=>b.disabled));assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
  state.enabled=8;await poll();assert(dirs.every(b=>!b.disabled));state.speed=1;el('speed').value='0.4';await poll();assert.equal(el('speed').value,'1');state.speed=0.4;await poll();assert.equal(el('speed').value,'0.4');
+ assert.equal(el('gait').value,'trot');assert(/chéo/.test(el('gaitHint').textContent));state.gait='pairs';await poll();assert.equal(el('gait').value,'pairs');assert(/trước và sau/.test(el('gaitHint').textContent));
+ el('gait').value='trot';await el('gait').onchange();await flush();assert(calls.some(c=>c.path==='/api/gait'&&c.data.value==='trot'&&c.data.token==='42'));state.gait='trot';await poll();assert.equal(el('gait').value,'trot');
  for(const b of dirs){b.fire('pointerdown');await flush();let cmd=calls.filter(c=>c.path==='/api/move').at(-1);assert.equal(cmd.data.dir,b.dataset.dir);assert.equal(cmd.data.fresh,'1');await hold();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');}
 
  // Polls and unrelated touches must not interrupt the captured finger.
