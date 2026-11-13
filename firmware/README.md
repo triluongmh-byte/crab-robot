@@ -196,3 +196,23 @@ Release `positional180-v18` makes three changes.
 ## Emotion page leg names — 2026-11-13
 
 In release `positional180-v19`, the emotion page sliders use the same leg names as the calibration menu: front left CH0/1, front right CH2/3, rear left CH4/5, rear right CH6/7. The owner reported that the previous mapping did not match the robot.
+
+## Owner settings backup — 2026-11-13
+
+`firmware/settings/owner-2026-11-13.json` records the tuned settings read from `/api/status` on v19:
+
+- trims `[24,-18,-30,30,-18,30,27,-21]`
+- speed 90%
+- knee lift 35°
+- heading trim +4
+- flick hip 90°
+- gait trot
+- lamp `#ff0f0f`
+
+Restore them after a reflash or erase with:
+
+```sh
+python3 tools/firmware/restore_settings.py firmware/settings/owner-2026-11-13.json --host <robot-ip>
+```
+
+Add `--dry-run` to list the requests without sending them. The robot keeps the trims, knee lift, heading trim and lamp colour across reboots. Speed, gait and flick hip are not saved on the robot: they reset to their defaults (90%, trot, 90°) at boot, which happen to equal these values.
