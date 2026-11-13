@@ -16,6 +16,8 @@ constexpr uint32_t DEADMAN_MS=500, BOOT_HOLD_MS=8000, ENABLE_GAP_MS=300;
 constexpr uint32_t FRAME_MS=20;
 constexpr float FRAME_S=FRAME_MS*.001f, PERIOD_S=0.8f;
 constexpr float HIP_AMPLITUDE=25, KNEE_LIFT=30, SLEW_DPS=600;
+// Return to standing after an emotion pose is released or times out.
+constexpr float RELAX_DPS=120;
 constexpr float RADIAL[4]={0.7853981634f,-0.7853981634f,2.3561944902f,-2.3561944902f};
 // Leg order FL, FR, RL, RR. Each pattern: phase group per leg, then cycle
 // fractions for grounded stance, knee lift and airborne hip return; the

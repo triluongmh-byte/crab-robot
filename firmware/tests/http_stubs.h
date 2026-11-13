@@ -65,10 +65,11 @@ struct Wifi{
 } WiFi;
 struct Store{
  std::map<std::string,String> data;
- void putString(const char* key,const String& s){data[key]=s;}
+ size_t putString(const char* key,const String& s){data[key]=s;return s.length();}
+ String getString(const char* key,const String& fallback){auto it=data.find(key);return it==data.end()?fallback:it->second;}
  size_t putBytes(const char*,const void*,size_t n){return n;}
-} wifiStore,trimStore;
-struct Light{bool on=false;void set(bool v){on=v;}} light;
+} wifiStore,trimStore,emoteStore;
+struct Light{bool on=false;int r=-1,g=-1,b=-1;void set(bool v){on=v;}void color(int r_,int g_,int b_){r=r_;g=g_;b=b_;}} light;
 crab::Motion motion;crab::Network network;
 std::atomic<bool> driverReady(true),stationHasIp(false);
 String candidateSsid,candidatePass,storedSsid,storedPass;

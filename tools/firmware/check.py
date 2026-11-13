@@ -72,7 +72,7 @@ def core():
  if not exe.exists() or not ss.exists() or ss.read_text()!=sd:
   run(['swiftc','-num-threads',str(os.cpu_count()),'-module-cache-path',str(OUT/'swift-modules'),str(swift),'-o',str(exe)]);ss.write_text(sd)
  return '; '.join(r[0] for r in results)+'; '+run([str(exe),str(OUT)])
-def web():return run(['node','firmware/tests/test_web.js'])
+def web():return run(['node','firmware/tests/test_web.js'])+'; '+run(['node','firmware/tests/test_emote.js'])
 def static():return run([sys.executable,'firmware/tests/test_interfaces.py'])
 def drivers():return '; '.join(r[0] for r in pooled(lambda p:cpp('drivers',p),PROFILES))
 def display():

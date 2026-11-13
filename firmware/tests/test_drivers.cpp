@@ -102,5 +102,7 @@ int main(){
  LightDriver light;assert(light.begin());assert(rmtCapture.gpio_num==1&&rmtCapture.clk_div==8&&rmtCapture.tx_config.idle_output_en);assert(rmtBits.size()==192);
  for(auto bit:rmtBits)assert(bit.duration0==4&&bit.duration1==9); // off at boot
  light.set(true);for(int color=0;color<24;color++){int value=0;for(int b=0;b<8;b++){const auto bit=rmtBits[color*8+b];assert(bit.level0==1&&bit.level1==0);assert(bit.duration0+bit.duration1==13);value=(value<<1)|(bit.duration0==8);}assert(value==16);}
- std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<": 180-only actual PCA register replay/shared8CH20ms frames/fast pair and diagonal-trot lift clearance: boot off, sequential enable8CH,8directions, pulse bounds after trim, release/deadman settle, assembly/raw centre, explicit disarm, legacy-state refusal,50Hz; OE inhibited before I2C and released only after first valid pulse; RMT LED off/cap/timing\n";
+ // RGB colour: WS2812 GRB byte order, each channel scaled to the brightness cap.
+ light.color(255,128,0);{const int expect[3]={8,16,0};for(int led=0;led<8;led++)for(int c=0;c<3;c++){int value=0;for(int b=0;b<8;b++)value=(value<<1)|(rmtBits[led*24+c*8+b].duration0==8);assert(value==expect[c]);}}
+ std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<": 180-only actual PCA register replay/shared8CH20ms frames/fast pair and diagonal-trot lift clearance: boot off, sequential enable8CH,8directions, pulse bounds after trim, release/deadman settle, assembly/raw centre, explicit disarm, legacy-state refusal,50Hz; OE inhibited before I2C and released only after first valid pulse; RMT LED off/cap/timing/GRB colour\n";
 }

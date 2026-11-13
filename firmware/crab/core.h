@@ -172,7 +172,23 @@ struct Motion {
  int enabled=0;
  uint32_t outputEpoch=0; // invalidate cached output after synchronous off/settings
  void begin(uint32_t now){start=lastTick=now;enabled=0;}
- void stop(){velocity={};lease=false;test.stop();continuous.stop();drive.stop();}
+ // Emotion poses: direct joint targets in the gait's command frame (knee
+ // negative lifts). Same lease/deadman as walking; release relaxes slowly.
+ float pose[8]={},poseRate[8]={};
+ bool posing=false,relaxing=false;
+ void stop(){if(posing)relaxing=true;posing=false;velocity={};lease=false;test.stop();continuous.stop();drive.stop();}
+ bool poseCommand(uint32_t id,uint32_t seq,const float angles[8],uint32_t ms,uint32_t now,bool fresh){
+  if(!sequence(id,seq)||inhibit||assembly||test.opened||continuous.opened||!positional()||enabled<8)return false;
+  if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
+  for(int ch=0;ch<8;ch++)if(!std::isfinite(angles[ch]))return false;
+  const float seconds=std::min(ms,uint32_t(5000))*.001f;
+  for(int ch=0;ch<8;ch++){
+   pose[ch]=clamp(angles[ch],-cfg::JOINT_LIMIT,cfg::JOINT_LIMIT);
+   const float distance=std::fabs(pose[ch]-position[ch]);
+   poseRate[ch]=seconds>0?clamp(distance/seconds,1,cfg::SLEW_DPS):cfg::SLEW_DPS;
+  }
+  velocity={};amplitude=0;posing=true;relaxing=false;lastCommand=now;lease=true;return true;
+ }
  bool command(uint32_t id,uint32_t seq,int dir,uint32_t now,bool fresh=true){
   if(dir<0||dir>8||!sequence(id,seq))return false;
   if(dir==0){stop();return true;}
@@ -180,7 +196,7 @@ struct Motion {
   if(actuator==Actuator::Unknown)return false; //180-only release: no timed360 fallback
   if(!positional()||enabled<8)return false;
   if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
-  velocity=direction(dir);lastCommand=now;lease=true;return true;
+  velocity=direction(dir);posing=false;relaxing=false;lastCommand=now;lease=true;return true;
  }
  void newSession(uint32_t id){stop();test.opened=false;continuous.opened=false;session=id;lastSeq=0;}
  bool setAssembly(bool active){if(active&&(test.opened||continuous.opened))return false;stop();assembly=active;raw=false;return true;}
@@ -202,8 +218,11 @@ struct Motion {
   amplitude=clamp(amplitude+(moving?dt*1.5f:-dt*4.0f),0,1);
   if(moving)heading=velocity;
   if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cyclePeriod(gaitPattern,heading),6.2831853072f);
+  if(posing){for(int ch=0;ch<8;ch++)position[ch]+=clamp(pose[ch]-position[ch],-poseRate[ch]*dt,poseRate[ch]*dt);return 0;}
   float target[8]={};if(!assembly)gait(phase,heading,amplitude,target,gaitPattern);
-  for(int ch=0;ch<8;ch++)position[ch]+=clamp(target[ch]-position[ch],-cfg::SLEW_DPS*dt,cfg::SLEW_DPS*dt);
+  const float rate=relaxing&&!moving?cfg::RELAX_DPS:cfg::SLEW_DPS;bool settled=true;
+  for(int ch=0;ch<8;ch++){position[ch]+=clamp(target[ch]-position[ch],-rate*dt,rate*dt);settled=settled&&std::fabs(target[ch]-position[ch])<.01f;}
+  if(settled||moving)relaxing=false;
   return 0;
  }
  private:Vec heading{};
