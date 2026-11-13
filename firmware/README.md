@@ -192,3 +192,7 @@ Release `positional180-v18` makes three changes.
 
 **Calibration names.** The calibration labels use the owner's names (CH6 = rear-right hip). These labels are independent of the Forward direction, which stays rotated by `FRONT_IS_CH46`.
 
+
+## Emotion page leg names — 2026-11-13
+
+In release `positional180-v19`, the emotion page sliders use the same leg names as the calibration menu: front left CH0/1, front right CH2/3, rear left CH4/5, rear right CH6/7. The owner reported that the previous mapping did not match the robot.
