@@ -107,29 +107,35 @@ static void test_manual90(){
  assert(m.continuous.confirmReference());assert(m.openContinuous(false));assert(!m.continuous.referenceValid); // mode/settings
  assert(m.openTest(true));assert(m.test.config(0,307));assert(m.testCommand(2,1,4,100,true));assert(!m.continuous.referenceValid); // untracked motion
 }
-static void test_recovery_order(){
- const int order[4]={0,3,1,2};
- for(int step=0;step<4;step++)for(float u:{.1f,.2f,.4f,.6f,.8f,.9f}){
-  float fwd[8],back[8];const float phase=(step+u)*6.2831853072f/4;
+static void test_pair_sequence(){
+ for(int group=0;group<2;group++)for(float u:{.1f,.3f,.55f,.6f,.7f,.8f,.9f,.95f}){
+  float fwd[8],back[8];const float cycle=u+group*.5f;
+  const float phase=(cycle-.25f)*6.2831853072f;
   gait(phase,direction(1),1,fwd);gait(phase,direction(2),1,back);
-  int leg=order[step];
-  for(int j=0;j<4;j++){
-   assert(std::fabs(fwd[2*j]+back[2*j])<.001f);assert(std::fabs(fwd[2*j+1]-back[2*j+1])<.001f);
-   if(j!=leg)assert(std::fabs(fwd[2*j+1])<.001f);
+  const int first=group*2;
+  for(int leg=0;leg<4;leg++){
+   assert(std::fabs(fwd[2*leg]+back[2*leg])<.001f);
+   assert(std::fabs(fwd[2*leg+1]-back[2*leg+1])<.001f);
   }
-  const float p=hipProjection(leg,direction(1));
-  if(u<.25f)assert(std::fabs(fwd[2*leg]+cfg::HIP_AMPLITUDE*p)<.001f);
-  if(u>.75f)assert(std::fabs(fwd[2*leg]-cfg::HIP_AMPLITUDE*p)<.001f);
-  if(u>.25f&&u<.75f)assert(std::fabs(fwd[2*leg+1]+cfg::KNEE_LIFT)<.001f);
+  assert(std::fabs(fwd[2*first+1]-fwd[2*(first+1)+1])<.001f);
+  assert(std::fabs(fwd[2*first]+fwd[2*(first+1)])<.001f); // mirrored hip push
+  if(u<.5f)assert(fwd[2*first+1]==0);
+  if(u>.5f&&u<.625f)assert(std::fabs(std::fabs(fwd[2*first])-25)<.001f);
+  if(u>.625f&&u<.875f)assert(std::fabs(fwd[2*first+1]+30)<.001f);
+  if(u>.875f)assert(std::fabs(std::fabs(fwd[2*first])-25)<.001f);
  }
+ // First forward frame commands front hips from neutral towards the rear.
+ float initial[8],after[8];gait(0,direction(1),1,initial);gait(.02f,direction(1),1,after);
+ assert(std::fabs(initial[0])<.001f&&std::fabs(initial[2])<.001f);
+ assert(after[0]>initial[0]&&after[2]<initial[2]&&after[1]==0&&after[3]==0);
 }
 static void test_normal_speed(){
  Motion m;assert(std::fabs(m.speed-.65f)<.001f);assert(cfg::SLEW_DPS==180);
- // Half a second of Normal advances half a recovery step (four-step crawl).
+ // Half a second of Normal advances about0.19 of a paired cycle.
  ready(m);m.newSession(91);uint32_t seq=0;const uint32_t begin=2200;
  const float phase=m.phase;
  for(uint32_t t=begin;t<begin+500;t+=10){if((t-begin)%150==0)assert(m.command(91,++seq,1,t,true));m.tick(t);}
- const float advance=m.phase-phase;assert(advance>.75f&&advance<.90f);
+ const float advance=m.phase-phase;assert(advance>1.1f&&advance<1.3f);
  m.stop();for(uint32_t t=begin+500;t<begin+1000;t+=10)m.tick(t);assert(!m.lease&&m.amplitude==0);
 }
 static void test_motion(){
@@ -159,7 +165,7 @@ static void test_qr(const std::string& path){
 }
 static void simulation(const std::string& dir){
  std::ofstream out(dir+"/gait.csv");out<<"direction,phase,hip_fl,knee_fl,hip_fr,knee_fr,hip_rl,knee_rl,hip_rr,knee_rr,grounded_mask\n";
- std::ofstream report(dir+"/gait-summary.json");report<<"{\"model\":\"four-step crawl; ideal knee-angle contact and tangent stance projection; not physical stability or CAD collision proof\",\"contactToleranceDeg\":0.0001,\"directions\":[";
+ std::ofstream report(dir+"/gait-summary.json");report<<"{\"model\":\"front/rear pair gait; ideal knee-angle contact and tangent stance projection; not physical stability or CAD collision proof\",\"contactToleranceDeg\":0.0001,\"directions\":[";
  for(int d=1;d<=8;d++){
   Vec v=direction(d);double sx=0,sy=0,maxAngle=0;int samples=720,minGrounded=4,maxLifted=0;
   int unilateralSupport=0,supportMasks[16]={};
@@ -176,7 +182,7 @@ static void simulation(const std::string& dir){
    if(!bothSides)unilateralSupport++;
    if(!bothSides)std::cerr<<"Unilateral support: direction="<<d<<" sample="<<k<<" groundedMask="<<grounded<<"\n";
    assert(bothSides); // regression: the old quarter-phase gait fails here
-   assert(count>=3&&(grounded&0x3u)&&(grounded&0xCu)); // front and rear too
+   assert(count>=2); // front or rear pair; no front/rear support guarantee
    for(int leg=0;leg<4;leg++){
     if(!(grounded&(1u<<leg)))continue;
     // Finite differences of the actual gait, independent of its phase formula.
@@ -192,4 +198,4 @@ static void simulation(const std::string& dir){
  }
  report<<"],\"sidewaysSupportedByModel\":true,\"hardwareTested\":false}\n";
 }
-int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_recovery_order();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, crawl recovery order/lift-before-return/three-foot support/forward-back reversal, pulse bounds, QR encoding\n";}
+int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_pair_sequence();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, front-rear pair push/lift/return/lower/full hip stroke/forward-back reversal, pulse bounds, QR encoding\n";}

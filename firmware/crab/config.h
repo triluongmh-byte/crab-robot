@@ -14,10 +14,10 @@ constexpr const char* JOINT[8]={"Hông trước trái","Gối trước trái","H
                              "Hông sau trái","Gối sau trái","Hông sau phải","Gối sau phải"};
 constexpr uint32_t DEADMAN_MS=500, BOOT_HOLD_MS=8000, ENABLE_GAP_MS=300;
 constexpr uint32_t FRAME_MS=20;
-constexpr float FRAME_S=FRAME_MS*.001f, STEP_PERIOD_S=.65f, PERIOD_S=4*STEP_PERIOD_S;
-constexpr float HIP_AMPLITUDE=18, KNEE_LIFT=25, SLEW_DPS=180;
+constexpr float FRAME_S=FRAME_MS*.001f, PERIOD_S=1.8f;
+constexpr float HIP_AMPLITUDE=25, KNEE_LIFT=30, SLEW_DPS=180;
 constexpr float RADIAL[4]={0.7853981634f,-0.7853981634f,2.3561944902f,-2.3561944902f};
-// One recovery leg at a time: FL, RR, FR, RL. Three feet stay in stance.
-// Each recovery has separate lift, airborne return and lower intervals.
-constexpr float SWING_START[4]={0,.5f,.75f,.25f};
+// Owner-requested front pair CH0/2 and rear pair CH4/6, half-cycle apart.
+// First half: grounded push. Second: lift, airborne return, lower.
+constexpr float GROUP_PHASE[4]={0,0,.5f,.5f};
 }

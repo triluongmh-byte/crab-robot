@@ -80,3 +80,7 @@ The direction pad is fixed on mobile layouts and holds one pointer across status
 ## Crawl progress trial —2026-11-13
 
 The owner reports leg motion with no body progress. `positional180-v4` implements three-stance-foot crawl with distinct lift/return/lower phases and shared20ms pose frames. Host tests now check recovery order, lift before return, Forward/Backward inversion,8directions, at least3 nominal contact feet, and actual PCA register output at Fast with zero trims. The updated ideal gait report uses18° hip/25° knee amplitudes. These are source/model assertions, not measured foot contact, traction, stability or successful walking. Pulse/trim limits, staged startup,180°/s slew, direct AP and release/deadman remain in force. The earlier full-CAD/manual gate remains outstanding; only firmware is being rebuilt/published.
+
+## Front/rear pair request —2026-11-13
+
+The owner replaces the one-leg crawl with front/rear paired push–lift–return–lower. `positional180-v5` groups CH0/CH2 with CH1/CH3, and CH4/CH6 with CH5/CH7, half a cycle apart. Nominal axial hip/knee amplitudes25/30°, final limits25/35°,20ms frames,180°/s slew and the existing enable/deadman behavior are retained. Fast timing is900/225/450/225ms per pair. Tests cover first front push from neutral, exact group order, paired knees, raised return, full hip stroke, inverse Forward/Backward and actual decoded PWM frames. Nominal support may be only the front or rear pair; no pitch stability, force, physical progression or full-CAD-build result is claimed.

@@ -105,5 +105,13 @@
     "reference": "https://www.tiktok.com/@gocmaker.diy/video/7685032192547835157",
     "referenceObservation": "Mostly bobbing and leg motion in place; no unambiguous forward/back walking; no hardware variant or code inferred.",
     "physicalWalkingVerified": false
+  },
+  "pairedPushTrial": {
+    "profile": "positional180-v5",
+    "date": "2026-11-13",
+    "exactOwnerMessage": "tao hiểu rồi: tới là ch0 + ch2 đẩy ra sau trước xong thì knee là ch1 + ch3 giơ lên ch0 + ch2 tiến về trước.\n\ntương tự cho phía sau. tính lại timing cho nhịp nhàng là dc. Cứ đẩy mạnh nhất có thể.",
+    "changes": "Front/rear pairs half cycle apart, push/lift/return/lower timing900/225/450/225ms at Fast, full nominal axial hip25/knee30, final limits unchanged.",
+    "physicalWalkingVerified": false,
+    "torqueIncreased": false
   }
 }

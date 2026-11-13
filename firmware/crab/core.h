@@ -21,17 +21,18 @@ inline Vec direction(int n){
 inline float hipProjection(int leg,Vec v){return -std::sin(cfg::RADIAL[leg])*v.x+std::cos(cfg::RADIAL[leg])*v.y;}
 inline float smooth(float x){x=clamp(x,0,1);return x*x*(3-2*x);}
 inline void gait(float phase,Vec v,float amplitude,float out[8]){
- const float cycle=phase/6.2831853072f;
+ // Begin at mid front-push: hips start from neutral, not an opposite kick.
+ const float cycle=phase/6.2831853072f+.25f;
  for(int leg=0;leg<4;leg++){
-  const float local=cycle-cfg::SWING_START[leg]-std::floor(cycle-cfg::SWING_START[leg]);
+  const float local=cycle-cfg::GROUP_PHASE[leg]-std::floor(cycle-cfg::GROUP_PHASE[leg]);
   float hip,lift=0;
-  if(local<.25f){
-   const float swing=local*4;
-   // Hold hip still while lifting/lowering. Return only at full knee lift.
-   lift=clamp(std::min(swing/.25f,(1-swing)/.25f),0,1);
-   hip=-1+2*smooth((swing-.25f)/.5f);
-  }else hip=1-2*(local-.25f)/.75f; // three grounded legs push together
-  out[2*leg]=cfg::HIP_AMPLITUDE*hipProjection(leg,v)*hip*amplitude;
+  if(local<.5f)hip=1-2*smooth(local/.5f);
+  else if(local<.625f){hip=-1;lift=(local-.5f)/.125f;}
+  else if(local<.875f){hip=-1+2*smooth((local-.625f)/.25f);lift=1;}
+  else{hip=1;lift=(1-local)/.125f;}
+  // Use the available full hip stroke for axial Forward/Backward commands.
+  const float push=clamp(hipProjection(leg,v)*1.4142135624f,-1,1);
+  out[2*leg]=cfg::HIP_AMPLITUDE*push*hip*amplitude;
   out[2*leg+1]=-cfg::KNEE_LIFT*lift*amplitude;
  }
 }

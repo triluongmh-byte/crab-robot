@@ -22,10 +22,10 @@ def gait_report(core_digest):
  report=json.loads((OUT/'gait-summary.json').read_text())
  report.update({
   'contractSha256':hashlib.sha256((ROOT/'PILOT_CONTRACT.json').read_bytes()).hexdigest(),
-  'fullCycleSamplesPerDirection':720,'maxHipDeg':18,'maxKneeDeg':25,
+  'fullCycleSamplesPerDirection':720,'maxHipDeg':25,'maxKneeDeg':30,
   'softJointLimitDeg':30,'trimLimitDeg':12,'coreInputDigest':core_digest,
-  'interpretation':'Ideal knee-angle contact keeps support on both sides and at front/rear. '
-   'At most one foot is scheduled airborne; three-foot contact does not prove a COM stability margin. '
+  'interpretation':'Ideal knee-angle contact keeps a left/right pair grounded at either the front or rear. '
+   'A front or rear pair supports the body during recovery; two-foot support is a line, not a COM stability margin. '
    'Tangent stance projection supports 8 translations including sideways; '
    'mass, friction, dynamic stability, servo lag/load and CAD collisions are not modelled. '
    'Physical walking remains unverified.',
