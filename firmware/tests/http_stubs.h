@@ -76,4 +76,4 @@ struct Light{bool on=false;int r=-1,g=-1,b=-1;void set(bool v){on=v;}void color(
 crab::Motion motion;crab::Network network;
 std::atomic<bool> driverReady(true),stationHasIp(false);
 String candidateSsid,candidatePass,storedSsid,storedPass;
-bool lightOn=false;
+bool lightOn=false;uint32_t lightRgb=0xffffff;

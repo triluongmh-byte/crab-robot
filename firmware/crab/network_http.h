@@ -47,11 +47,20 @@ void pauseSavedRetry(){
  network.pauseRetry(millis());
  if(network.pauseRequested){WiFi.disconnect(false,false);stationHasIp=false;network.pauseRequested=false;}
 }
+// Lamp: saved colour when on, dark when off. Emotion /api/led stays transient.
+void applyLight(){if(lightOn)light.color(uint8_t(lightRgb>>16),uint8_t(lightRgb>>8),uint8_t(lightRgb));else light.color(0,0,0);}
+// "rrggbb" hex, as an <input type=color> value without the '#'.
+String lightHex(){char s[8];snprintf(s,sizeof(s),"#%06x",unsigned(lightRgb&0xffffff));return s;}
+bool hexColorArg(uint32_t& out){
+ String s=server.arg("value");if(s.length()!=6)return false;uint32_t v=0;
+ for(size_t i=0;i<6;i++){const char c=s[i];const int d=c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:c>='A'&&c<='F'?c-'A'+10:-1;if(d<0)return false;v=v*16+uint32_t(d);}
+ out=v;return true;
+}
 void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° trước, chờ bật đủ8 kênh và thoát Ráp để lái.\"}");}
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v17\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+"}");});
+  json(200,String("{\"firmware\":\"positional180-v18\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -81,7 +90,8 @@ void configureHttp(){
   if(ssid.length()<1||ssid.length()>32||pass.length()>63||(pass.length()>0&&pass.length()<8)){error();return;}
   WiFi.scanDelete();stopMotion();candidateSsid=ssid;candidatePass=pass;network.connect(true,millis());connectStation(ssid,pass);ok();
  });
- server.on("/api/light",HTTP_POST,[]{if(!owns()){error(409);return;}lightOn=!lightOn;light.set(lightOn);ok();});
+ server.on("/api/light",HTTP_POST,[]{if(!owns()){error(409);return;}lightOn=!lightOn;applyLight();ok();});
+ server.on("/api/lightcolor",HTTP_POST,[]{if(!owns()){error(409);return;}uint32_t rgb;if(!hexColorArg(rgb)){error();return;}lightRgb=rgb;lightOn=true;applyLight();trimStore.putInt("led",int32_t(rgb));ok();});
  // Emotion studio: direct poses under the walking lease/deadman, LED colour, saved list.
  server.on("/api/pose",HTTP_POST,[]{
   uint32_t token,seq,ms,fresh;float angles[8];

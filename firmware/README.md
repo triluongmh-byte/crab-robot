@@ -177,3 +177,18 @@ The owner turned the robot around. With v16, Forward/Backward and Left/Right wer
 
 The emotion page and the **Bù lệch** right side (CH0/CH4) also follow it. The setting is a single constant; flip it if the front changes again.
 
+## Pet eyes, lamp colour, calibration names — 2026-11-13
+
+Release `positional180-v18` makes three changes.
+
+**Screen: pet eyes.** The screen shows two white eyes on black, drawn as shapes (`eyes.h`).
+- Idle, they blink every 2.5–5.5 s and glance sideways now and then.
+- While walking or performing an emotion, they become happy arcs.
+- Wi-Fi status is one small line at the bottom.
+- The QR join screen remains only for first setup, when no Wi-Fi is saved.
+- Only black and white are used, so colour byte order cannot be wrong.
+
+**Lamp colour.** A colour picker sits beside **Bật / tắt đèn**. The picked colour is saved on the robot (`/api/lightcolor`, Preferences `led`) and used whenever the lamp is on. Emotion colours (`/api/led`) stay temporary.
+
+**Calibration names.** The calibration labels use the owner's names (CH6 = rear-right hip). These labels are independent of the Forward direction, which stays rotated by `FRONT_IS_CH46`.
+

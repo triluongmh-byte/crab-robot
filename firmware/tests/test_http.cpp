@@ -7,7 +7,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v17")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v18")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -94,7 +94,15 @@ int main(){
  motion.newSession(42);
  server.request("/api/move",{{"token","42"},{"seq","1"},{"dir","1"},{"fresh","1"}});
  assert(server.code==200&&motion.lease&&motion.velocity.x==crab::bodyDirection(1).x); // no STA connection; Forward heads to CH4/CH6
- server.request("/api/light",{{"token","42"}});assert(server.code==200&&light.on);
+ server.request("/api/light",{{"token","42"}});assert(server.code==200&&lightOn&&light.r==255&&light.g==255&&light.b==255);
+ // Lamp colour beside the light button: saved hex, turns the lamp on, toggle keeps it.
+ server.request("/api/lightcolor",{{"token","42"},{"value","ff8000"}});assert(server.code==200&&lightOn&&light.r==255&&light.g==128&&light.b==0&&trimStore.getInt("led",0)==0xff8000);
+ server.request("/api/status");assert(server.body.find("\"lightColor\":\"#ff8000\"")!=String::npos);
+ server.request("/api/light",{{"token","42"}});assert(!lightOn&&light.r==0&&light.g==0&&light.b==0);
+ server.request("/api/light",{{"token","42"}});assert(lightOn&&light.r==255&&light.g==128&&light.b==0);
+ for(const char* bad:{"","fff","gg0000","#ff0000","ff00001"}){server.request("/api/lightcolor",{{"token","42"},{"value",bad}});assert(server.code==400&&trimStore.getInt("led",0)==0xff8000);}
+ server.request("/api/lightcolor",{{"token","7"},{"value","00ff00"}});assert(server.code==409&&light.g==128);
+ server.request("/api/lightcolor",{{"token","42"},{"value","FFFFFF"}});assert(server.code==200&&light.b==255);
  server.request("/api/assembly",{{"token","42"},{"active","1"}});assert(server.code==200&&motion.assembly);
  server.request("/api/centre",{{"token","42"}});assert(server.code==200&&motion.raw);
  server.request("/api/assembly",{{"token","42"},{"active","0"}});assert(server.code==200&&!motion.assembly);
