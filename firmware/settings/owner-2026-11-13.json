@@ -1,0 +1,21 @@
+{
+  "savedAt": "2026-11-13",
+  "firmware": "positional180-v19",
+  "note": "Owner-tuned settings read from /api/status. Restore with tools/firmware/restore_settings.py.",
+  "offsets": [
+    24,
+    -18,
+    -30,
+    30,
+    -18,
+    30,
+    27,
+    -21
+  ],
+  "speed": 0.9,
+  "kneeLift": 35,
+  "balance": 4,
+  "flickHip": 90,
+  "gait": "trot",
+  "lightColor": "#ff0f0f"
+}
