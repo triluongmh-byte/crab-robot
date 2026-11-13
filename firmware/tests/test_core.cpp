@@ -179,7 +179,7 @@ static void test_tracking(){
 static void test_flick(){
  assert(std::string(patternName(Pattern::Flick))=="flick");
  // Owner frame: CH0 is rear right, so Forward/Left are rotated 180 deg into CAD.
- assert(cfg::FRONT_IS_CH46&&bodyDirection(1).x==-1&&bodyDirection(2).x==1&&bodyDirection(3).y==-1&&bodyDirection(4).y==1);
+ assert(!cfg::FRONT_IS_CH46&&bodyDirection(1).x==1&&bodyDirection(2).x==-1&&bodyDirection(3).y==1&&bodyDirection(4).y==-1);
  assert(flickActive(Pattern::Flick,direction(1))&&flickActive(Pattern::Flick,direction(2)));
  assert(!flickActive(Pattern::Flick,direction(3))&&!flickActive(Pattern::Flick,direction(5))&&!flickActive(Pattern::Trot,direction(1)));
  assert(cyclePeriod(Pattern::Flick,direction(1))==cfg::FLICK_PERIOD_S&&cyclePeriod(Pattern::Flick,direction(3))==cfg::PERIOD_S);
@@ -207,9 +207,10 @@ static void test_flick(){
    float h[8];gait((k/1000.f+.5f)*6.2831853072f,bodyDirection(dir),1,h,Pattern::Flick);
    assert(std::fabs(o[1]-h[3])<.001f&&std::fabs(o[7]-h[5])<.001f);
   }
-  // Physical Forward (dir 1): rear legs (CH1 knee) trail and get the fast
-  // drop; front legs (CH7 knee) lead and snap up fast. Backward swaps them.
-  double rr,rf,fr,ff;profile(dir,0,rr,rf);profile(dir,3,fr,ff);
+  // Physical Forward (dir 1): rear legs trail and get the fast drop; front
+  // legs lead and snap up fast. Backward swaps them. CAD legs 0,3 share a
+  // phase group; with no rotation leg 0 (CH0/1) is front, leg 3 (CH6/7) rear.
+  double rr,rf,fr,ff;profile(dir,cfg::FRONT_IS_CH46?0:3,rr,rf);profile(dir,cfg::FRONT_IS_CH46?3:0,fr,ff);
   const bool rearTrails=dir==1;
   const double trailRise=rearTrails?rr:fr,trailFall=rearTrails?rf:ff,leadRise=rearTrails?fr:rr,leadFall=rearTrails?ff:rf;
   assert(trailRise>.7&&trailFall-trailRise<=cfg::FLICK_STROKE+.01);
@@ -219,10 +220,10 @@ static void test_flick(){
  {float o[8];gait(0,bodyDirection(1),1,o,Pattern::Flick,45);for(int leg=0;leg<4;leg++)assert(std::fabs(std::fabs(o[2*leg])-45)<.001f);
   gait(0,bodyDirection(1),1,o,Pattern::Flick,200);for(int leg=0;leg<4;leg++)assert(std::fabs(std::fabs(o[2*leg])-cfg::FLICK_HIP)<.001f);
   Motion m;assert(m.flickHip==cfg::FLICK_HIP);}
- // Heading trim: physical right legs are CH0 (rear right) and CH4 (front right).
- assert(physicalRight(0)&&!physicalRight(1)&&physicalRight(2)&&!physicalRight(3));
- {float o[8]={10,5,10,5,10,5,10,5};applyBalance(o,20);assert(std::fabs(o[0]-12)<1e-4f&&std::fabs(o[2]-8)<1e-4f&&std::fabs(o[4]-12)<1e-4f&&std::fabs(o[6]-8)<1e-4f&&o[1]==5&&o[7]==5);
-  float c[8]={10,0,10,0,10,0,10,0};applyBalance(c,99);assert(std::fabs(c[0]-13)<1e-4f&&std::fabs(c[2]-7)<1e-4f);} // clamped to 30%
+ // Heading trim: physical right legs are CH2 (front right) and CH6 (rear right).
+ assert(!physicalRight(0)&&physicalRight(1)&&!physicalRight(2)&&physicalRight(3)); // CH2 FR, CH6 RR
+ {float o[8]={10,5,10,5,10,5,10,5};applyBalance(o,20);assert(std::fabs(o[0]-8)<1e-4f&&std::fabs(o[2]-12)<1e-4f&&std::fabs(o[4]-8)<1e-4f&&std::fabs(o[6]-12)<1e-4f&&o[1]==5&&o[7]==5);
+  float c[8]={10,0,10,0,10,0,10,0};applyBalance(c,99);assert(std::fabs(c[0]-7)<1e-4f&&std::fabs(c[2]-13)<1e-4f);} // right = CH2, CH6 // clamped to 30%
  {Motion m;assert(m.balance==0&&m.setBalance(-30)&&m.balance==-30&&!m.setBalance(31)&&!m.setBalance(-31)&&m.balance==-30);}
  {// Walking applies the trim to the hip targets the joints track.
   Motion a,b;ready(a);ready(b);a.newSession(3);b.newSession(3);b.setBalance(25);
@@ -272,8 +273,8 @@ static void test_normal_speed(){
 }
 static void test_motion(){
  Motion m;m.newSession(12);m.begin(0);assert(!m.command(12,1,1,0));m.stop();assert(m.enabled==0);ready(m);
- assert(m.command(12,2,1,2200,true));assert(m.velocity.x==-1);assert(!m.command(12,1,2,2210));
- m.tick(2699);assert(m.velocity.x==-1);m.tick(2709);assert(m.velocity.x==0&&!m.lease);
+ assert(m.command(12,2,1,2200,true));assert(m.velocity.x==1);assert(!m.command(12,1,2,2210));
+ m.tick(2699);assert(m.velocity.x==1);m.tick(2709);assert(m.velocity.x==0&&!m.lease);
  assert(!m.command(12,3,1,2710,false));assert(m.command(12,4,1,2720,true));
  assert(m.command(12,6,0,2730,false));assert(!m.command(12,5,1,2740,false));assert(!m.lease);
  assert(!m.command(13,7,1,2800));m.setAssembly(true);assert(!m.command(12,7,1,2810));
