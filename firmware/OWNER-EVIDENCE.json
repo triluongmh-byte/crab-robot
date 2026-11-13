@@ -82,5 +82,14 @@
     "ownerObservation": "180deg servo movement is reported too slow; no measured rate or loaded walking result supplied",
     "servoPowerStateToday": "not confirmed; prior-day power-disconnection report is historical",
     "runtimeChanges": "period1second,default0.65,slew180nominaldeg/s; angular envelope and saved positional trims unchanged"
+  },
+  "stableHoldFasterUpdate": {
+    "profile": "positional180-v3",
+    "date": "2026-11-13",
+    "exactOwnerMessage": "cái web mà đè mấy cái nút là nó nhẩy, làm con mất event đè nút. Vs tao thấy vẫn chưa đủ nhanh",
+    "ownerObservation": "Page jumps while holding drive buttons; previous speed still too slow.",
+    "runtimeChanges": "fixed mobile drive deck, captured pointer ownership and stable polling DOM; period0.65s; angles, slew, trims, enable/stop behavior unchanged",
+    "physicalPhoneTouchVerified": false,
+    "physicalWalkingVerified": false
   }
 }

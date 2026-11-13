@@ -2,17 +2,19 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const html=fs.readFileSync('firmware/assets/ui.html','utf8'),code=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const elements={};class Element{
- constructor(){this.value='';this.textContent='';this.id='';this.listeners={};this.children=[];this.dataset={};this.disabled=false;this.classList={toggle:(n,v)=>{if(n==='hidden')this.hidden=v;}};}
+ constructor(){this.value='';this.textContent='';this.id='';this.listeners={};this.children=[];this.dataset={};this.disabledWrites=0;this._disabled=false;this.capture=null;this.classList={toggle:(n,v)=>{if(n==='hidden')this.hidden=v;if(n==='holding')this.holding=v;}};}
  appendChild(e){this.children.push(e);if(e.id)elements[e.id]=e;return e;}replaceChildren(){this.children=[];}
- addEventListener(n,f){(this.listeners[n]??=[]).push(f);}setPointerCapture(){}
- fire(n){for(const f of this.listeners[n]||[])f({currentTarget:this,pointerId:1,preventDefault(){}});}
+ get disabled(){return this._disabled;}set disabled(v){this.disabledWrites++;this._disabled=v;}
+ addEventListener(n,f){(this.listeners[n]??=[]).push(f);}setPointerCapture(id){this.capture=id;}
+ hasPointerCapture(id){return this.capture===id;}releasePointerCapture(){this.capture=null;}
+ fire(n,props={}){let prevented=false;for(const f of this.listeners[n]||[])f({currentTarget:this,pointerId:1,pointerType:'touch',button:0,preventDefault(){prevented=true;},...props});return prevented;}
 }
 for(const m of html.matchAll(/id="([^"]+)"/g)){const e=new Element();e.id=m[1];elements[e.id]=e;}
 const el=id=>{assert(elements[id],id+' must actually exist');return elements[id];};
 const dirs=[...html.matchAll(/data-dir="(\d+)"/g)].map(m=>{let e=new Element();e.dataset.dir=m[1];e.disabled=true;return e;});
 const events={},timers=[],calls=[],beacons=[];let failMove=false,failStatus=false,deferred=null;
 const state={message:'Đã vào Wi-Fi',online:true,url:'http://192.168.4.1/',driver:true,positional:false,enabled:0,assembly:false,speed:0.65,offsets:Array(8).fill(0)};
-const document={hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:[],addEventListener:(n,f)=>events[n]=f};
+const document={body:new Element(),hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:[],addEventListener:(n,f)=>events[n]=f};
 const fetch=async(path,opt={})=>{const data=Object.fromEntries(opt.body||[]);calls.push({path,data});let d={};
  if(path==='/api/move'){if(deferred)await deferred;if(failMove)throw Error('offline');}
  if(path==='/api/status'){if(failStatus)throw Error('offline');d={...state};}
@@ -31,11 +33,24 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  await el('arm').onclick();await flush();assert(state.positional&&dirs.every(b=>b.disabled));assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
  state.enabled=8;await poll();assert(dirs.every(b=>!b.disabled));state.speed=1;el('speed').value='0.4';await poll();assert.equal(el('speed').value,'1');state.speed=0.4;await poll();assert.equal(el('speed').value,'0.4');
  for(const b of dirs){b.fire('pointerdown');await flush();let cmd=calls.filter(c=>c.path==='/api/move').at(-1);assert.equal(cmd.data.dir,b.dataset.dir);assert.equal(cmd.data.fresh,'1');await hold();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');}
+
+ // Polls and unrelated touches must not interrupt the captured finger.
+ const first=dirs[0];assert(first.fire('pointerdown',{pointerId:7}));await flush();assert(first.holding&&first.capture===7);
+ const writes=dirs.map(b=>b.disabledWrites);state.message='Đã vào Wi-Fi — trạng thái thay đổi';await poll();
+ assert.deepEqual(dirs.map(b=>b.disabledWrites),writes);assert.equal(vm.runInContext('held',ctx),Number(first.dataset.dir));
+ first.fire('pointerup',{pointerId:8});events.pointerup({pointerId:8,preventDefault(){}});assert(first.holding);
+ assert(el('driveDeck').fire('contextmenu'));assert(el('driveDeck').fire('touchmove'));await hold();await flush();
+ events.pointerup({pointerId:7,preventDefault(){}});assert(!first.holding&&first.capture===null);assert.equal(vm.runInContext('held',ctx),0);
+ // Losing capture or readiness still stops immediately, never silently resumes.
+ first.fire('pointerdown');await flush();first.fire('lostpointercapture');assert.equal(vm.runInContext('held',ctx),0);
+ first.fire('pointerdown');await flush();state.assembly=true;await poll();assert.equal(vm.runInContext('held',ctx),0);state.assembly=false;await poll();
+ first.fire('pointerdown',{pointerType:'mouse',button:2});assert.equal(vm.runInContext('held',ctx),0);
+ assert(html.includes('position:fixed')&&html.includes('overscroll-behavior-y:none')&&html.includes('-webkit-touch-callout:none'));
  for(const event of ['blur','pagehide']){dirs[0].fire('pointerdown');await flush();events[event]();assert.equal(vm.runInContext('held',ctx),0);}
  dirs[0].fire('pointerdown');await flush();document.hidden=true;events.visibilitychange();assert.equal(vm.runInContext('held',ctx),0);document.hidden=false;
  dirs[1].fire('pointerdown');await flush();dirs[1].fire('pointercancel');assert.equal(beacons.at(-1).data.dir,'0');
  failMove=true;dirs[0].fire('pointerdown');await flush();assert.equal(vm.runInContext('held',ctx),0);failMove=false;
- await el('showAssembly').onclick();assert(state.assembly&&dirs.every(b=>b.disabled));assert.equal(el('trims').children.length,8);
+ await el('showAssembly').onclick();assert(state.assembly&&dirs.every(b=>b.disabled));assert.equal(document.body.dataset.page,'assembly');assert.equal(el('trims').children.length,8);
  await el('centre').onclick();await el('stand').onclick();await el('trims').children[0].children[2].onclick();assert.equal(state.offsets[0],1);assert(el('trim0').textContent.includes('(1°)'));
  await el('save').onclick();await el('showSetup').onclick();assert.equal(vm.runInContext('page',ctx),'assembly');await el('done').onclick();assert(!state.assembly&&vm.runInContext('page',ctx)==='control');
  await el('disarm').onclick();assert(!state.positional&&dirs.every(b=>b.disabled));
@@ -46,5 +61,5 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  el('ssid').value='Home';el('password').value='example-password';await el('connect').onclick();assert.equal(el('password').value,'');assert(calls.some(c=>c.path==='/api/wifi'&&c.data.ssid==='Home'));
  failStatus=true;await poll();assert(dirs.every(b=>b.disabled));assert.equal(vm.runInContext('held',ctx),0);
  assert(!calls.some(c=>c.path.includes('/360')||c.path.includes('/test')));assert(!html.includes('id="show360"'));
- console.log('PASS: actual180-only UI, default off/explicit arm, enable8 readiness,8 directions/keepalive/release/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
+ console.log('PASS: actual180-only UI, default off/explicit arm, enable8 readiness,8 directions/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

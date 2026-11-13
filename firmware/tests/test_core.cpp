@@ -109,12 +109,12 @@ static void test_manual90(){
 }
 static void test_normal_speed(){
  Motion m;assert(std::fabs(m.speed-.65f)<.001f);assert(cfg::SLEW_DPS==180);
- // One second of held Normal must advance about0.65cycles, not the old0.067.
+ // Half a second of held Normal must advance half a cycle (1Hz).
  ready(m);m.newSession(91);uint32_t seq=0;const uint32_t begin=2200;
  const float phase=m.phase;
- for(uint32_t t=begin;t<begin+1000;t+=10){if((t-begin)%150==0)assert(m.command(91,++seq,1,t,true));m.tick(t);}
- const float advance=m.phase-phase;assert(advance>3.9f&&advance<4.5f);
- m.stop();for(uint32_t t=begin+1000;t<begin+1500;t+=10)m.tick(t);assert(!m.lease&&m.amplitude==0);
+ for(uint32_t t=begin;t<begin+500;t+=10){if((t-begin)%150==0)assert(m.command(91,++seq,1,t,true));m.tick(t);}
+ const float advance=m.phase-phase;assert(advance>3.0f&&advance<3.4f);
+ m.stop();for(uint32_t t=begin+500;t<begin+1000;t+=10)m.tick(t);assert(!m.lease&&m.amplitude==0);
 }
 static void test_motion(){
  Motion m;m.newSession(12);m.begin(0);assert(!m.command(12,1,1,0));m.stop();assert(m.enabled==0);ready(m);

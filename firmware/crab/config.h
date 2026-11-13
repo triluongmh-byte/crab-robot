@@ -13,7 +13,7 @@ constexpr int SIGN[8]={1,1,1,-1,1,-1,1,1};
 constexpr const char* JOINT[8]={"Hông trước trái","Gối trước trái","Hông trước phải","Gối trước phải",
                              "Hông sau trái","Gối sau trái","Hông sau phải","Gối sau phải"};
 constexpr uint32_t DEADMAN_MS=500, BOOT_HOLD_MS=8000, ENABLE_GAP_MS=300;
-constexpr float PERIOD_S=1.0f, HIP_AMPLITUDE=12, KNEE_LIFT=15, SLEW_DPS=180;
+constexpr float PERIOD_S=.65f, HIP_AMPLITUDE=12, KNEE_LIFT=15, SLEW_DPS=180;
 constexpr float RADIAL[4]={0.7853981634f,-0.7853981634f,2.3561944902f,-2.3561944902f};
 // Diagonal trot in FL,FR,RL,RR order: FL+RR and FR+RL alternate.
 // Knees lift for half a cycle; quarter-cycle offsets would remove both

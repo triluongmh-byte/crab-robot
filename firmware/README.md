@@ -2,7 +2,7 @@
 
 This release is for the owner's replacement **positional180° SG90-class servos**. On November13 the owner reports movement from the replacement180° motors, but finds it too slow. Their current power state and physical calibration are unconfirmed. The earlier360° experiments failed loaded tests and are [archived as unsuccessful](EXPERIMENT-STATUS.md).
 
-**Current behavior:** servo PWM is off at every boot. Saved Wi-Fi/direct AP and capped-brightness LEDs remain available. Use **Bật servo180°** to enable channels one at a time,300ms apart; approximately3seconds enables all eight. The main page then offers all eight directions. **Ngắt servo** disables every output. The default speed is **Bình thường**: about1.54seconds per cycle; **Chậm** is2.5seconds and **Nhanh** is1second. Releasing a direction or missing its heartbeat500ms stops walking and settles gently towards standing; it does not disconnect the servo supply.
+**Current behavior:** servo PWM is off at every boot. Saved Wi-Fi/direct AP and capped-brightness LEDs remain available. Use **Bật servo180°** to enable channels one at a time,300ms apart; approximately3seconds enables all eight. The main page then offers all eight directions. **Ngắt servo** disables every output. The default speed is **Bình thường**: about1second per cycle; **Chậm** is1.625seconds and **Nhanh** is0.65seconds. Releasing a direction or missing its heartbeat500ms stops walking and settles gently towards standing; it does not disconnect the servo supply.
 
 The360°/single-servo speed-test pages and HTTP routes are removed from this release. The unknown actuator value is retained only as the explicit PWM-off state and cannot start the old hips-only/timed gait. Historical helper sources remain in the repository, but the final actuator output boundary emits only positional pulses.
 
@@ -61,3 +61,9 @@ The full repository CAD/source-build manual step remains documented in [BUILD-VA
 ## Normal-speed update —2026-11-13
 
 The owner reports the previous setting is too slow and explicitly requests normal speed. The base gait period is now1second, default factor0.65, with the existing0.4/0.65/1 factors preserved. This changes tempo and joint slew only: pulse calibration, gait amplitudes, joint/trim limits, motor directions, sequential enable, BOOT/stop behavior, Wi-Fi and the `cua-180-v1` trim store are unchanged. The status version is `positional180-v2`. The larger software speed allowance is not a measurement of the delivered servo's physical speed or loaded walking.
+
+## Stable hold and faster tempo —2026-11-13
+
+The owner reports the page jumps during a held arrow and requests more speed. On narrow screens the direction pad and speed selector now stay fixed at the bottom, clear of scrolling content. Holding uses one captured pointer, prevents touch scrolling/text selection/long-press menus on the pad, ignores another finger's release, and stops on the owning finger's release, cancellation, capture loss or page exit. Polling avoids rewriting unchanged status text and direction-button attributes. Losing readiness still stops the held command.
+
+The base period is0.65seconds with the existing0.4/0.65/1 factors: Slow1.625seconds, Normal1second, Fast0.65seconds per cycle. Nominal slew remains180°/s; angles, trims, output limits, enable/disable and500ms deadman are unchanged. Profile: `positional180-v3`. Host tests simulate hold renewal across polls and release paths. Actual phone touch behavior and physical speed still require the owner's check.
