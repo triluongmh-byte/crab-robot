@@ -28,9 +28,11 @@ constexpr int BALANCE_LIMIT=30;
 // Case D7: hip shafts point up; single mirrors FR/RL reverse knee sense.
 // Knees FL +1, FR -1, RL -1, RR +1; negative angle lifts each foot.
 constexpr int SIGN[8]={1,1,1,-1,1,-1,1,1};
-// Physical leg positions (see FRONT_IS_CH46).
-constexpr const char* JOINT[8]={"Hông sau phải","Gối sau phải","Hông sau trái","Gối sau trái",
-                             "Hông trước phải","Gối trước phải","Hông trước trái","Gối trước trái"};
+// Calibration labels as the owner names the legs (CH6 = rear-right hip).
+// Owner, 2026-11-13: keep these names while Forward stays rotated by
+// FRONT_IS_CH46; labels and drive direction are set independently.
+constexpr const char* JOINT[8]={"Hông trước trái","Gối trước trái","Hông trước phải","Gối trước phải",
+                             "Hông sau trái","Gối sau trái","Hông sau phải","Gối sau phải"};
 constexpr uint32_t DEADMAN_MS=500, BOOT_HOLD_MS=8000, ENABLE_GAP_MS=300;
 constexpr uint32_t FRAME_MS=20;
 constexpr float FRAME_S=FRAME_MS*.001f, PERIOD_S=0.8f;

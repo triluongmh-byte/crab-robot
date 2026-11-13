@@ -29,5 +29,23 @@ int main(int argc,char** argv){
  gpio.clear();failCommand=0xbb;Screen failure;assert(!failure.begin());
  for(auto c:gpio)assert(c.pin!=38||c.value==LOW); // failed init never lights BL
 #endif
- std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<": actual Screen begin bus/pins/init/offset/rotation, QR draw callback; init failure stays dark\n";
+ // Pet face: open eyes are white at their centres on black, a blink narrows them,
+ // a glance shifts them, happy draws arcs; the status line sits at the bottom.
+ {Screen& f=s;crab::EyeFrame open;const int before=draws;
+  assert(f.face(open,"Đã vào Wi-Fi 172.168.20.249")&&draws==before+1);
+  assert(f.at(160-52,70)==0xffff&&f.at(160+52,70)==0xffff&&f.at(160,70)==0&&f.at(5,5)==0);
+  assert(f.at(160-52,70-40)==0xffff&&f.at(160-52,70+40)==0xffff);
+  bool lineInk=false;for(int y=150;y<170;y++)for(int x=0;x<320;x++)lineInk=lineInk||f.at(x,y)==0xffff;assert(lineInk);
+  bool eyeRows=true;for(int y=0;y<150;y++)for(int x:{2,317})eyeRows=eyeRows&&f.at(x,y)==0;assert(eyeRows);
+  crab::EyeFrame shut;shut.open=10;assert(f.face(shut,""));assert(f.at(160-52,70)==0xffff&&f.at(160-52,70-20)==0);
+  crab::EyeFrame right;right.look=1;assert(f.face(right,""));assert(f.at(160-52+24,70)==0xffff&&f.at(160-52-28,70)==0);
+  crab::EyeFrame happy;happy.happy=true;assert(f.face(happy,""));assert(f.at(160-52,70+16-26)==0xffff&&f.at(160-52,70+16)==0&&f.at(160-52,70+16+10)==0);}
+ // Animation: blinks within 2.5-5.5 s, lasting 160 ms; glances come and go; walking is happy.
+ {crab::Eyes e;int blinks=0,glances=0;bool wasShut=false;int8_t last=0;
+  for(uint32_t t=0;t<60000;t+=20){auto fr=e.frame(t,false);assert(!fr.happy&&fr.open>=10&&fr.open<=100);
+   const bool shut=fr.open<50;if(shut&&!wasShut)blinks++;wasShut=shut;if(fr.look!=0&&last==0)glances++;last=fr.look;}
+  assert(blinks>=10&&blinks<=25&&glances>=3&&glances<=12);
+  assert(e.frame(60000,true).happy&&e.frame(60020,true).open==100);
+  crab::Eyes w;w.nextBlink=0xfffffff0;assert(w.frame(0xfffffff0,false).open==100&&w.frame(0x40,false).open<100);} // wrap-safe
+ std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<": actual Screen begin bus/pins/init/offset/rotation, QR draw callback; init failure stays dark; pet eyes face/blink/glance/happy\n";
 }

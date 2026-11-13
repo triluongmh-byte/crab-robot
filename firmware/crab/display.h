@@ -3,6 +3,8 @@
 #include "config.h"
 #include "font_vi.h"
 #include "qrcodegen.h"
+#include "eyes.h"
+#include <algorithm>
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_vendor.h>
@@ -19,10 +21,20 @@ class Screen {
  static bool IRAM_ATTR transferred(esp_lcd_panel_io_handle_t,esp_lcd_panel_io_event_data_t*,void* arg){
   BaseType_t wake=pdFALSE;xSemaphoreGiveFromISR(static_cast<Screen*>(arg)->done,&wake);return wake==pdTRUE;
  }
- void pixel(int x,int y,bool black){if(x>=0&&x<320&&y>=0&&y<170)pixels[y*320+x]=black?0:0xffff;}
+ void pixel(int x,int y,bool black){put(x,y,black?0:0xffff);}
+ void put(int x,int y,uint16_t c){if(x>=0&&x<320&&y>=0&&y<170)pixels[y*320+x]=c;}
+ // Face colours are 0x0000/0xffff only: byte-order independent on both panels.
+ static constexpr uint16_t INK=0xffff,PAPER=0x0000;
+ void roundRect(int cx,int cy,int w,int h,int r){
+  r=std::min(r,std::min(w,h)/2);const int hw=w/2-r,hh=h/2-r;
+  for(int y=cy-h/2;y<cy+(h+1)/2;y++)for(int x=cx-w/2;x<cx+(w+1)/2;x++){
+   const int dx=std::max(0,std::abs(x-cx)-hw),dy=std::max(0,std::abs(y-cy)-hh);if(dx*dx+dy*dy<=r*r)put(x,y,INK);}
+ }
+ void arch(int cx,int cy,int ro,int ri){for(int y=cy-ro;y<=cy;y++)for(int x=cx-ro;x<=cx+ro;x++){const int d=(x-cx)*(x-cx)+(y-cy)*(y-cy);if(d<=ro*ro&&d>=ri*ri)put(x,y,INK);}}
+ int width(const char* s){int w=0;while(*s){uint32_t cp=utf8(s);if(const Glyph* g=glyph(cp))w+=g->advance;}return w;}
  const Glyph* glyph(uint32_t cp){for(const auto& g:GLYPHS)if(g.cp==cp)return &g;return nullptr;}
  uint32_t utf8(const char*& s){uint32_t c=(uint8_t)*s++;if(c<128)return c;int n=c<224?1:c<240?2:3;c&=(1<<(6-n))-1;while(n--&&*s)c=(c<<6)|((uint8_t)*s++&63);return c;}
- void text(const char* s,int x,int y,int right=319){const int left=x;while(*s){uint32_t cp=utf8(s);if(cp=='\n'){x=left;y+=19;continue;}const Glyph* g=glyph(cp);if(!g)continue;if(x+g->advance>right){x=left;y+=19;}if(y+20>170)break;for(int yy=0;yy<20;yy++)for(int xx=0;xx<16;xx++)if(g->rows[yy]&(1<<(15-xx)))pixel(x+xx,y+yy,true);x+=g->advance;}}
+ void text(const char* s,int x,int y,int right=319,uint16_t ink=0){const int left=x;while(*s){uint32_t cp=utf8(s);if(cp=='\n'){x=left;y+=19;continue;}const Glyph* g=glyph(cp);if(!g)continue;if(x+g->advance>right){x=left;y+=19;}if(y+20>170)break;for(int yy=0;yy<20;yy++)for(int xx=0;xx<16;xx++)if(g->rows[yy]&(1<<(15-xx)))put(x+xx,y+yy,ink);x+=g->advance;}}
  public:
  bool begin(){
   if(cfg::POWER_PIN>=0){digitalWrite(cfg::POWER_PIN,HIGH);pinMode(cfg::POWER_PIN,OUTPUT);}
@@ -85,6 +97,21 @@ class Screen {
 #endif
   digitalWrite(cfg::LCD_BL,HIGH);return true;
  }
+ // Face: two pet eyes on black, one small status line at the bottom.
+ static constexpr int EYE_W=58,EYE_H=86,EYE_GAP=52,EYE_Y=70,LOOK_PX=24,LINE_Y=150;
+ bool face(const crab::EyeFrame& f,const char* line){
+  if(!panel)return false;
+  for(int i=0;i<320*170;i++)pixels[i]=PAPER;
+  for(int side:{-1,1}){
+   const int cx=160+side*EYE_GAP+f.look*LOOK_PX;
+   if(f.happy)arch(cx,EYE_Y+16,32,21);
+   else roundRect(cx,EYE_Y,EYE_W,std::max(6,EYE_H*f.open/100),20);
+  }
+  const int w=width(line);text(line,std::max(2,(320-w)/2),LINE_Y,317,INK);
+  if(esp_lcd_panel_draw_bitmap(panel,0,0,320,170,pixels)!=ESP_OK)return false;
+  return xSemaphoreTake(done,pdMS_TO_TICKS(1000))==pdTRUE;
+ }
+ uint16_t at(int x,int y)const{return pixels[y*320+x];}
  bool show(const char* payload,const char* message,const char* address,const char* ap){
   if(!panel)return false;
   memset(pixels,255,320*170*2);
