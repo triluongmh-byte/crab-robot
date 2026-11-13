@@ -154,3 +154,13 @@ Release `positional180-v14` changes the knee lift:
 - The knee output limit is now ±65° nominal.
 - The trot lift at 100% speed still tracks within 2.5°.
 
+## Calibration steps that actually move — 2026-11-13
+
+The owner reported that the calibration buttons did nothing. The firmware was applying the trims (CH0 −3° read back as 1483 µs), but a 1° nominal step is about 5.6 µs. That is roughly one PCA9685 count, inside the SG90 deadband.
+
+Release `positional180-v15` changes the calibration buttons:
+
+- **Step size.** Each joint now has −3, −1, +1 and +3 buttons. A 3° step is at least 3 counts.
+- **Range.** The trim range widens from ±12° to ±30° nominal.
+- **No blanking.** A trim no longer blanks every PWM output, so the servos stop twitching on each press.
+

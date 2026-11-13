@@ -51,7 +51,7 @@ void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° t
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v14\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+"}");});
+  json(200,String("{\"firmware\":\"positional180-v15\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -103,7 +103,10 @@ void configureHttp(){
  server.on("/api/assembly",HTTP_POST,[]{if(!owns()){error(409);return;}uint32_t a;if(!uintArg("active",a)||a>1){error();return;}bool accepted;{Guard g;offForChangeLocked();accepted=motion.setAssembly(a);}if(!accepted){error(409);return;}ok();});
  server.on("/api/centre",HTTP_POST,[]{if(!owns()){error(409);return;}bool accepted;{Guard g;offForChangeLocked();accepted=motion.centre();}if(!accepted){actuatorError();return;}ok();});
  server.on("/api/stand",HTTP_POST,[]{if(!owns()){error(409);return;}bool accepted;{Guard g;offForChangeLocked();accepted=motion.positional()&&motion.setAssembly(true);}if(!accepted){actuatorError();return;}ok();});
- server.on("/api/trim",HTTP_POST,[]{if(!owns()){error(409);return;}uint32_t ch;String s=server.arg("delta");if(!uintArg("ch",ch)||ch>7||(s!="-1"&&s!="1")){error();return;}bool accepted;float offset;{Guard g;offForChangeLocked();accepted=motion.trim(ch,s.toInt());offset=motion.offsets[ch];}if(!accepted){error(409);return;}json(200,"{\"offset\":"+String(offset,0)+"}");});
+ server.on("/api/trim",HTTP_POST,[]{if(!owns()){error(409);return;}uint32_t ch;int32_t delta;if(!uintArg("ch",ch)||ch>7||!intArg("delta",delta)){error();return;}bool accepted;float offset;
+  // No output blanking here: a trim is a small slewed move in Assembly, and
+  // blanking every press made the servos twitch instead of stepping.
+  {Guard g;accepted=motion.trim(ch,delta);offset=motion.offsets[ch];}if(!accepted){error(409);return;}json(200,"{\"offset\":"+String(offset,0)+"}");});
  server.on("/api/save",HTTP_POST,[]{if(!owns()){error(409);return;}float offsets[8];bool accepted;{Guard g;offForChangeLocked();accepted=motion.positional()&&motion.assembly;memcpy(offsets,motion.offsets,sizeof(offsets));}if(!accepted){actuatorError();return;}
   if(trimStore.putBytes("offsets",offsets,sizeof(offsets))!=sizeof(offsets)){error(500);return;}ok();});
  // Explicit RAM-only mode selection. No servo type or test result is saved.
