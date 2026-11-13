@@ -17,14 +17,22 @@ inline Vec direction(int n){
  {.70710678f,-.70710678f},{-.70710678f,.70710678f},{-.70710678f,-.70710678f}};
  return n>=0&&n<=8?d[n]:Vec{};
 }
-// Project commanded translation onto the tangent at each radial hip.
-// Stance (sin phase <= 0) pushes the floor opposite the travel vector.
+// Project body translation onto each hip tangent in the nominal CAD frame.
 inline float hipProjection(int leg,Vec v){return -std::sin(cfg::RADIAL[leg])*v.x+std::cos(cfg::RADIAL[leg])*v.y;}
+inline float smooth(float x){x=clamp(x,0,1);return x*x*(3-2*x);}
 inline void gait(float phase,Vec v,float amplitude,float out[8]){
- for(int l=0;l<4;l++){
-  const float a=phase+cfg::PHASE[l];
-  out[2*l]=-cfg::HIP_AMPLITUDE*hipProjection(l,v)*std::cos(a)*amplitude;
-  out[2*l+1]=-cfg::KNEE_LIFT*std::max(0.0f,std::sin(a))*amplitude;
+ const float cycle=phase/6.2831853072f;
+ for(int leg=0;leg<4;leg++){
+  const float local=cycle-cfg::SWING_START[leg]-std::floor(cycle-cfg::SWING_START[leg]);
+  float hip,lift=0;
+  if(local<.25f){
+   const float swing=local*4;
+   // Hold hip still while lifting/lowering. Return only at full knee lift.
+   lift=clamp(std::min(swing/.25f,(1-swing)/.25f),0,1);
+   hip=-1+2*smooth((swing-.25f)/.5f);
+  }else hip=1-2*(local-.25f)/.75f; // three grounded legs push together
+  out[2*leg]=cfg::HIP_AMPLITUDE*hipProjection(leg,v)*hip*amplitude;
+  out[2*leg+1]=-cfg::KNEE_LIFT*lift*amplitude;
  }
 }
 inline int pulse(int ch,float angle,float offset,bool raw=false){
@@ -135,7 +143,7 @@ struct Motion {
  float amplitude=0,phase=0,speed=.65f;
  bool assembly=false,raw=false,inhibit=false,lease=false;
  uint32_t session=0,lastSeq=0,lastCommand=0,start=0,lastTick=0;
- int enabled=0,cursor=0;
+ int enabled=0;
  uint32_t outputEpoch=0; // invalidate cached output after synchronous off/settings
  void begin(uint32_t now){start=lastTick=now;enabled=0;}
  void stop(){velocity={};lease=false;test.stop();continuous.stop();drive.stop();}
@@ -152,15 +160,16 @@ struct Motion {
  bool setAssembly(bool active){if(active&&(test.opened||continuous.opened))return false;stop();assembly=active;raw=false;return true;}
  bool centre(){if(!positional())return false;stop();assembly=true;raw=true;return true;}
  bool trim(int ch,int delta){if(!positional()||!assembly||ch<0||ch>7||std::abs(delta)!=1)return false;raw=false;offsets[ch]=clamp(offsets[ch]+delta,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT);return true;}
- // One channel update per 10 ms; 300 ms gaps on initial enable.
+ // Shared20-ms pose frames after startup;300-ms gaps on initial enable.
+ // tick returns the startup channel, or0 to indicate a complete pose frame.
  // angle+offset slew is enforced in the driver, so trim also moves smoothly.
  int tick(uint32_t now){
   test.tick(now);continuous.tick(now);drive.tick(now);
   if(inhibit){test.stop();continuous.stop();drive.stop();}
   if(!positional()||inhibit){velocity={};lease=false;return -1;}
-  if(elapsed(now,lastTick)<10)return -1;
+  if(assembly||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)stop();
+  if(elapsed(now,lastTick)<cfg::FRAME_MS)return -1;
   const float dt=std::min(elapsed(now,lastTick)*.001f,.05f);lastTick=now;
-  if(inhibit||assembly||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)stop();
   if(enabled<8){if(elapsed(now,start)<uint32_t(enabled)*cfg::ENABLE_GAP_MS)return -1;return enabled++;}
   const bool moving=std::fabs(velocity.x)+std::fabs(velocity.y)>.01f;
   // Keep last heading through amplitude decay to avoid snapping the hip target.
@@ -168,9 +177,8 @@ struct Motion {
   if(moving)heading=velocity;
   if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cfg::PERIOD_S,6.2831853072f);
   float target[8]={};if(!assembly)gait(phase,heading,amplitude,target);
-  int ch=cursor;cursor=(cursor+1)%8;
-  position[ch]+=clamp(target[ch]-position[ch],-cfg::SLEW_DPS*.08f,cfg::SLEW_DPS*.08f);
-  return ch;
+  for(int ch=0;ch<8;ch++)position[ch]+=clamp(target[ch]-position[ch],-cfg::SLEW_DPS*dt,cfg::SLEW_DPS*dt);
+  return 0;
  }
  private:Vec heading{};
 };

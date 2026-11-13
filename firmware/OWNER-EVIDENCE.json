@@ -91,5 +91,19 @@
     "runtimeChanges": "fixed mobile drive deck, captured pointer ownership and stable polling DOM; period0.65s; angles, slew, trims, enable/stop behavior unchanged",
     "physicalPhoneTouchVerified": false,
     "physicalWalkingVerified": false
+  },
+  "crawlTrial": {
+    "profile": "positional180-v4",
+    "date": "2026-11-13",
+    "exactOwnerMessages": [
+      "tới lui chưa đúng fen ơi.",
+      "chân quẫy mà thân\n  không tiến",
+      "https://vt.tiktok.com/ZSpxWJGJT/ soi con này xem"
+    ],
+    "observation": "Leg motion without body progress; physical cause not established.",
+    "changes": "Three-stance-foot crawl, lift before hip recovery, common20ms pose frames, nominal amplitudes18/25 with unchanged final limits25/35.",
+    "reference": "https://www.tiktok.com/@gocmaker.diy/video/7685032192547835157",
+    "referenceObservation": "Mostly bobbing and leg motion in place; no unambiguous forward/back walking; no hardware variant or code inferred.",
+    "physicalWalkingVerified": false
   }
 }

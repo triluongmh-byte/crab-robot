@@ -24,7 +24,7 @@ static void test_positional180(){
  m.drive.active=true;m.drive.last=4010;assert(out.service(m,d,4010)&&activeOutputs()==0);m.drive={};
  assert(m.setAssembly(true));assert(m.selectActuator(true,5000)&&m.assembly);assert(m.centre());
  for(int ch=0;ch<8;ch++){
-  uint32_t t=5010+ch*300;assert(out.service(m,d,t));assert(activeOutputs()==ch+1);
+  uint32_t t=5020+ch*300;assert(out.service(m,d,t));assert(activeOutputs()==ch+1);
   auto w=Wire.writes.back();assert(w.size()==5&&w[0]==6+ch*4);assert(((w[3]+256*w[4]-w[1]-256*w[2])&4095)==307);
   if(ch<7){assert(out.service(m,d,t+100));assert(activeOutputs()==ch+1);}
  }
@@ -43,7 +43,30 @@ static void test_positional180(){
  assert(!m.command(70,++seq,1,now+520,false));
  assert(m.selectActuator(false,now+600));assert(out.service(m,d,now+600)&&activeOutputs()==0);
  assert(!m.command(70,++seq,1,now+610));assert(!m.drive.active);
- assert(m.selectActuator(true,now+1000));assert(out.service(m,d,now+1010));Wire.fail=true;assert(!out.service(m,d,now+1310));assert(m.inhibit);Wire.fail=false;
+ assert(m.selectActuator(true,now+1000));assert(out.service(m,d,now+1020));Wire.fail=true;assert(!out.service(m,d,now+1310));assert(m.inhibit);Wire.fail=false;
+}
+static void test_crawl_frames(){
+ Wire.writes.clear();ServoDriver d;assert(d.begin());ActuatorOutput out;crab::Motion m;m.begin(0);m.newSession(81);assert(m.selectActuator(true,0));
+ for(uint32_t t=0;t<=2200;t+=20)assert(out.service(m,d,t));assert(m.enabled==8);
+ m.speed=1;uint32_t seq=0;int previous[8]={},checkedReturns=0,frames=0;
+ for(uint32_t t=3000;t<14000;t+=10){
+  if((t-3000)%150==0)assert(m.command(81,++seq,1,t,!m.lease));
+  size_t before=Wire.writes.size();assert(out.service(m,d,t));size_t count=Wire.writes.size()-before;
+  if(!count)continue;
+  assert(count==8);int pulses[8];int grounded=0;
+  for(int ch=0;ch<8;ch++){
+   auto w=Wire.writes[before+ch];assert(w.size()==5&&w[0]==6+4*ch);
+   pulses[ch]=((w[3]+256*w[4])-(w[1]+256*w[2]))&4095;
+   if(ch%2&&std::abs(pulses[ch]-307)<=1)grounded++;
+  }
+  assert(grounded>=3); // zero trims, actual quantised output; not physical contact
+  if(t>6000)for(int leg=0;leg<4;leg++){
+   const float delta=(pulses[2*leg]-previous[2*leg])*crab::hipProjection(leg,crab::direction(1));
+   if(delta>.5f){assert(std::abs(pulses[2*leg+1]-307)>=12);checkedReturns++;}
+  }
+  for(int ch=0;ch<8;ch++)previous[ch]=pulses[ch];frames++;
+ }
+ assert(checkedReturns>30&&frames>400);
 }
 int main(){
  ServoDriver p;
@@ -66,9 +89,9 @@ int main(){
  count=Wire.writes.size();assert(!p.pulse(0,1500)&&Wire.writes.size()==count); // fault latched
  assert(!p.begin());Wire.fail=false;assert(!p.pulse(0,1500)); // init failure remains inhibited
  assert(p.begin());assert(p.pulse(0,1500));p.allOff();assert(!p.pulse(0,1500));
- test_positional180();
+ test_positional180();test_crawl_frames();
  LightDriver light;assert(light.begin());assert(rmtCapture.gpio_num==1&&rmtCapture.clk_div==8&&rmtCapture.tx_config.idle_output_en);assert(rmtBits.size()==192);
  for(auto bit:rmtBits)assert(bit.duration0==4&&bit.duration1==9); // off at boot
  light.set(true);for(int color=0;color<24;color++){int value=0;for(int b=0;b<8;b++){const auto bit=rmtBits[color*8+b];assert(bit.level0==1&&bit.level1==0);assert(bit.duration0+bit.duration1==13);value=(value<<1)|(bit.duration0==8);}assert(value==16);}
- std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<": 180-only actual PCA register replay: boot off, sequential enable8CH,8directions, pulse bounds after trim, release/deadman settle, assembly/raw centre, explicit disarm, legacy-state refusal,50Hz; OE inhibited before I2C and released only after first valid pulse; RMT LED off/cap/timing\n";
+ std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<": 180-only actual PCA register replay/shared8CH20ms frames/fast crawl lift clearance: boot off, sequential enable8CH,8directions, pulse bounds after trim, release/deadman settle, assembly/raw centre, explicit disarm, legacy-state refusal,50Hz; OE inhibited before I2C and released only after first valid pulse; RMT LED off/cap/timing\n";
 }
