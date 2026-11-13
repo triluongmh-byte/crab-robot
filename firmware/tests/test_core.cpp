@@ -278,7 +278,9 @@ static void test_motion(){
  assert(m.command(12,6,0,2730,false));assert(!m.command(12,5,1,2740,false));assert(!m.lease);
  assert(!m.command(13,7,1,2800));m.setAssembly(true);assert(!m.command(12,7,1,2810));
  m.centre();assert(m.raw);assert(pulse(2,25,12,true)==1500);
- assert(m.trim(2,1));assert(!m.raw&&m.offsets[2]==1);for(int i=0;i<99;i++)m.trim(2,1);assert(m.offsets[2]==cfg::TRIM_LIMIT);
+ assert(m.trim(2,1));assert(!m.raw&&m.offsets[2]==1);assert(m.trim(2,3)&&m.offsets[2]==4&&m.trim(2,-3)&&m.offsets[2]==1&&!m.trim(2,2)&&!m.trim(2,0));for(int i=0;i<99;i++)m.trim(2,3);assert(m.offsets[2]==cfg::TRIM_LIMIT);
+ // A coarse step moves at least 3 PCA counts, outside the SG90 deadband.
+ assert(pwmCounts(pulse(0,0,3))-pwmCounts(pulse(0,0,0))>=3);
  assert(!m.trim(8,1));assert(!m.trim(2,22));m.setAssembly(false);assert(!m.trim(2,-1));
  m.inhibit=true;assert(!m.command(12,8,1,2900));m.inhibit=false;assert(m.command(12,9,1,3000));m.newSession(99);assert(!m.lease&&!m.command(12,10,1,3010));
  for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1000&&p<=2000);const int limit=ch%2?361:500;assert(std::abs(p-1500)<=limit);}

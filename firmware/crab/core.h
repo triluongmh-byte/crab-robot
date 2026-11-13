@@ -227,7 +227,7 @@ struct Motion {
  void newSession(uint32_t id){stop();test.opened=false;continuous.opened=false;session=id;lastSeq=0;}
  bool setAssembly(bool active){if(active&&(test.opened||continuous.opened))return false;stop();assembly=active;raw=false;return true;}
  bool centre(){if(!positional())return false;stop();assembly=true;raw=true;return true;}
- bool trim(int ch,int delta){if(!positional()||!assembly||ch<0||ch>7||std::abs(delta)!=1)return false;raw=false;offsets[ch]=clamp(offsets[ch]+delta,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT);return true;}
+ bool trim(int ch,int delta){if(!positional()||!assembly||ch<0||ch>7||(std::abs(delta)!=cfg::TRIM_FINE&&std::abs(delta)!=cfg::TRIM_COARSE))return false;raw=false;offsets[ch]=clamp(offsets[ch]+delta,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT);return true;}
  // Shared20-ms pose frames after startup;300-ms gaps on initial enable.
  // tick returns the startup channel, or0 to indicate a complete pose frame.
  // angle+offset slew is enforced in the driver, so trim also moves smoothly.

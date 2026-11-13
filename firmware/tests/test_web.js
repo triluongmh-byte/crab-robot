@@ -86,7 +86,7 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  dirs[1].fire('pointerdown');await flush();dirs[1].fire('pointercancel');assert.equal(beacons.at(-1).data.dir,'0');
  failMove=true;dirs[0].fire('pointerdown');await flush();assert.equal(vm.runInContext('held',ctx),0);failMove=false;
  await el('showAssembly').onclick();assert(state.assembly&&dirs.every(b=>b.disabled));assert.equal(document.body.dataset.page,'assembly');assert.equal(el('trims').children.length,8);
- await el('centre').onclick();await el('stand').onclick();await el('trims').children[0].children[2].onclick();assert.equal(state.offsets[0],1);assert(el('trim0').textContent.includes('(1°)'));
+ await el('centre').onclick();await el('stand').onclick();assert.deepEqual(el('trims').children[0].children.slice(1).map(b=>b.textContent),['−3','−1','+1','+3']);await el('trims').children[0].children[3].onclick();assert.equal(state.offsets[0],1);assert(el('trim0').textContent.includes('(1°)'));await el('trims').children[0].children[4].onclick();assert.equal(state.offsets[0],4);await el('trims').children[0].children[1].onclick();assert.equal(state.offsets[0],1);
  await el('save').onclick();await el('showSetup').onclick();assert.equal(vm.runInContext('page',ctx),'assembly');await el('done').onclick();assert(!state.assembly&&vm.runInContext('page',ctx)==='control');
  await el('disarm').onclick();assert(!state.positional&&dirs.every(b=>b.disabled));
  await el('showAssembly').onclick();await el('arm').onclick();assert(state.assembly&&state.positional);await el('done').onclick();
