@@ -14,8 +14,8 @@ constexpr const char* JOINT[8]={"Hông trước trái","Gối trước trái","H
                              "Hông sau trái","Gối sau trái","Hông sau phải","Gối sau phải"};
 constexpr uint32_t DEADMAN_MS=500, BOOT_HOLD_MS=8000, ENABLE_GAP_MS=300;
 constexpr uint32_t FRAME_MS=20;
-constexpr float FRAME_S=FRAME_MS*.001f, PERIOD_S=1.8f;
-constexpr float HIP_AMPLITUDE=25, KNEE_LIFT=30, SLEW_DPS=180;
+constexpr float FRAME_S=FRAME_MS*.001f, PERIOD_S=1.0f;
+constexpr float HIP_AMPLITUDE=25, KNEE_LIFT=30, SLEW_DPS=450;
 constexpr float RADIAL[4]={0.7853981634f,-0.7853981634f,2.3561944902f,-2.3561944902f};
 // Leg order FL, FR, RL, RR. Each pattern: phase group per leg, then cycle
 // fractions for grounded stance, knee lift and airborne hip return; the
@@ -23,9 +23,10 @@ constexpr float RADIAL[4]={0.7853981634f,-0.7853981634f,2.3561944902f,-2.3561944
 struct GaitPattern {float group[4],stance,lift,swing,start;bool linearStance;};
 // Default diagonal trot FL+RR / FR+RL. Stance .56 > .5 leaves 12% of each
 // cycle with all four feet down. Linear stance keeps both grounded pairs at
-// one body velocity during that overlap. At Fast (1.8 s) the knee lift
-// (30 deg/.18 s) and smoothstep hip return (peak 1.5*50 deg/.432 s) both stay
-// under SLEW_DPS so the joints track their targets.
+// one body velocity during that overlap. At Fast (1.0 s) the knee lift
+// (30 deg/.1 s = 300 deg/s) and smoothstep hip return (peak 1.5*50 deg/.24 s
+// = 312 deg/s) both stay under SLEW_DPS (450) so joints track their targets.
+// SG90 no-load speed is about 600 deg/s at 4.8 V.
 constexpr GaitPattern TROT={{0,.5f,.5f,0},.56f,.1f,.24f,.28f,true};
 // Owner-requested front pair CH0/2 and rear pair CH4/6, half-cycle apart.
 // First half: grounded push. Second: lift, airborne return, lower.
