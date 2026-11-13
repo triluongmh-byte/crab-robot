@@ -22,16 +22,21 @@ inline Vec direction(int n){
 // Project body translation onto each hip tangent in the nominal CAD frame.
 inline float hipProjection(int leg,Vec v){return -std::sin(cfg::RADIAL[leg])*v.x+std::cos(cfg::RADIAL[leg])*v.y;}
 inline float smooth(float x){x=clamp(x,0,1);return x*x*(3-2*x);}
-inline void gait(float phase,Vec v,float amplitude,float out[8]){
- // Begin at mid front-push: hips start from neutral, not an opposite kick.
- const float cycle=phase/6.2831853072f+.25f;
+enum class Pattern:uint8_t {Trot,Pairs};
+inline const cfg::GaitPattern& pattern(Pattern p){return p==Pattern::Pairs?cfg::PAIRS:cfg::TROT;}
+inline const char* patternName(Pattern p){return p==Pattern::Pairs?"pairs":"trot";}
+inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pattern::Trot){
+ const cfg::GaitPattern& g=pattern(which);
+ // Begin at mid stance: hips start from neutral, not an opposite kick.
+ const float cycle=phase/6.2831853072f+g.start;
+ const float swingEnd=g.stance+g.lift+g.swing,lower=1-swingEnd;
  for(int leg=0;leg<4;leg++){
-  const float local=cycle-cfg::GROUP_PHASE[leg]-std::floor(cycle-cfg::GROUP_PHASE[leg]);
+  const float local=cycle-g.group[leg]-std::floor(cycle-g.group[leg]);
   float hip,lift=0;
-  if(local<.5f)hip=1-2*smooth(local/.5f);
-  else if(local<.625f){hip=-1;lift=(local-.5f)/.125f;}
-  else if(local<.875f){hip=-1+2*smooth((local-.625f)/.25f);lift=1;}
-  else{hip=1;lift=(1-local)/.125f;}
+  if(local<g.stance)hip=1-2*(g.linearStance?local/g.stance:smooth(local/g.stance));
+  else if(local<g.stance+g.lift){hip=-1;lift=(local-g.stance)/g.lift;}
+  else if(local<swingEnd){hip=-1+2*smooth((local-g.stance-g.lift)/g.swing);lift=1;}
+  else{hip=1;lift=(1-local)/lower;}
   // Use the available full hip stroke for axial Forward/Backward commands.
   const float push=clamp(hipProjection(leg,v)*1.4142135624f,-1,1);
   out[2*leg]=cfg::HIP_AMPLITUDE*push*hip*amplitude;
@@ -144,6 +149,7 @@ struct Motion {
  float offsets[8]={},position[8]={};
  Vec velocity{};
  float amplitude=0,phase=0,speed=.65f;
+ Pattern gaitPattern=Pattern::Trot;
  bool assembly=false,raw=false,inhibit=false,lease=false;
  uint32_t session=0,lastSeq=0,lastCommand=0,start=0,lastTick=0;
  int enabled=0;
@@ -179,7 +185,7 @@ struct Motion {
   amplitude=clamp(amplitude+(moving?dt*1.5f:-dt*4.0f),0,1);
   if(moving)heading=velocity;
   if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cfg::PERIOD_S,6.2831853072f);
-  float target[8]={};if(!assembly)gait(phase,heading,amplitude,target);
+  float target[8]={};if(!assembly)gait(phase,heading,amplitude,target,gaitPattern);
   for(int ch=0;ch<8;ch++)position[ch]+=clamp(target[ch]-position[ch],-cfg::SLEW_DPS*dt,cfg::SLEW_DPS*dt);
   return 0;
  }

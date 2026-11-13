@@ -17,7 +17,7 @@ const sameBox=(a,b)=>{for(const key of ['x','y','width','height'])assert(Math.ab
     const url=new URL(route.request().url());let data={};
     if(url.pathname==='/')return route.fulfill({contentType:'text/html',body:html});
     if(url.pathname==='/api/session')data={token:'42'};
-    if(url.pathname==='/api/status')data={message,url:'http://192.168.4.1/',driver:true,positional:true,enabled:8,assembly:false,speed:.65,offsets:Array(8).fill(0)};
+    if(url.pathname==='/api/status')data={message,url:'http://192.168.4.1/',driver:true,positional:true,enabled:8,assembly:false,speed:.65,gait:'trot',offsets:Array(8).fill(0)};
     if(url.pathname==='/api/servos'){telemetry++;data={kind:'commanded',feedback:false,sampledAtMs:12345,servos:Array.from({length:8},(_,ch)=>({ch,known:true,active:true,angleDeg:90+ch,pulseUs:1500+ch*6,counts:307+ch}))};}
     if(url.pathname==='/api/move')commands.push(Object.fromEntries(new URLSearchParams(route.request().postData())));
     await route.fulfill({contentType:'application/json',body:JSON.stringify(data)});

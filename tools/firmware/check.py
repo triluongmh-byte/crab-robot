@@ -24,11 +24,11 @@ def gait_report(core_digest):
   'contractSha256':hashlib.sha256((ROOT/'PILOT_CONTRACT.json').read_bytes()).hexdigest(),
   'fullCycleSamplesPerDirection':720,'maxHipDeg':25,'maxKneeDeg':30,
   'softJointLimitDeg':30,'trimLimitDeg':12,'coreInputDigest':core_digest,
-  'interpretation':'Ideal knee-angle contact keeps a left/right pair grounded at either the front or rear. '
-   'A front or rear pair supports the body during recovery; two-foot support is a line, not a COM stability margin. '
-   'Tangent stance projection supports 8 translations including sideways; '
-   'mass, friction, dynamic stability, servo lag/load and CAD collisions are not modelled. '
-   'Physical walking remains unverified.',
+  'interpretation':'Default diagonal trot (FL+RR / FR+RL): a full diagonal is always grounded, so the support line passes under the body centre; '
+   'about 12% of each cycle has all four feet down. Equal-reach yaw model: trot gives zero body yaw in all 8 directions; '
+   'the owner front/rear pairs option is yaw-free only for Forward/Backward and yaws during sideways/diagonal moves. '
+   'Two-foot support is a line, not a COM stability margin; mass, friction, dynamic stability, servo load, actual SG90 '
+   'angle per microsecond and CAD collisions are not modelled. Physical walking remains unverified.',
   'source':'firmware/crab/core.h::gait; firmware/tests/test_core.cpp::simulation',
   'trace':'../build/firmware/host/gait.csv'})
  target=ROOT/'firmware/GAIT-REPORT.json';content=json.dumps(report,ensure_ascii=False,indent=2)+'\n'
