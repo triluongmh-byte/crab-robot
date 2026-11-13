@@ -22,10 +22,27 @@ inline Vec direction(int n){
 // Project body translation onto each hip tangent in the nominal CAD frame.
 inline float hipProjection(int leg,Vec v){return -std::sin(cfg::RADIAL[leg])*v.x+std::cos(cfg::RADIAL[leg])*v.y;}
 inline float smooth(float x){x=clamp(x,0,1);return x*x*(3-2*x);}
-enum class Pattern:uint8_t {Trot,Pairs};
+enum class Pattern:uint8_t {Trot,Pairs,Flick};
 inline const cfg::GaitPattern& pattern(Pattern p){return p==Pattern::Pairs?cfg::PAIRS:cfg::TROT;}
-inline const char* patternName(Pattern p){return p==Pattern::Pairs?"pairs":"trot";}
+inline const char* patternName(Pattern p){return p==Pattern::Pairs?"pairs":p==Pattern::Flick?"flick":"trot";}
+// Flick only replaces axial Forward/Backward; sideways and diagonals trot.
+inline bool flickActive(Pattern p,Vec v){return p==Pattern::Flick&&std::fabs(v.x)>std::fabs(v.y)+.01f;}
+inline float cyclePeriod(Pattern p,Vec v){return flickActive(p,v)?cfg::FLICK_PERIOD_S:cfg::PERIOD_S;}
+inline void flick(float phase,Vec v,float amplitude,float out[8]){
+ const float cycle=phase/6.2831853072f;const bool forward=v.x>0;
+ for(int leg=0;leg<4;leg++){
+  // Front legs (0,1) swing their feet towards +X, rear legs (2,3) towards -X.
+  const Vec pose(leg<2?1.f:-1.f,0);
+  out[2*leg]=cfg::FLICK_HIP*clamp(hipProjection(leg,pose)*1.4142135624f,-1,1)*amplitude;
+  const float group=(leg==0||leg==3)?0:.5f;
+  float u=cycle-group-std::floor(cycle-group);
+  if(!forward)u=1-u;
+  const float k=u<cfg::FLICK_STROKE?smooth(u/cfg::FLICK_STROKE):1-smooth((u-cfg::FLICK_STROKE)/(1-cfg::FLICK_STROKE));
+  out[2*leg+1]=-cfg::KNEE_LIFT*k*amplitude;
+ }
+}
 inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pattern::Trot){
+ if(flickActive(which,v)){flick(phase,v,amplitude,out);return;}
  const cfg::GaitPattern& g=pattern(which);
  // Begin at mid stance: hips start from neutral, not an opposite kick.
  const float cycle=phase/6.2831853072f+g.start;
@@ -184,7 +201,7 @@ struct Motion {
   // Keep last heading through amplitude decay to avoid snapping the hip target.
   amplitude=clamp(amplitude+(moving?dt*1.5f:-dt*4.0f),0,1);
   if(moving)heading=velocity;
-  if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cfg::PERIOD_S,6.2831853072f);
+  if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cyclePeriod(gaitPattern,heading),6.2831853072f);
   float target[8]={};if(!assembly)gait(phase,heading,amplitude,target,gaitPattern);
   for(int ch=0;ch<8;ch++)position[ch]+=clamp(target[ch]-position[ch],-cfg::SLEW_DPS*dt,cfg::SLEW_DPS*dt);
   return 0;
