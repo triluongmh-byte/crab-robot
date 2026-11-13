@@ -108,6 +108,10 @@ struct Network {
    if(connected){state=NetState::Online;message=msg::ONLINE;saveRequested=pending; saved=saved||pending;pending=false;}
    else if(hardFail||elapsed(now,since)>=18000){state=NetState::Setup;message=msg::FAILED;pending=false;retryAt=now;}
   }else if(state==NetState::Online&&!connected){state=NetState::Setup;message=msg::LOST;retryAt=now;}
+  // A saved-network attempt marked failed (e.g. NO_SSID_AVAIL in the first
+  // scan) can still associate. Adopt it; retrying would WiFi.disconnect() a
+  // working link every 30 s (owner: page "load hoài", 60% ping loss).
+  else if(state==NetState::Setup&&saved&&connected){state=NetState::Online;message=msg::ONLINE;}
   else if(state==NetState::Setup&&saved&&!apClients&&elapsed(now,retryAt)>=30000){retryRequested=true;connect(false,now);}
  }
  void erase(uint32_t now){*this=Network{};retryAt=now;message=msg::ERASED;}

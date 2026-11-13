@@ -120,3 +120,12 @@ Release `positional180-v11` makes these changes:
 - **Status panel.** The **Trạng thái** tab now lists firmware, PCA9685, servo, mode, gait, speed, light and Wi-Fi.
 - **Arm button.** The greyed **Bật servo** button now reads "✅ Servo đang bật" when the servos are already on. That is why it was disabled.
 
+## Wi-Fi drops fix — 2026-11-13
+
+The owner reported that the page sometimes keeps loading. Pinging the robot showed 60% loss with up to 800 ms latency, while the LAN gateway showed 0% loss.
+
+Release `positional180-v12` makes two changes:
+
+- **Radio sleep.** Wi-Fi modem sleep is disabled (`WiFi.setSleep(false)`).
+- **Status after a slow connect.** A saved-network attempt that was marked failed but then connected anyway is now adopted as online. Before, the robot kept the wrong status and called `WiFi.disconnect()` on the working link every 30 s.
+

@@ -45,6 +45,9 @@ void setup(){
  xTaskCreatePinnedToCore(motionTask,"cua-motion",4096,nullptr,3,nullptr,1);
  WiFi.onEvent([](WiFiEvent_t event){if(event==ARDUINO_EVENT_WIFI_STA_GOT_IP)stationHasIp=true;else if(event==ARDUINO_EVENT_WIFI_STA_DISCONNECTED)stationHasIp=false;});
  WiFi.persistent(false);WiFi.mode(WIFI_AP_STA);WiFi.setAutoReconnect(false);
+ // Modem sleep naps the radio between beacons: owner saw the page hang with
+ // 60% ping loss and up to 800 ms latency. Keep the radio awake (USB/bank powered).
+ WiFi.setSleep(false);
  ap=crab::apName(uint32_t(ESP.getEfuseMac()>>32)).c_str();
  WiFi.softAPConfig(IPAddress(192,168,4,1),IPAddress(192,168,4,1),IPAddress(255,255,255,0));WiFi.softAP(ap.c_str());
  dns.start(53,"*",IPAddress(192,168,4,1));
