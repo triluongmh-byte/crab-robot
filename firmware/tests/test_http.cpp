@@ -7,7 +7,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v16")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v15")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -93,7 +93,7 @@ int main(){
  server.request("/api/emotions");assert(server.code==200&&server.body=="[{\"n\":\"Vui\"}]");
  motion.newSession(42);
  server.request("/api/move",{{"token","42"},{"seq","1"},{"dir","1"},{"fresh","1"}});
- assert(server.code==200&&motion.lease&&motion.velocity.x==crab::bodyDirection(1).x); // no STA connection; Forward heads to CH0/CH2
+ assert(server.code==200&&motion.lease&&motion.velocity.x==crab::bodyDirection(1).x); // no STA connection; Forward heads to CH4/CH6
  server.request("/api/light",{{"token","42"}});assert(server.code==200&&light.on);
  server.request("/api/assembly",{{"token","42"},{"active","1"}});assert(server.code==200&&motion.assembly);
  server.request("/api/centre",{{"token","42"}});assert(server.code==200&&motion.raw);
