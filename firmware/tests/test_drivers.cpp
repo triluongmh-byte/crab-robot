@@ -38,7 +38,7 @@ static void test_positional180(){
   assert(m.velocity.x==0&&m.velocity.y==0&&m.amplitude==0);now+=4100;
  }
  // Independently decode every actual pulse, including trimmed channels.
- for(const auto& w:Wire.writes)if(w.size()==5){int ch=(w[0]-6)/4,on=w[1]+256*w[2],off=w[3]+256*w[4];assert(ch>=0&&ch<8);int count=(off-on)&4095;assert(count>=(ch%2?267:205)&&count<=(ch%2?347:410));}
+ for(const auto& w:Wire.writes)if(w.size()==5){int ch=(w[0]-6)/4,on=w[1]+256*w[2],off=w[3]+256*w[4];assert(ch>=0&&ch<8);int count=(off-on)&4095;assert(count>=(ch%2?233:205)&&count<=(ch%2?381:410));}
  assert(m.command(70,++seq,1,now,true));assert(out.service(m,d,now));assert(out.service(m,d,now+510));assert(!m.lease);
  assert(!m.command(70,++seq,1,now+520,false));
  assert(m.selectActuator(false,now+600));assert(out.service(m,d,now+600)&&activeOutputs()==0);

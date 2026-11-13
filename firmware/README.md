@@ -143,3 +143,14 @@ Use it when Forward drifts towards the slower side.
 
 **Emotion sliders.** Moving a slider on `/emo` now starts live preview on its own. Before, the sliders only changed numbers until **Xem trực tiếp** was pressed.
 
+## Higher knee lift — 2026-11-13
+
+The owner reported that the feet scraped the table while the hips swung back, which pushed the robot backwards.
+
+Release `positional180-v14` changes the knee lift:
+
+- The default lift is now 45° nominal, up from 30°.
+- A new **Độ nhấc gối** slider sets the lift from 20° to 60°. It is saved on the robot (`/api/knee`, Preferences `knee`) and applies to every gait.
+- The knee output limit is now ±65° nominal.
+- The trot lift at 100% speed still tracks within 2.5°.
+
