@@ -37,7 +37,7 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  await el('arm').onclick();await flush();assert(state.positional&&dirs.every(b=>b.disabled));assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
  state.enabled=8;await poll();assert(dirs.every(b=>!b.disabled));state.speed=1;el('speed').value='0.4';await poll();assert.equal(el('speed').value,'1');state.speed=0.4;await poll();assert.equal(el('speed').value,'0.4');
  assert.equal(el('gait').value,'trot');assert(/chéo/.test(el('gaitHint').textContent));state.gait='pairs';await poll();assert.equal(el('gait').value,'pairs');assert(/trước và sau/.test(el('gaitHint').textContent));
- el('gait').value='trot';await el('gait').onchange();await flush();assert(calls.some(c=>c.path==='/api/gait'&&c.data.value==='trot'&&c.data.token==='42'));state.gait='trot';await poll();assert.equal(el('gait').value,'trot');
+ el('gait').value='trot';await el('gait').onchange();await flush();assert(calls.some(c=>c.path==='/api/gait'&&c.data.value==='trot'&&c.data.token==='42'));state.gait='flick';await poll();assert.equal(el('gait').value,'flick');assert(/búng/.test(el('gaitHint').textContent));state.gait='trot';await poll();assert.equal(el('gait').value,'trot');
  for(const b of dirs){b.fire('pointerdown');await flush();let cmd=calls.filter(c=>c.path==='/api/move').at(-1);assert.equal(cmd.data.dir,b.dataset.dir);assert.equal(cmd.data.fresh,'1');await hold();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');}
 
  // Polls and unrelated touches must not interrupt the captured finger.

@@ -158,7 +158,7 @@ static void test_trot_sequence(){
 static void test_tracking(){
  // At Fast the slew limit must not make joints lag their targets; a lagging
  // hip would still be returning when the knee lowers (foot lands mid-swing).
- for(Pattern which:{Pattern::Trot,Pattern::Pairs})for(int dir=1;dir<=4;dir++){
+ for(Pattern which:{Pattern::Trot,Pattern::Pairs,Pattern::Flick})for(int dir=1;dir<=4;dir++){
   Motion m;ready(m);m.newSession(5);m.speed=1;m.gaitPattern=which;uint32_t seq=0;double worst=0;
   for(uint32_t t=2200;t<12200;t+=10){
    if(t%150==100)assert(m.command(5,++seq,dir,t,!m.lease));
@@ -170,13 +170,40 @@ static void test_tracking(){
   assert(worst<2.5);
  }
 }
+static void test_flick(){
+ assert(std::string(patternName(Pattern::Flick))=="flick");
+ assert(flickActive(Pattern::Flick,direction(1))&&flickActive(Pattern::Flick,direction(2)));
+ assert(!flickActive(Pattern::Flick,direction(3))&&!flickActive(Pattern::Flick,direction(5))&&!flickActive(Pattern::Trot,direction(1)));
+ assert(cyclePeriod(Pattern::Flick,direction(1))==cfg::FLICK_PERIOD_S&&cyclePeriod(Pattern::Flick,direction(3))==cfg::PERIOD_S);
+ // Left/Right in flick mode are exactly the trot.
+ for(int d:{3,4})for(float ph:{0.f,1.f,2.5f,4.f}){float a[8],b[8];gait(ph,direction(d),1,a,Pattern::Flick);gait(ph,direction(d),1,b);for(int i=0;i<8;i++)assert(a[i]==b[i]);}
+ for(int d:{1,2}){
+  double rise=-1,fall=-1;float first[8];gait(0,direction(d),1,first,Pattern::Flick);
+  for(int k=0;k<1000;k++){
+   float ph=k*6.2831853072f/1000,o[8];gait(ph,direction(d),1,o,Pattern::Flick);
+   // Hips hold one pose: front feet towards +X, rear feet towards -X.
+   for(int leg=0;leg<4;leg++)assert(o[2*leg]==first[2*leg]);
+   assert(o[0]<-24.9f&&o[2]>24.9f&&o[4]>24.9f&&o[6]<-24.9f);
+   // Diagonal knees together; never lower than neutral, never above the lift.
+   assert(std::fabs(o[1]-o[7])<.001f&&std::fabs(o[3]-o[5])<.001f);
+   for(int leg=0;leg<4;leg++)assert(o[2*leg+1]<=0.0001f&&o[2*leg+1]>=-cfg::KNEE_LIFT-.0001f);
+   const double u=k/1000.;
+   if(rise<0&&o[1]<=-cfg::KNEE_LIFT+.001f)rise=u;
+   if(rise>=0&&fall<0&&o[1]>=-.05f&&u>rise)fall=u;
+  }
+  // Forward: fast lift (~stroke), slow return. Backward: slow lift, fast drop.
+  assert(rise>=0&&fall>rise);
+  if(d==1)assert(rise<=cfg::FLICK_STROKE+.01&&fall-rise>.7);
+  else assert(rise>.7&&fall-rise<=cfg::FLICK_STROKE+.01);
+ }
+}
 static void test_normal_speed(){
- Motion m;assert(std::fabs(m.speed-.65f)<.001f);assert(cfg::SLEW_DPS==450&&cfg::PERIOD_S==1.0f);
- // Half a second of Normal advances about0.325 of a cycle (1.54 s period).
+ Motion m;assert(std::fabs(m.speed-.65f)<.001f);assert(cfg::SLEW_DPS==600&&cfg::PERIOD_S==0.8f);
+ // Half a second of Normal advances about0.41 of a cycle (1.23 s period).
  ready(m);m.newSession(91);uint32_t seq=0;const uint32_t begin=2200;
  const float phase=m.phase;
  for(uint32_t t=begin;t<begin+500;t+=10){if((t-begin)%150==0)assert(m.command(91,++seq,1,t,true));m.tick(t);}
- const float advance=m.phase-phase;assert(advance>2.0f&&advance<2.3f);
+ const float advance=m.phase-phase;assert(advance>2.5f&&advance<2.85f);
  m.stop();for(uint32_t t=begin+500;t<begin+1000;t+=10)m.tick(t);assert(!m.lease&&m.amplitude==0);
 }
 static void test_motion(){
@@ -254,4 +281,4 @@ static void simulation(const std::string& dir){
  simulatePattern(Pattern::Pairs,out,report);
  report<<"],\"sidewaysSupportedByModel\":true,\"hardwareTested\":false}\n";
 }
-int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_pair_sequence();test_trot_sequence();test_tracking();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, diagonal trot default/four-foot overlap/zero yaw all 8 directions/Fast slew tracking, owner front-rear pairs option push/lift/return/lower/full hip stroke/forward-back reversal, pulse bounds, QR encoding\n";}
+int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_pair_sequence();test_trot_sequence();test_flick();test_tracking();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, diagonal trot default/owner knee flick forward-back with held hip pose/four-foot overlap/zero yaw all 8 directions/Fast slew tracking, owner front-rear pairs option push/lift/return/lower/full hip stroke/forward-back reversal, pulse bounds, QR encoding\n";}

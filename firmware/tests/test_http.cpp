@@ -6,7 +6,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v8")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v9")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -25,6 +25,7 @@ int main(){
  server.request("/api/gait",{{"token","7"},{"value","pairs"}});assert(server.code==409&&motion.gaitPattern==crab::Pattern::Trot);
  server.request("/api/gait",{{"token","42"},{"value","pairs"}});assert(server.code==200&&motion.gaitPattern==crab::Pattern::Pairs&&!motion.lease&&motion.positional()); // stays armed
  server.request("/api/status");assert(server.body.find("\"gait\":\"pairs\"")!=String::npos);
+ server.request("/api/gait",{{"token","42"},{"value","flick"}});assert(server.code==200&&motion.gaitPattern==crab::Pattern::Flick);server.request("/api/status");assert(server.body.find("\"gait\":\"flick\"")!=String::npos);
  server.request("/api/gait",{{"token","42"},{"value","trot"}});assert(server.code==200&&motion.gaitPattern==crab::Pattern::Trot);
  server.request("/api/move",{{"token","42"},{"seq","2"},{"dir","1"},{"fresh","1"}});assert(server.code==409); // not enabled8 yet
  for(int ch=0;ch<8;ch++)motion.tick(clockMs+20+300*ch);
