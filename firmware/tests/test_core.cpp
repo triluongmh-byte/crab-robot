@@ -127,7 +127,7 @@ static void test_pair_sequence(){
   assert(std::fabs(fwd[2*first]+fwd[2*(first+1)])<.001f); // mirrored hip push
   if(u<.5f)assert(fwd[2*first+1]==0);
   if(u>.5f&&u<.625f)assert(std::fabs(std::fabs(fwd[2*first])-25)<.001f);
-  if(u>.625f&&u<.875f)assert(std::fabs(fwd[2*first+1]+30)<.001f);
+  if(u>.625f&&u<.875f)assert(std::fabs(fwd[2*first+1]+cfg::KNEE_LIFT)<.001f);
   if(u>.875f)assert(std::fabs(std::fabs(fwd[2*first])-25)<.001f);
  }
  // First forward frame commands front hips from neutral towards the rear.
@@ -232,6 +232,9 @@ static void test_flick(){
  // Boot arm follows the Bật servo path, only with a working driver.
  {Motion m;assert(cfg::AUTO_ARM&&!m.bootArm(false,0)&&!m.positional());assert(m.bootArm(true,0)&&m.positional()&&m.enabled==0);
   for(uint32_t t=0;t<3000;t+=10)m.tick(t);assert(m.enabled==8);}
+ // Knee lift: default raised to 45 (feet dragged), owner range 20-60, every gait.
+ {assert(cfg::KNEE_LIFT==45);Motion m;assert(m.kneeLift==cfg::KNEE_LIFT&&m.setKneeLift(60)&&!m.setKneeLift(61)&&!m.setKneeLift(19)&&m.kneeLift==60);
+  for(Pattern w:{Pattern::Trot,Pattern::Pairs,Pattern::Flick})for(int d:{1,3}){double lo=0;for(int k=0;k<200;k++){float o[8];gait(k*.0314f,bodyDirection(d),1,o,w,cfg::FLICK_HIP,55);for(int leg=0;leg<4;leg++)lo=std::min(lo,double(o[2*leg+1]));}assert(std::fabs(lo+55)<.01);}}
  // The fix for IMG_2637: Forward and Backward knee patterns now differ.
  float f[8],b[8];bool differ=false;
  for(int k=0;k<100;k++){gait(k*.0628f,bodyDirection(1),1,f,Pattern::Flick);gait(k*.0628f,bodyDirection(2),1,b,Pattern::Flick);for(int i=1;i<8;i+=2)differ=differ||std::fabs(f[i]-b[i])>1;}
@@ -278,14 +281,14 @@ static void test_motion(){
  assert(m.trim(2,1));assert(!m.raw&&m.offsets[2]==1);for(int i=0;i<99;i++)m.trim(2,1);assert(m.offsets[2]==cfg::TRIM_LIMIT);
  assert(!m.trim(8,1));assert(!m.trim(2,22));m.setAssembly(false);assert(!m.trim(2,-1));
  m.inhibit=true;assert(!m.command(12,8,1,2900));m.inhibit=false;assert(m.command(12,9,1,3000));m.newSession(99);assert(!m.lease&&!m.command(12,10,1,3010));
- for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1000&&p<=2000);const int limit=ch%2?195:500;assert(std::abs(p-1500)<=limit);}
+ for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1000&&p<=2000);const int limit=ch%2?361:500;assert(std::abs(p-1500)<=limit);}
  // Hips reach the full 90 deg flick stance; knees still stop at 35 deg.
- assert(pulse(0,90,0)==2000&&pulse(0,-90,0)==1000&&pulse(1,90,0)==1667&&pulse(1,90,12)==1694);
+ assert(pulse(0,90,0)==2000&&pulse(0,-90,0)==1000&&pulse(1,90,0)==1833&&pulse(1,90,12)==1861);
  Motion wrap;ready(wrap,0xfffff000);wrap.newSession(2);assert(wrap.command(2,1,1,0xffffff00));wrap.tick(0x200);assert(!wrap.lease);
  // Long realistic run tests the production scheduler, lease renewal, limits, ramp and exact startup order.
  for(int dir=1;dir<=8;dir++){
   Motion sim;ready(sim);sim.newSession(1);uint32_t seq=0;float previous[8]={};
-  for(uint32_t t=2200;t<32200;t+=10){if(t%150==100)assert(sim.command(1,++seq,dir,t,!sim.lease));int ch=sim.tick(t);if(ch>=0)for(int joint=0;joint<8;joint++){assert(std::fabs(sim.position[joint])<=cfg::JOINT_LIMIT);assert(std::fabs(sim.position[joint]-previous[joint])<=cfg::SLEW_DPS*.05f+.0001f);previous[joint]=sim.position[joint];}}
+  for(uint32_t t=2200;t<32200;t+=10){if(t%150==100)assert(sim.command(1,++seq,dir,t,!sim.lease));int ch=sim.tick(t);if(ch>=0)for(int joint=0;joint<8;joint++){assert(std::fabs(sim.position[joint])<=cfg::KNEE_LIFT_MAX);assert(std::fabs(sim.position[joint]-previous[joint])<=cfg::SLEW_DPS*.05f+.0001f);previous[joint]=sim.position[joint];}}
   sim.stop();for(uint32_t t=32200;t<38200;t+=10)sim.tick(t);assert(sim.amplitude==0);for(float v:sim.position)assert(std::fabs(v)<.001);
  }
 }
@@ -301,7 +304,7 @@ static void simulatePattern(Pattern which,std::ofstream& out,std::ofstream& repo
   int unilateralSupport=0,supportMasks[16]={};
   for(int k=0;k<samples;k++){
    float phase=k*6.2831853072f/samples,outAngles[8];gait(phase,v,1,outAngles,which);out<<patternName(which)<<","<<d<<","<<phase;
-   for(float a:outAngles){out<<","<<a;assert(std::fabs(a)<=cfg::JOINT_LIMIT);maxAngle=std::max(maxAngle,double(std::fabs(a)));}
+   for(float a:outAngles){out<<","<<a;assert(std::fabs(a)<=cfg::KNEE_LIFT_MAX);maxAngle=std::max(maxAngle,double(std::fabs(a)));}
    // Infer contact from the production knee output, not from the phase table:
    // negative knee = raised foot. Tolerance ignores float roundoff at zero.
    unsigned grounded=0;int count=0;

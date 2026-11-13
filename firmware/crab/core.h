@@ -41,7 +41,7 @@ inline float cyclePeriod(Pattern p,Vec v){return flickActive(p,v)?cfg::FLICK_PER
 // set by geometry instead: a trailing leg (foot pointing away from travel)
 // gets the power stroke, a slow lift then a fast drop that strikes and pushes;
 // a leading leg snaps up fast and lowers slowly so it drags little.
-inline void flick(float phase,Vec v,float amplitude,float out[8],float hip=cfg::FLICK_HIP){
+inline void flick(float phase,Vec v,float amplitude,float out[8],float hip=cfg::FLICK_HIP,float knee=cfg::KNEE_LIFT){
  const float cycle=phase/6.2831853072f;
  for(int leg=0;leg<4;leg++){
   // CAD legs 0,1 swing their feet towards +X, legs 2,3 towards -X.
@@ -52,11 +52,12 @@ inline void flick(float phase,Vec v,float amplitude,float out[8],float hip=cfg::
   const bool leading=pose.x*v.x>0;
   if(!leading)u=1-u;
   const float k=u<cfg::FLICK_STROKE?smooth(u/cfg::FLICK_STROKE):1-smooth((u-cfg::FLICK_STROKE)/(1-cfg::FLICK_STROKE));
-  out[2*leg+1]=-cfg::KNEE_LIFT*k*amplitude;
+  out[2*leg+1]=-clamp(knee,0,cfg::KNEE_LIFT_MAX)*k*amplitude;
  }
 }
-inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pattern::Trot,float flickHip=cfg::FLICK_HIP){
- if(flickActive(which,v)){flick(phase,v,amplitude,out,flickHip);return;}
+inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pattern::Trot,float flickHip=cfg::FLICK_HIP,float knee=cfg::KNEE_LIFT){
+ if(flickActive(which,v)){flick(phase,v,amplitude,out,flickHip,knee);return;}
+ knee=clamp(knee,0,cfg::KNEE_LIFT_MAX);
  const cfg::GaitPattern& g=pattern(which);
  // Begin at mid stance: hips start from neutral, not an opposite kick.
  const float cycle=phase/6.2831853072f+g.start;
@@ -71,14 +72,14 @@ inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pa
   // Use the available full hip stroke for axial Forward/Backward commands.
   const float push=clamp(hipProjection(leg,v)*1.4142135624f,-1,1);
   out[2*leg]=cfg::HIP_AMPLITUDE*push*hip*amplitude;
-  out[2*leg+1]=-cfg::KNEE_LIFT*lift*amplitude;
+  out[2*leg+1]=-knee*lift*amplitude;
  }
 }
 inline int pulse(int ch,float angle,float offset,bool raw=false){
  if(raw)return cfg::CENTRE_US;
  // Clamp AFTER mirror and trim: trim cannot bypass the owner's travel budget.
  // Owner-requested hip range for the 90 deg knee-flick stance; knees unchanged.
- const float limit=ch%2?cfg::KNEE_PULSE_LIMIT:cfg::HIP_LIMIT,request=ch%2?cfg::JOINT_LIMIT:cfg::HIP_LIMIT;
+ const float limit=ch%2?cfg::KNEE_PULSE_LIMIT:cfg::HIP_LIMIT,request=ch%2?cfg::KNEE_LIFT_MAX:cfg::HIP_LIMIT;
  float degrees=clamp(cfg::SIGN[ch]*clamp(angle,-request,request)+clamp(offset,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT),-limit,limit);
  return int(std::lround(cfg::CENTRE_US+cfg::US_PER_DEG*degrees));
 }
@@ -186,6 +187,7 @@ struct Motion {
  Vec velocity{};
  float amplitude=0,phase=0,speed=cfg::SPEED_DEFAULT,flickHip=cfg::FLICK_HIP;
  int balance=0; // percent, see applyBalance
+ float kneeLift=cfg::KNEE_LIFT;
  Pattern gaitPattern=Pattern::Trot;
  bool assembly=false,raw=false,inhibit=false,lease=false;
  uint32_t session=0,lastSeq=0,lastCommand=0,start=0,lastTick=0;
@@ -194,6 +196,7 @@ struct Motion {
  void begin(uint32_t now){start=lastTick=now;enabled=0;}
  // Boot-time arm (cfg::AUTO_ARM): same path as the page's Bật servo button.
  bool bootArm(bool driver,uint32_t now){return cfg::AUTO_ARM&&driver&&selectActuator(true,now);}
+ bool setKneeLift(int deg){if(deg<cfg::KNEE_LIFT_MIN||deg>cfg::KNEE_LIFT_MAX)return false;kneeLift=float(deg);return true;}
  bool setBalance(int percent){if(percent<-cfg::BALANCE_LIMIT||percent>cfg::BALANCE_LIMIT)return false;balance=percent;return true;}
  // Emotion poses: direct joint targets in the gait's command frame (knee
  // negative lifts). Same lease/deadman as walking; release relaxes slowly.
@@ -242,7 +245,7 @@ struct Motion {
   if(moving)heading=velocity;
   if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cyclePeriod(gaitPattern,heading),6.2831853072f);
   if(posing){for(int ch=0;ch<8;ch++)position[ch]+=clamp(pose[ch]-position[ch],-poseRate[ch]*dt,poseRate[ch]*dt);return 0;}
-  float target[8]={};if(!assembly){gait(phase,heading,amplitude,target,gaitPattern,flickHip);applyBalance(target,balance);}
+  float target[8]={};if(!assembly){gait(phase,heading,amplitude,target,gaitPattern,flickHip,kneeLift);applyBalance(target,balance);}
   const float rate=relaxing&&!moving?cfg::RELAX_DPS:cfg::SLEW_DPS;bool settled=true;
   for(int ch=0;ch<8;ch++){position[ch]+=clamp(target[ch]-position[ch],-rate*dt,rate*dt);settled=settled&&std::fabs(target[ch]-position[ch])<.01f;}
   if(settled||moving)relaxing=false;

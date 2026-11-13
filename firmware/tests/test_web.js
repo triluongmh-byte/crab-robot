@@ -49,6 +49,9 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  // Heading trim slider posts signed whole percent; poll does not fight a drag.
  state.balance=0;await poll();assert.equal(el('balance').value,'0');el('balance').value='12';el('balance').oninput();assert.equal(el('balanceValue').textContent,'+12% phải');await poll();assert.equal(el('balance').value,'12');
  el('balance').onchange();await flush();assert(calls.some(c=>c.path==='/api/balance'&&c.data.value==='12'));state.balance=12;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='+12% phải'));
+ // Knee lift slider.
+ state.knee=45;await poll();assert.equal(el('knee').value,'45');el('knee').value='55';el('knee').oninput();assert.equal(el('kneeValue').textContent,'55°');await poll();assert.equal(el('knee').value,'55');
+ el('knee').onchange();await flush();assert(calls.some(c=>c.path==='/api/knee'&&c.data.value==='55'));
  assert(/CH0 · Hông sau phải/.test(el('trim0').textContent)&&/CH6 · Hông trước trái/.test(el('trim6').textContent));
  assert.equal(el('gait').value,'trot');assert(/chéo/.test(el('gaitHint').textContent));state.gait='pairs';await poll();assert.equal(el('gait').value,'pairs');assert(/trước và sau/.test(el('gaitHint').textContent));
  el('gait').value='trot';await el('gait').onchange();await flush();assert(calls.some(c=>c.path==='/api/gait'&&c.data.value==='trot'&&c.data.token==='42'));state.gait='flick';await poll();assert.equal(el('gait').value,'flick');assert(/búng/.test(el('gaitHint').textContent));state.gait='trot';await poll();assert.equal(el('gait').value,'trot');

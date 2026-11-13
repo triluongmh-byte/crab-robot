@@ -9,7 +9,10 @@ constexpr int PWM_HZ=50, CENTRE_US=1500;
 constexpr float US_PER_DEG=1000.0f/180.0f, JOINT_LIMIT=30, TRIM_LIMIT=12;
 // Hips may travel to +/-90 deg nominal (1000-2000 us) for the owner's knee-flick
 // stance; trot/pairs still request only HIP_AMPLITUDE. Knees stay at +/-35 deg.
-constexpr float HIP_LIMIT=90, KNEE_PULSE_LIMIT=35;
+// Knee lift is owner-adjustable KNEE_LIFT_MIN..KNEE_LIFT_MAX (saved); owner,
+// 2026-11-13: feet dragged on the table while the hips returned, pushing the
+// crab backwards, so the default rose from 30 to 45 deg nominal.
+constexpr float KNEE_LIFT_MIN=20, KNEE_LIFT_MAX=60, HIP_LIMIT=90, KNEE_PULSE_LIMIT=65;
 // Owner, 2026-11-13: CH0 actually sits at the REAR RIGHT. The firmware CAD
 // frame (CH0 = front left) is therefore rotated 180 deg from the real robot.
 // Drive commands are rotated into the CAD frame so Forward goes to CH4/CH6.
@@ -30,7 +33,7 @@ constexpr uint32_t FRAME_MS=20;
 constexpr float FRAME_S=FRAME_MS*.001f, PERIOD_S=0.8f;
 // Web speed slider: fraction of full rate, default 90%.
 constexpr float SPEED_MIN=.2f, SPEED_MAX=1.f, SPEED_DEFAULT=.9f;
-constexpr float HIP_AMPLITUDE=25, KNEE_LIFT=30, SLEW_DPS=600;
+constexpr float HIP_AMPLITUDE=25, KNEE_LIFT=45, SLEW_DPS=600;
 // Return to standing after an emotion pose is released or times out.
 constexpr float RELAX_DPS=120;
 constexpr float RADIAL[4]={0.7853981634f,-0.7853981634f,2.3561944902f,-2.3561944902f};

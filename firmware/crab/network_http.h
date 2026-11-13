@@ -51,7 +51,7 @@ void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° t
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v13\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"offsets\":"+offsets+"}");});
+  json(200,String("{\"firmware\":\"positional180-v14\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -93,6 +93,8 @@ void configureHttp(){
  server.on("/api/emotions/save",HTTP_POST,[]{if(!owns()){error(409);return;}String data=server.arg("data");if(!emotionListValid(data)){error();return;}if(emoteStore.putString("list",data)!=data.length()){error(500);return;}ok();});
  server.on("/emo",HTTP_GET,[]{server.sendHeader("Cache-Control","no-store");server.send_P(200,"text/html; charset=utf-8",EMOTE_UI);});
  server.on("/api/speed",HTTP_POST,[]{if(!owns()){error(409);return;}float v;if(!speedArg(v)){error();return;}{Guard g;offForChangeLocked();motion.speed=v;}ok();});
+ // Walking knee lift, whole degrees; persisted with the trims.
+ server.on("/api/knee",HTTP_POST,[]{if(!owns()){error(409);return;}int32_t v;if(!intArg("value",v)){error();return;}bool accepted;{Guard g;accepted=motion.setKneeLift(v);}if(!accepted){error();return;}trimStore.putInt("knee",v);ok();});
  // Left/right heading trim, percent; persisted with the trims.
  server.on("/api/balance",HTTP_POST,[]{if(!owns()){error(409);return;}int32_t v;if(!intArg("value",v)){error();return;}bool accepted;{Guard g;accepted=motion.setBalance(v);}if(!accepted){error();return;}trimStore.putInt("balance",v);ok();});
  // Knee-flick hip stance, whole degrees FLICK_HIP_MIN..FLICK_HIP.
