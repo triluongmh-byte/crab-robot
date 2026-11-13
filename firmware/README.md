@@ -164,3 +164,16 @@ Release `positional180-v15` changes the calibration buttons:
 - **Range.** The trim range widens from ±12° to ±30° nominal.
 - **No blanking.** A trim no longer blanks every PWM output, so the servos stop twitching on each press.
 
+## Front flipped again — 2026-11-13
+
+The owner turned the robot around. With v16, Forward/Backward and Left/Right were both reversed. Release `positional180-v17` sets `cfg::FRONT_IS_CH46=true` again, so the front is the CH4/CH6 end. The labels follow this layout:
+
+| Leg | Hip | Knee |
+|---|---|---|
+| Rear right | CH0 | CH1 |
+| Rear left | CH2 | CH3 |
+| Front right | CH4 | CH5 |
+| Front left | CH6 | CH7 |
+
+The emotion page and the **Bù lệch** right side (CH0/CH4) also follow it. The setting is a single constant; flip it if the front changes again.
+
