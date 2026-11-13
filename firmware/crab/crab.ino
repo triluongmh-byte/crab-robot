@@ -41,7 +41,9 @@ void setup(){
  motionLock=xSemaphoreCreateMutex();
  displayOk=screen.begin();light.begin();light.set(lightOn);driverReady=servos.begin();
  wifiStore.begin("cua-wifi",false);trimStore.begin("cua-180-v1",false);emoteStore.begin("cua-emote",false);
- {Guard g;if(trimStore.getBytesLength("offsets")==sizeof(motion.offsets)){trimStore.getBytes("offsets",motion.offsets,sizeof(motion.offsets));for(auto& v:motion.offsets)if(!std::isfinite(v)||std::fabs(v)>cfg::TRIM_LIMIT)v=0;}motion.begin(millis());}
+ {Guard g;if(trimStore.getBytesLength("offsets")==sizeof(motion.offsets)){trimStore.getBytes("offsets",motion.offsets,sizeof(motion.offsets));for(auto& v:motion.offsets)if(!std::isfinite(v)||std::fabs(v)>cfg::TRIM_LIMIT)v=0;}
+  if(!motion.setBalance(trimStore.getInt("balance",0)))motion.balance=0;
+  motion.begin(millis());motion.bootArm(driverReady.load(),millis());}
  xTaskCreatePinnedToCore(motionTask,"cua-motion",4096,nullptr,3,nullptr,1);
  WiFi.onEvent([](WiFiEvent_t event){if(event==ARDUINO_EVENT_WIFI_STA_GOT_IP)stationHasIp=true;else if(event==ARDUINO_EVENT_WIFI_STA_DISCONNECTED)stationHasIp=false;});
  WiFi.persistent(false);WiFi.mode(WIFI_AP_STA);WiFi.setAutoReconnect(false);

@@ -49,5 +49,11 @@ async function advance(ms){const end=now+ms;for(;;){await flush();timers.sort((a
  calls.length=0;beacons.length=0;const loop=E.playFrames(frames,true);await advance(400);E.halt();await advance(1000);await loop;
  const after=calls.filter(c=>c.path==='/api/pose').length;await advance(1000);assert.equal(calls.filter(c=>c.path==='/api/pose').length,after);
  assert(beacons.length>=1);
+ // Touching a slider starts live preview (owner: sliders looked dead); not ready -> hint.
+ E.halt();await advance(500);calls.length=0;E.setReady(false);elements.j0.value='12';elements.j0.oninput();await advance(300);assert(!E.state().liveOn&&/Bật servo/.test(elements.status.textContent));assert.equal(calls.filter(c=>c.path==='/api/pose').length,0);
+ E.setReady(true);elements.j0.value='12';elements.j0.oninput();assert(E.state().liveOn);await advance(400);
+ const live=calls.filter(c=>c.path==='/api/pose');assert(live.length>=2&&live[0].data.fresh==='1');assert.equal(live[0].data.a.split(',')[6],'-12'); // front-left hip = CH6
+ assert.equal(elements.j2.value,'12'); // mirrored to front-right
+ E.halt();await advance(500);assert(!E.state().liveOn);
  console.log('PASS: emotion page unit mapping/preset bounds/saved-list filter/timeline renewals with fresh-first lease/colour changes/stop at end and on halt');
 })().catch(e=>{console.error(e);process.exit(1);});

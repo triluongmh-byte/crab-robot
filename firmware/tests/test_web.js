@@ -46,6 +46,9 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  assert(el('flickHipBox').hidden);state.gait='flick';state.flickHip=90;await poll();assert(!el('flickHipBox').hidden&&el('flickHip').value==='90');
  el('flickHip').value='60';el('flickHip').oninput();await poll();assert.equal(el('flickHip').value,'60');el('flickHip').onchange();await flush();
  assert(calls.some(c=>c.path==='/api/flickhip'&&c.data.value==='60'));state.flickHip=60;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='Búng gối · hông 60°'));state.gait='trot';await poll();assert(el('flickHipBox').hidden);
+ // Heading trim slider posts signed whole percent; poll does not fight a drag.
+ state.balance=0;await poll();assert.equal(el('balance').value,'0');el('balance').value='12';el('balance').oninput();assert.equal(el('balanceValue').textContent,'+12% phải');await poll();assert.equal(el('balance').value,'12');
+ el('balance').onchange();await flush();assert(calls.some(c=>c.path==='/api/balance'&&c.data.value==='12'));state.balance=12;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='+12% phải'));
  assert(/CH0 · Hông sau phải/.test(el('trim0').textContent)&&/CH6 · Hông trước trái/.test(el('trim6').textContent));
  assert.equal(el('gait').value,'trot');assert(/chéo/.test(el('gaitHint').textContent));state.gait='pairs';await poll();assert.equal(el('gait').value,'pairs');assert(/trước và sau/.test(el('gaitHint').textContent));
  el('gait').value='trot';await el('gait').onchange();await flush();assert(calls.some(c=>c.path==='/api/gait'&&c.data.value==='trot'&&c.data.token==='42'));state.gait='flick';await poll();assert.equal(el('gait').value,'flick');assert(/búng/.test(el('gaitHint').textContent));state.gait='trot';await poll();assert.equal(el('gait').value,'trot');
