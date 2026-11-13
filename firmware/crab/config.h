@@ -19,10 +19,7 @@ constexpr float KNEE_LIFT_MIN=20, KNEE_LIFT_MAX=60, HIP_LIMIT=90, KNEE_PULSE_LIM
 // Owner, 2026-11-13: CH0 actually sits at the REAR RIGHT. The firmware CAD
 // frame (CH0 = front left) is therefore rotated 180 deg from the real robot.
 // Drive commands are rotated into the CAD frame so Forward goes to CH4/CH6.
-// Owner, later 2026-11-13 (after recalibrating): CH6 is the REAR RIGHT hip,
-// which is the original CAD map (CH0 front left). The earlier CH0 report is
-// superseded, so no rotation is applied.
-constexpr bool FRONT_IS_CH46=false;
+constexpr bool FRONT_IS_CH46=true;
 // Owner, 2026-11-13: arm the servos at boot (was: PWM off until Bật servo).
 constexpr bool AUTO_ARM=true;
 // Heading trim: +N% gives the physical right hips N% more stroke and the left
@@ -32,8 +29,8 @@ constexpr int BALANCE_LIMIT=30;
 // Knees FL +1, FR -1, RL -1, RR +1; negative angle lifts each foot.
 constexpr int SIGN[8]={1,1,1,-1,1,-1,1,1};
 // Physical leg positions (see FRONT_IS_CH46).
-constexpr const char* JOINT[8]={"Hông trước trái","Gối trước trái","Hông trước phải","Gối trước phải",
-                             "Hông sau trái","Gối sau trái","Hông sau phải","Gối sau phải"};
+constexpr const char* JOINT[8]={"Hông sau phải","Gối sau phải","Hông sau trái","Gối sau trái",
+                             "Hông trước phải","Gối trước phải","Hông trước trái","Gối trước trái"};
 constexpr uint32_t DEADMAN_MS=500, BOOT_HOLD_MS=8000, ENABLE_GAP_MS=300;
 constexpr uint32_t FRAME_MS=20;
 constexpr float FRAME_S=FRAME_MS*.001f, PERIOD_S=0.8f;

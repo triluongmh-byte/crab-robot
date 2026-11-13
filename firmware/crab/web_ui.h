@@ -32,8 +32,8 @@ static const char WEB_UI[] PROGMEM=R"CRABHTML(<!doctype html>
 const $=id=>document.getElementById(id);
 let token='',seq=0,held=0,busy=false,page='control',requestEpoch=0,freshPress=false,ready=false,activePointer=null,activeButton=null,menuOpen=false,telemetryBusy=false;
 const logLines=[];
-// Physical positions, owner-confirmed CH6 = rear right (firmware cfg::FRONT_IS_CH46=false).
-const names=['Hông trước trái','Gối trước trái','Hông trước phải','Gối trước phải','Hông sau trái','Gối sau trái','Hông sau phải','Gối sau phải'];
+// Physical positions: the owner found CH0 at the REAR RIGHT (firmware cfg::FRONT_IS_CH46).
+const names=['Hông sau phải','Gối sau phải','Hông sau trái','Gối sau trái','Hông trước phải','Gối trước phải','Hông trước trái','Gối trước trái'];
 const GAITS={trot:'Chéo',pairs:'Cặp trước/sau',flick:'Búng gối'};let speedDragging=false,hipDragging=false,balanceDragging=false,kneeDragging=false;
 function balanceText(v){v=Number(v);return v===0?'0':(v>0?'+'+v+'% phải':v+'% (trái mạnh hơn)');}
 function showSpeed(pct){$('speedValue').textContent=pct+'%';}
@@ -130,9 +130,9 @@ const $=id=>document.getElementById(id);
 // Firmware command frame: knee negative lifts; left hips move forwards when negative.
 const LEGS=['Trước trái','Trước phải','Sau trái','Sau phải'],HIP_FORWARD=[-1,1,-1,1],LIMIT=30,TICK=150,MAX_LIST=3800;
 const clampDeg=v=>Math.max(-LIMIT,Math.min(LIMIT,Math.round(Number(v)||0)));
-// Sliders/presets are in physical leg order. Owner confirmed CH6 = rear right, the
-// original map (firmware cfg::FRONT_IS_CH46=false), so physical leg L = CAD leg L.
-const CAD_LEG=[0,1,2,3];
+// Sliders/presets are in physical leg order. The owner found CH0 at the rear right
+// (firmware cfg::FRONT_IS_CH46), so physical leg L drives channels of CAD leg 3-L.
+const CAD_LEG=[3,2,1,0];
 function toCommand(p){const a=Array(8).fill(0);for(let leg=0;leg<4;leg++){const c=CAD_LEG[leg];a[2*c]=clampDeg(p[2*leg])*HIP_FORWARD[leg];a[2*c+1]=-clampDeg(p[2*leg+1]);}return a.map(v=>v===0?0:v).join(',');}
 function hexRgb(c){const m=/^#([0-9a-f]{6})$/i.exec(c||'');const n=m?parseInt(m[1],16):0;return {r:n>>16&255,g:n>>8&255,b:n&255};}
 // Frame: [h0,k0,h1,k1,h2,k2,h3,k3,'#rrggbb',moveMs,holdMs]

@@ -164,23 +164,16 @@ Release `positional180-v15` changes the calibration buttons:
 - **Range.** The trim range widens from ±12° to ±30° nominal.
 - **No blanking.** A trim no longer blanks every PWM output, so the servos stop twitching on each press.
 
-## Original channel map restored — 2026-11-13
+## Front flipped again — 2026-11-13
 
-After recalibrating, the owner confirmed that **CH6 is the rear-right hip**. This matches the original map:
+The owner turned the robot around. With v16, Forward/Backward and Left/Right were both reversed. Release `positional180-v17` sets `cfg::FRONT_IS_CH46=true` again, so the front is the CH4/CH6 end. The labels follow this layout:
 
 | Leg | Hip | Knee |
 |---|---|---|
-| Front left | CH0 | CH1 |
-| Front right | CH2 | CH3 |
-| Rear left | CH4 | CH5 |
-| Rear right | CH6 | CH7 |
+| Rear right | CH0 | CH1 |
+| Rear left | CH2 | CH3 |
+| Front right | CH4 | CH5 |
+| Front left | CH6 | CH7 |
 
-The knee mirror signs pair diagonal legs (CH1 with CH7, CH3 with CH5), so the CH0 leg sits diagonally opposite CH6. The owner's original pairs request named CH0+CH2 as the front pair.
-
-Release `positional180-v16` sets `cfg::FRONT_IS_CH46=false`. The following now follow this map:
-
-- Forward heads towards CH0/CH2.
-- The joint labels.
-- The emotion page.
-- The **Bù lệch** right side, which is now CH2/CH6.
+The emotion page and the **Bù lệch** right side (CH0/CH4) also follow it. The setting is a single constant; flip it if the front changes again.
 
