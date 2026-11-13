@@ -52,7 +52,9 @@ class LightDriver {
  bool begin(){rmt_config_t c={};c.rmt_mode=RMT_MODE_TX;c.channel=RMT_CHANNEL_0;c.gpio_num=(gpio_num_t)cfg::LED_PIN;c.clk_div=8;c.mem_block_num=1;c.tx_config.idle_output_en=true;c.tx_config.idle_level=RMT_IDLE_LEVEL_LOW;
   available=rmt_config(&c)==ESP_OK&&rmt_driver_install(c.channel,0,0)==ESP_OK;if(available)set(false);return available;
  }
- void set(bool on){if(!available)return;rmt_item32_t bits[24*cfg::LED_COUNT]={};for(int led=0;led<cfg::LED_COUNT;led++)for(int color=0;color<3;color++){uint8_t v=on?cfg::LED_BRIGHTNESS:0;for(int b=0;b<8;b++){bool high=(v&(128>>b));auto& item=bits[led*24+color*8+b];item.level0=1;item.duration0=high?8:4;item.level1=0;item.duration1=high?5:9;}}
+ void set(bool on){color(on?255:0,on?255:0,on?255:0);}
+ // WS2812 GRB order; each channel scaled to the LED_BRIGHTNESS power cap.
+ void color(uint8_t r,uint8_t g,uint8_t b){if(!available)return;const uint8_t rgb[3]={g,r,b};rmt_item32_t bits[24*cfg::LED_COUNT]={};for(int led=0;led<cfg::LED_COUNT;led++)for(int color=0;color<3;color++){uint8_t v=uint8_t((rgb[color]*cfg::LED_BRIGHTNESS+127)/255);for(int b=0;b<8;b++){bool high=(v&(128>>b));auto& item=bits[led*24+color*8+b];item.level0=1;item.duration0=high?8:4;item.level1=0;item.duration1=high?5:9;}}
   rmt_write_items(RMT_CHANNEL_0,bits,24*cfg::LED_COUNT,true);delayMicroseconds(80);
  }
 };

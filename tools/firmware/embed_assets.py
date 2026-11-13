@@ -7,7 +7,8 @@ def put(p,data):
  p=ROOT/p
  if not p.exists() or p.read_bytes()!=data:p.write_bytes(data)
 ui=(ROOT/'firmware/assets/ui.html').read_text()
-put(Path('firmware/crab/web_ui.h'),('#pragma once\n#include <pgmspace.h>\nstatic const char WEB_UI[] PROGMEM=R"CRABHTML('+ui+')CRABHTML";\n').encode())
+emote=(ROOT/'firmware/assets/emote.html').read_text()
+put(Path('firmware/crab/web_ui.h'),('#pragma once\n#include <pgmspace.h>\nstatic const char WEB_UI[] PROGMEM=R"CRABHTML('+ui+')CRABHTML";\nstatic const char EMOTE_UI[] PROGMEM=R"CRABHTML('+emote+')CRABHTML";\n').encode())
 # SIL Open Font License, pinned Noto Sans source; font is data, not an SDK.
 font=ROOT/'firmware/assets/NotoSans-Regular.ttf'
 if not font.exists():

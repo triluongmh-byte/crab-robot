@@ -99,3 +99,7 @@ The owner reports the trot works but moves too slowly. Release `positional180-v8
 ## Snappier servos and knee-flick trial —2026-11-13
 
 Release `positional180-v9` raises the slew limit to 600°/s (about SG90 no-load speed) and shortens the base cycle to 0.8 s: Fast 0.8 s, Normal 1.23 s, Slow 2.0 s. Firmware cannot add torque; stronger joints need a higher supply voltage within the servo rating, or MG90S-class servos. A third **Dáng đi** option, **Búng gối** (`flick`), holds the hips with the front feet forward and rear feet back, and flicks the diagonal knees for Forward/Backward (Left/Right still trot). See [the gait trial guide](CRAWL.md). Host tests cover the flick pose, waveform direction, diagonal pairing and tracking at Fast.
+
+## Emotion studio —2026-11-13
+
+Release `positional180-v10` adds an emotion page at `/emo`, linked as **🎭 Cảm xúc** from the control page. It has built-in emotions, a keyframe editor with live preview, mirroring and LED colour, and emotions saved on the robot. The firmware gains a pose mode under the walking lease and deadman (`/api/pose`), RGB LED colour within the brightness cap (`/api/led`) and a bounded NVS list (`/api/emotions`). Releasing a pose relaxes to standing at 120°/s. See [EMOTIONS.md](EMOTIONS.md). Host tests cover pose timing, clamps, lease, deadman, relax, cancel and assembly blocking; endpoint validation; GRB colour; and the page's unit mapping, presets and playback timeline.

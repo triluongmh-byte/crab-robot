@@ -8,6 +8,22 @@ void error(int code=400){json(code,"{\"error\":\"Lệnh chưa hợp lệ hoặc 
 bool uintArg(const char* name,uint32_t& value){String s=server.arg(name);if(s.length()==0||s.length()>10)return false;uint64_t v=0;for(char c:s){if(c<'0'||c>'9')return false;v=v*10+c-'0';if(v>0xffffffffULL)return false;}value=(uint32_t)v;return true;}
 bool owns(){uint32_t t;if(!uintArg("token",t))return false;Guard g;return t&&t==motion.session;}
 void stopMotion(){Guard g;motion.stop();}
+// "a" holds eight comma-separated joint angles in degrees, each within +/-90.
+bool poseArg(float out[8]){
+ String s=server.arg("a");if(s.length()<15||s.length()>120)return false;
+ const char* p=s.c_str();
+ for(int ch=0;ch<8;ch++){
+  char* end=nullptr;float v=strtof(p,&end);if(end==p||!std::isfinite(v)||v<-90||v>90)return false;
+  out[ch]=v;p=end;if(ch<7){if(*p!=',')return false;p++;}
+ }
+ return *p==0;
+}
+// Saved emotions are opaque JSON for the page; bound size and reject control bytes.
+bool emotionListValid(const String& s){
+ if(s.length()<2||s.length()>3800||s[0]!='['||s[s.length()-1]!=']')return false;
+ for(size_t i=0;i<s.length();i++)if((unsigned char)s[i]<32)return false;
+ return true;
+}
 // Caller owns motionLock; only hard-off writes occur here. Never send HTTP under it.
 void offForChangeLocked(){
  motion.stop();motion.outputEpoch++;motion.test.generation++;motion.continuous.generation++;
@@ -22,7 +38,7 @@ void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° t
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v9\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"offsets\":"+offsets+"}");});
+  json(200,String("{\"firmware\":\"positional180-v10\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"offsets\":"+offsets+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -53,6 +69,16 @@ void configureHttp(){
   WiFi.scanDelete();stopMotion();candidateSsid=ssid;candidatePass=pass;network.connect(true,millis());connectStation(ssid,pass);ok();
  });
  server.on("/api/light",HTTP_POST,[]{if(!owns()){error(409);return;}lightOn=!lightOn;light.set(lightOn);ok();});
+ // Emotion studio: direct poses under the walking lease/deadman, LED colour, saved list.
+ server.on("/api/pose",HTTP_POST,[]{
+  uint32_t token,seq,ms,fresh;float angles[8];
+  if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("ms",ms)||!uintArg("fresh",fresh)||fresh>1||ms>5000||!poseArg(angles)){error();return;}
+  bool accepted,blocked;{Guard g;blocked=!motion.positional()||motion.enabled<8||motion.assembly;accepted=!blocked&&motion.poseCommand(token,seq,angles,ms,millis(),fresh==1);}
+  if(blocked){actuatorError();return;}if(accepted)ok();else error(409);});
+ server.on("/api/led",HTTP_POST,[]{uint32_t r,g,b;if(!owns()){error(409);return;}if(!uintArg("r",r)||!uintArg("g",g)||!uintArg("b",b)||r>255||g>255||b>255){error();return;}lightOn=r||g||b;light.color(r,g,b);ok();});
+ server.on("/api/emotions",HTTP_GET,[]{String list=emoteStore.getString("list","[]");json(200,list.length()?list:String("[]"));});
+ server.on("/api/emotions/save",HTTP_POST,[]{if(!owns()){error(409);return;}String data=server.arg("data");if(!emotionListValid(data)){error();return;}if(emoteStore.putString("list",data)!=data.length()){error(500);return;}ok();});
+ server.on("/emo",HTTP_GET,[]{server.sendHeader("Cache-Control","no-store");server.send_P(200,"text/html; charset=utf-8",EMOTE_UI);});
  server.on("/api/speed",HTTP_POST,[]{if(!owns()){error(409);return;}String s=server.arg("value");if(s!="0.4"&&s!="0.65"&&s!="1"){error();return;}{Guard g;offForChangeLocked();motion.speed=s.toFloat();}ok();});
  server.on("/api/gait",HTTP_POST,[]{if(!owns()){error(409);return;}String s=server.arg("value");if(s!="trot"&&s!="pairs"&&s!="flick"){error();return;}{Guard g;offForChangeLocked();motion.gaitPattern=s=="pairs"?crab::Pattern::Pairs:s=="flick"?crab::Pattern::Flick:crab::Pattern::Trot;}ok();});
  server.on("/api/assembly",HTTP_POST,[]{if(!owns()){error(409);return;}uint32_t a;if(!uintArg("active",a)||a>1){error();return;}bool accepted;{Guard g;offForChangeLocked();accepted=motion.setAssembly(a);}if(!accepted){error(409);return;}ok();});

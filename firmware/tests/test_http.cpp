@@ -6,7 +6,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v9")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v10")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -35,6 +35,30 @@ int main(){
  for(const char* path:{"/","/generate_204","/hotspot-detect.html","/connecttest.txt"}){
   server.request(path);assert(server.code==200&&server.body==WEB_UI);
  }
+ // Emotion studio: page, pose validation/lease, LED colour, saved list.
+ server.request("/emo");assert(server.code==200&&server.body==EMOTE_UI);
+ const char* poseA="10,-20,-10,-20,10,-20,-10,-20";
+ server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a","1,2,3"}});assert(server.code==400&&!motion.posing);
+ server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a","1,2,3,4,5,6,7,99"}});assert(server.code==400);
+ server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a","1,2,3,4,5,6,7,8x"}});assert(server.code==400);
+ server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","9000"},{"a",poseA}});assert(server.code==400);
+ server.request("/api/pose",{{"token","7"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a",poseA}});assert(server.code==409&&!motion.posing);
+ server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a",poseA}});assert(server.code==200&&motion.posing&&motion.pose[1]==-20&&motion.lease);
+ server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","0"},{"ms","0"},{"a",poseA}});assert(server.code==409); // replayed sequence
+ server.request("/api/pose",{{"token","42"},{"seq","2"},{"fresh","0"},{"ms","0"},{"a",poseA}});assert(server.code==200&&motion.posing);
+ server.request("/api/move",{{"token","42"},{"seq","3"},{"dir","0"},{"fresh","0"}});assert(server.code==200&&!motion.posing&&motion.relaxing);
+ server.request("/api/led",{{"token","42"},{"r","300"},{"g","0"},{"b","0"}});assert(server.code==400);
+ server.request("/api/led",{{"token","7"},{"r","255"},{"g","0"},{"b","0"}});assert(server.code==409);
+ server.request("/api/led",{{"token","42"},{"r","255"},{"g","64"},{"b","0"}});assert(server.code==200&&light.r==255&&light.g==64&&light.b==0&&lightOn);
+ server.request("/api/led",{{"token","42"},{"r","0"},{"g","0"},{"b","0"}});assert(server.code==200&&!lightOn);
+ server.request("/api/emotions");assert(server.code==200&&server.body=="[]");
+ server.request("/api/emotions/save",{{"token","42"},{"data","{\"n\":1}"}});assert(server.code==400);
+ server.request("/api/emotions/save",{{"token","42"},{"data","[\"a\nb\"]"}});assert(server.code==400);
+ server.request("/api/emotions/save",{{"token","42"},{"data",String(3801,'[')}});assert(server.code==400);
+ server.request("/api/emotions/save",{{"token","7"},{"data","[]"}});assert(server.code==409);
+ server.request("/api/emotions/save",{{"token","42"},{"data","[{\"n\":\"Vui\"}]"}});assert(server.code==200);
+ server.request("/api/emotions");assert(server.code==200&&server.body=="[{\"n\":\"Vui\"}]");
+ motion.newSession(42);
  server.request("/api/move",{{"token","42"},{"seq","1"},{"dir","1"},{"fresh","1"}});
  assert(server.code==200&&motion.lease&&motion.velocity.x==1); // no STA connection
  server.request("/api/light",{{"token","42"}});assert(server.code==200&&light.on);

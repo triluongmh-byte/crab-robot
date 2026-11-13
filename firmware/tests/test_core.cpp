@@ -197,6 +197,27 @@ static void test_flick(){
   else assert(rise>.7&&fall-rise<=cfg::FLICK_STROKE+.01);
  }
 }
+static void test_pose(){
+ Motion m;const float a[8]={20,-30,-20,-30,10,0,-10,0};
+ assert(!m.poseCommand(1,1,a,300,0,true)); // not armed
+ ready(m);m.newSession(5);uint32_t t=2200;
+ float bad[8]={0,0,0,0,0,0,0,NAN};assert(!m.poseCommand(5,1,bad,300,t,true)&&!m.posing);
+ assert(m.poseCommand(5,2,a,300,t,true)&&m.posing&&m.lease);
+ // Move over the requested 300 ms (not instantly), and clamp to JOINT_LIMIT.
+ for(uint32_t k=t;k<t+150;k+=10)m.tick(k);assert(m.position[1]<-10&&m.position[1]>-20);
+ for(uint32_t k=t+150;k<t+400;k+=10){if(k%100==0)assert(m.poseCommand(5,m.lastSeq+1,a,0,k,false));m.tick(k);}
+ for(int ch=0;ch<8;ch++)assert(std::fabs(m.position[ch]-a[ch])<.01f);
+ float big[8]={90,-90,0,0,0,0,0,0};assert(m.poseCommand(5,m.lastSeq+1,big,0,t+400,false)&&m.pose[0]==cfg::JOINT_LIMIT&&m.pose[1]==-cfg::JOINT_LIMIT);
+ assert(m.poseCommand(5,m.lastSeq+1,a,0,t+410,false));for(uint32_t k=t+410;k<t+500;k+=10)m.tick(k);
+ // Deadman: no renewal for 500 ms -> relax towards standing at RELAX_DPS.
+ uint32_t k=t+500;while(m.posing){m.tick(k);k+=10;}assert(m.relaxing&&k-(t+410)>=cfg::DEADMAN_MS&&k-(t+410)<=cfg::DEADMAN_MS+30);
+ const float before=m.position[1];m.tick(k+=20);m.tick(k+=20);assert(std::fabs(m.position[1]-before)<=cfg::RELAX_DPS*.07f&&std::fabs(m.position[1]-before)>0);
+ for(int i=0;i<200;i++)m.tick(k+=20);for(float v:m.position)assert(std::fabs(v)<.01f);assert(!m.relaxing);
+ // Stale non-fresh pose refused; walking command cancels a pose; assembly blocks poses.
+ assert(!m.poseCommand(5,m.lastSeq+1,a,0,k,false));
+ assert(m.poseCommand(5,m.lastSeq+1,a,0,k,true));assert(m.command(5,m.lastSeq+1,1,k+10,true)&&!m.posing&&!m.relaxing);
+ m.stop();m.setAssembly(true);assert(!m.poseCommand(5,m.lastSeq+1,a,0,k+20,true));
+}
 static void test_normal_speed(){
  Motion m;assert(std::fabs(m.speed-.65f)<.001f);assert(cfg::SLEW_DPS==600&&cfg::PERIOD_S==0.8f);
  // Half a second of Normal advances about0.41 of a cycle (1.23 s period).
@@ -281,4 +302,4 @@ static void simulation(const std::string& dir){
  simulatePattern(Pattern::Pairs,out,report);
  report<<"],\"sidewaysSupportedByModel\":true,\"hardwareTested\":false}\n";
 }
-int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_pair_sequence();test_trot_sequence();test_flick();test_tracking();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, diagonal trot default/owner knee flick forward-back with held hip pose/four-foot overlap/zero yaw all 8 directions/Fast slew tracking, owner front-rear pairs option push/lift/return/lower/full hip stroke/forward-back reversal, pulse bounds, QR encoding\n";}
+int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_pair_sequence();test_trot_sequence();test_flick();test_pose();test_tracking();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, diagonal trot default/owner knee flick forward-back with held hip pose/emotion pose timing/clamp/lease/deadman relax/walk cancel/assembly block/four-foot overlap/zero yaw all 8 directions/Fast slew tracking, owner front-rear pairs option push/lift/return/lower/full hip stroke/forward-back reversal, pulse bounds, QR encoding\n";}

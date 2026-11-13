@@ -11,7 +11,7 @@ static const char WEB_UI[] PROGMEM=R"CRABHTML(<!doctype html>
 @media(max-height:480px){.drive-deck{gap:8px}.grid{grid-template-rows:repeat(3,56px);gap:8px}.drive-heading p{display:none}}
 </style></head>
 <body data-page="control" data-panel="closed">
-<header class="topbar"><h1>🦀 Cua Robot</h1><div class="top-actions"><span id="readiness">Đang kết nối…</span><button id="menuButton" aria-label="Mở trạng thái và cài đặt" aria-controls="tools" aria-expanded="false">☰</button></div></header>
+<header class="topbar"><h1>🦀 Cua Robot</h1><div class="top-actions"><a href="/emo" style="color:#124c92;font-weight:600;text-decoration:none">🎭 Cảm xúc</a><span id="readiness">Đang kết nối…</span><button id="menuButton" aria-label="Mở trạng thái và cài đặt" aria-controls="tools" aria-expanded="false">☰</button></div></header>
 <main class="workspace">
 <section id="control" aria-label="Lái cua"><div id="driveDeck" class="drive-deck"><div class="drive-heading"><h2>Điều khiển</h2><p>Giữ nút để đi · Thả tay để dừng</p></div><div class="grid">
 <button class="forward" disabled data-dir="1">↑ Tiến</button><button class="left" disabled data-dir="3">← Trái</button><button id="stop">DỪNG</button><button class="right" disabled data-dir="4">Phải →</button><button class="backward" disabled data-dir="2">↓ Lùi</button>
@@ -75,5 +75,120 @@ async function pollServos(){
  }catch(e){clearTelemetry('Chưa đọc được bản ghi servo.');}finally{telemetryBusy=false;}
 }
 api('session').then(d=>{token=d.token;seq=0;pollStatus();setInterval(pollStatus,1000);setInterval(sendMove,150);pollServos();setInterval(pollServos,500);}).catch(fail);
+</script></body></html>
+)CRABHTML";
+static const char EMOTE_UI[] PROGMEM=R"CRABHTML(<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Cua Robot · Cảm xúc</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:16px/1.4 system-ui,sans-serif;background:#eff5fa;color:#172333}
+button,input,select{font:inherit;min-height:44px;border-radius:10px;padding:8px 10px;border:1px solid #879bad;background:#fff;color:inherit}
+button{cursor:pointer;touch-action:manipulation}button:disabled{opacity:.45;cursor:default}button:active{background:#addaff}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;background:#fff;border-bottom:1px solid #d1dee8;position:sticky;top:0;z-index:5}
+.topbar h1{font-size:20px;margin:0}.topbar a{color:#124c92;text-decoration:none;font-weight:600}
+main{max-width:1100px;margin:auto;padding:14px;display:grid;gap:14px;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.card{background:#fff;border:1px solid #d1dee8;border-radius:14px;padding:14px}.card h2{font-size:18px;margin:0 0 10px}
+#status{background:#dfeffc;border:1px solid #c7dff1;border-radius:10px;padding:10px;white-space:pre-line;min-height:48px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}.row>*{flex:1 1 auto}
+#stopAll{background:#ffe1e1;border-color:#d68e8e;font-weight:700}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}.presets button{font-size:17px;min-height:56px}
+.legs{display:grid;grid-template-columns:1fr 1fr;gap:10px}.leg{border:1px solid #d1dee8;border-radius:10px;padding:8px}.leg h3{font-size:15px;margin:0 0 4px}
+.leg label{display:block;font-size:14px;margin:6px 0 0}.leg input[type=range]{width:100%;min-height:32px;padding:0;border:0}
+.val{float:right;font-variant-numeric:tabular-nums;color:#38536a}
+#frames{list-style:none;margin:8px 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}#frames li button{min-width:52px}#frames li button.sel{background:#addaff;border-color:#2671ae}
+#saved{list-style:none;margin:8px 0;padding:0}#saved li{display:flex;gap:6px;align-items:center;margin:6px 0}#saved li span{flex:1;overflow-wrap:anywhere}
+.dim{color:#526778;font-size:14px}.span2{grid-column:1/-1}
+@media(max-width:760px){main{grid-template-columns:minmax(0,1fr);padding:10px}.legs{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header class="topbar"><h1>🎭 Cảm xúc của cua</h1><a href="/">← Lái cua</a></header>
+<main>
+<section class="card"><h2>Trạng thái</h2><div id="status" role="status">Đang kết nối…</div>
+<div class="row"><button id="arm">Bật servo 180°</button><button id="stopAll">DỪNG</button></div>
+<p class="dim">Mở trang này sẽ nhận quyền điều khiển (trang lái sẽ phải mở lại). Thả trang, đổi tab hoặc mất kết nối thì cua tự về đứng.</p></section>
+<section class="card"><h2>Cảm xúc có sẵn</h2><div class="presets" id="presets"></div>
+<div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="loopPreset" style="width:auto;min-height:0"> Lặp lại</label></div></section>
+<section class="card span2"><h2>Tạo cảm xúc</h2>
+<p class="dim">Hông: + là đưa bàn chân ra trước. Gối: + là nhấc chân lên, − là đạp xuống (thân cao lên). Mỗi khung có thời gian chuyển và thời gian giữ.</p>
+<div class="legs" id="legs"></div>
+<div class="row"><label>Màu đèn <input type="color" id="color" value="#ffc400"></label><label>Chuyển (ms) <input type="number" id="ms" min="0" max="3000" step="10" value="300"></label><label>Giữ (ms) <input type="number" id="hold" min="0" max="5000" step="10" value="0"></label></div>
+<div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="mirror" style="width:auto;min-height:0" checked> Đối xứng trái/phải</label><button id="live">Xem trực tiếp: tắt</button><button id="zero">Về đứng</button></div>
+<div class="row"><button id="addFrame">+ Thêm khung</button><button id="updateFrame">Cập nhật khung</button><button id="deleteFrame">Xóa khung</button></div>
+<ul id="frames"></ul>
+<div class="row"><button id="playOnce">▶ Chạy</button><button id="playLoop">🔁 Lặp</button></div>
+<div class="row"><input id="name" maxlength="24" placeholder="Tên cảm xúc"><button id="save">💾 Lưu vào cua</button></div>
+<p class="dim" id="capacity"></p><ul id="saved"></ul></section>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+// Leg order FL, FR, RL, RR. Page units: hip + = foot forwards, knee + = lift.
+// Firmware command frame: knee negative lifts; left hips move forwards when negative.
+const LEGS=['Trước trái','Trước phải','Sau trái','Sau phải'],HIP_FORWARD=[-1,1,-1,1],LIMIT=30,TICK=150,MAX_LIST=3800;
+const clampDeg=v=>Math.max(-LIMIT,Math.min(LIMIT,Math.round(Number(v)||0)));
+function toCommand(p){const a=[];for(let leg=0;leg<4;leg++){a.push(clampDeg(p[2*leg])*HIP_FORWARD[leg]);a.push(-clampDeg(p[2*leg+1]));}return a.map(v=>v===0?0:v).join(',');}
+function hexRgb(c){const m=/^#([0-9a-f]{6})$/i.exec(c||'');const n=m?parseInt(m[1],16):0;return {r:n>>16&255,g:n>>8&255,b:n&255};}
+// Frame: [h0,k0,h1,k1,h2,k2,h3,k3,'#rrggbb',moveMs,holdMs]
+const F=(p,c,ms,hold=0)=>[...p,c,ms,hold];
+const P=(h,k)=>[h[0],k[0],h[1],k[1],h[2],k[2],h[3],k[3]];
+const STAND=P([0,0,0,0],[0,0,0,0]);
+const PRESETS=[
+ {n:'😄 Vui',f:[F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(STAND,'#ffc400',200)]},
+ {n:'😢 Buồn',f:[F(P([-10,-10,0,0],[28,28,15,15]),'#2050ff',1200,1500),F(P([-10,-10,0,0],[22,22,12,12]),'#102890',900,600),F(STAND,'#2050ff',900)]},
+ {n:'😡 Giận',f:[F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(P([15,15,0,0],[0,30,0,0]),'#ff0000',120),F(P([15,15,0,0],[0,-25,0,0]),'#600000',100),F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(STAND,'#ff0000',250)]},
+ {n:'👋 Chào',f:[F(P([0,25,0,0],[-10,30,-10,-10]),'#00d0ff',300),F(P([0,5,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,25,0,0],[-10,30,-10,-10]),'#80f0ff',200),F(P([0,5,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,25,0,0],[-10,30,-10,-10]),'#80f0ff',200),F(STAND,'#00d0ff',300)]},
+ {n:'💃 Nhảy',f:[F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(STAND,'#c040ff',250)]},
+ {n:'😴 Ngủ',f:[F(P([0,0,0,0],[30,30,30,30]),'#301060',2000,2500),F(STAND,'#301060',1500)]},
+ {n:'😲 Ngạc nhiên',f:[F(P([0,0,0,0],[-30,-30,-30,-30]),'#ffffff',100,700),F(STAND,'#ffffff',400)]}
+];
+let token='',seq=0,ready=false,run=0,frames=[],selected=-1,saved=[],liveOn=false,liveBusy=false,lastColor='';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function api(path,data={}){const r=await fetch('/api/'+path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(data),cache:'no-store'});let d={};try{d=await r.json();}catch(e){}if(!r.ok)throw Error(d.error||'Lệnh chưa được nhận.');return d;}
+function setStatus(s){$('status').textContent=s;}
+async function led(c){if(c===lastColor)return;lastColor=c;const {r,g,b}=hexRgb(c);await api('led',{token,r,g,b});}
+async function pose(p,ms,fresh){await api('pose',{token,seq:++seq,fresh:fresh?'1':'0',ms:String(Math.max(0,Math.min(5000,Math.round(ms)))),a:toCommand(p)});}
+// The page drives the timeline: each frame is re-sent every TICK ms with the
+// remaining transition time, which also renews the firmware's 500 ms lease.
+async function playFrames(list,loop){
+ const id=++run;liveOff();let fresh=true;
+ try{
+  do{for(const f of list){
+   if(id!==run)return;const p=f.slice(0,8),move=Number(f[9])||0,hold=Number(f[10])||0;
+   await led(f[8]);const start=Date.now();
+   for(;;){if(id!==run)return;const left=start+move-Date.now();await pose(p,Math.max(0,left),fresh);fresh=false;if(Date.now()-start>=move+hold)break;await sleep(TICK);}
+  }}while(loop&&id===run);
+ }catch(e){setStatus(e.message);}
+ if(id===run)halt();
+}
+function halt(){run++;liveOff();if(token&&navigator.sendBeacon)navigator.sendBeacon('/api/move',new URLSearchParams({token,seq:String(++seq),dir:'0',fresh:'0'}));}
+function readEditor(){const p=[];for(let i=0;i<8;i++)p.push(clampDeg($('j'+i).value));return F(p,$('color').value,Math.max(0,Math.min(3000,Number($('ms').value)||0)),Math.max(0,Math.min(5000,Number($('hold').value)||0)));}
+function writeEditor(f){for(let i=0;i<8;i++){$('j'+i).value=f[i];$('v'+i).textContent=f[i]+'°';}$('color').value=f[8];$('ms').value=f[9];$('hold').value=f[10];}
+function mirrorFrom(i){if(!$('mirror').checked)return;const leg=i>>1,joint=i&1,other=leg^1,j=2*other+joint;$('j'+j).value=$('j'+i).value;$('v'+j).textContent=$('j'+j).value+'°';}
+function renderFrames(){const ul=$('frames');ul.replaceChildren();frames.forEach((f,i)=>{const li=document.createElement('li'),b=document.createElement('button');b.textContent=String(i+1);b.style.borderBottom='6px solid '+f[8];if(i===selected)b.className='sel';b.onclick=()=>{selected=i;writeEditor(f);renderFrames();};li.appendChild(b);ul.appendChild(li);});}
+function listJson(list){return JSON.stringify(list);}
+function renderSaved(){const ul=$('saved');ul.replaceChildren();saved.forEach((e,i)=>{const li=document.createElement('li'),name=document.createElement('span'),play=document.createElement('button'),edit=document.createElement('button'),del=document.createElement('button');name.textContent=e.n;play.textContent='▶';edit.textContent='Sửa';del.textContent='Xóa';play.onclick=()=>ready&&playFrames(e.f,$('loopPreset').checked);edit.onclick=()=>{frames=e.f.map(f=>f.slice());selected=0;$('name').value=e.n;if(frames[0])writeEditor(frames[0]);renderFrames();};del.onclick=()=>store(saved.filter((_,k)=>k!==i));li.append(name,play,edit,del);ul.appendChild(li);});$('capacity').textContent='Bộ nhớ cua: '+listJson(saved).length+'/'+MAX_LIST+' ký tự.';}
+async function store(list){const data=listJson(list);if(data.length>MAX_LIST){setStatus('Hết chỗ lưu trên cua. Xóa bớt cảm xúc cũ.');return false;}try{await api('emotions/save',{token,data});saved=list;renderSaved();return true;}catch(e){setStatus(e.message);return false;}}
+async function loadSaved(){try{const r=await fetch('/api/emotions',{cache:'no-store'});const d=await r.json();saved=Array.isArray(d)?d.filter(e=>e&&typeof e.n==='string'&&Array.isArray(e.f)):[];}catch(e){saved=[];}renderSaved();}
+async function liveLoop(){if(liveBusy)return;liveBusy=true;let fresh=true;try{while(liveOn&&ready){const f=readEditor();await led(f[8]);await pose(f.slice(0,8),200,fresh);fresh=false;await sleep(TICK);}}catch(e){setStatus(e.message);liveOff();}liveBusy=false;}
+function liveOff(){if(!liveOn)return;liveOn=false;$('live').textContent='Xem trực tiếp: tắt';}
+async function poll(){try{const r=await fetch('/api/status',{cache:'no-store'});const d=await r.json();ready=!!d.driver&&!!d.positional&&d.enabled===8&&!d.assembly;$('arm').disabled=!!d.positional||!d.driver;setStatus((ready?'Sẵn sàng diễn cảm xúc.':!d.driver?'Kiểm tra dây PCA9685.':d.assembly?'Đang ở trang Ráp: thoát Ráp trước.':d.positional?'Đang bật servo '+d.enabled+'/8…':'Servo đang tắt — bấm Bật servo.')+(run?'':''));}catch(e){ready=false;setStatus('Mất kết nối. Cua tự về đứng.');}}
+function build(){
+ const legs=$('legs');LEGS.forEach((n,leg)=>{const box=document.createElement('div');box.className='leg';const h=document.createElement('h3');h.textContent=n;box.appendChild(h);
+  ['Hông','Gối'].forEach((jn,joint)=>{const i=2*leg+joint,l=document.createElement('label'),v=document.createElement('span'),r=document.createElement('input');v.className='val';v.id='v'+i;v.textContent='0°';r.type='range';r.min=-LIMIT;r.max=LIMIT;r.step=1;r.value=0;r.id='j'+i;r.oninput=()=>{v.textContent=r.value+'°';mirrorFrom(i);};l.append(jn,v,r);box.appendChild(l);});legs.appendChild(box);});
+ PRESETS.forEach(e=>{const b=document.createElement('button');b.textContent=e.n;b.onclick=()=>{if(!ready){setStatus('Bật servo trước đã.');return;}playFrames(e.f,$('loopPreset').checked);};$('presets').appendChild(b);});
+}
+build();
+$('arm').onclick=async()=>{try{halt();await api('actuator',{token,seq:++seq,value:'positional',confirm:'1'});await poll();}catch(e){setStatus(e.message);}};
+$('stopAll').onclick=halt;
+$('zero').onclick=()=>writeEditor(F(STAND,$('color').value,Number($('ms').value)||0,Number($('hold').value)||0));
+$('live').onclick=()=>{if(liveOn){liveOff();halt();return;}if(!ready){setStatus('Bật servo trước đã.');return;}run++;liveOn=true;$('live').textContent='Xem trực tiếp: bật';liveLoop();};
+$('addFrame').onclick=()=>{if(frames.length>=40)return;frames.splice(selected+1,0,readEditor());selected++;renderFrames();};
+$('updateFrame').onclick=()=>{if(selected<0)return;frames[selected]=readEditor();renderFrames();};
+$('deleteFrame').onclick=()=>{if(selected<0)return;frames.splice(selected,1);selected=Math.min(selected,frames.length-1);if(selected>=0)writeEditor(frames[selected]);renderFrames();};
+$('playOnce').onclick=()=>{if(ready&&frames.length)playFrames(frames,false);};
+$('playLoop').onclick=()=>{if(ready&&frames.length)playFrames(frames,true);};
+$('save').onclick=async()=>{const n=$('name').value.trim().slice(0,24);if(!n||!frames.length){setStatus('Đặt tên và thêm ít nhất một khung.');return;}const list=saved.filter(e=>e.n!==n).concat([{n,f:frames.map(f=>f.slice())}]);if(await store(list))setStatus('Đã lưu “'+n+'” vào cua.');};
+for(const ev of ['blur','pagehide'])window.addEventListener(ev,halt);document.addEventListener('visibilitychange',()=>{if(document.hidden)halt();});
+window.CuaEmote={toCommand,hexRgb,PRESETS,playFrames,halt,state:()=>({run,seq,ready,liveOn,frames,saved}),setReady:v=>{ready=v;}};
+api('session').then(d=>{token=d.token;seq=0;poll();loadSaved();setInterval(poll,1000);}).catch(e=>setStatus(e.message));
 </script></body></html>
 )CRABHTML";
