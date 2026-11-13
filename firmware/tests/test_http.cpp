@@ -6,7 +6,13 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v5")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v6")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos);
+ // Telemetry must never arm, write, or manufacture measured angles.
+ int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
+ server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
+ assert(server.body.find("\"feedback\":false")!=String::npos&&server.body.find("\"angleDeg\":100.1")!=String::npos);
+ assert(server.body.find("\"angleDeg\":null")!=String::npos&&server.body.find("\"counts\":319")!=String::npos);
+ servos.samples[0].known=false;server.request("/api/servos");assert(server.body.find("100.1")==String::npos);
  server.request("/api/move",{{"token","42"},{"seq","1"},{"dir","1"},{"fresh","1"}});assert(server.code==409&&!motion.drive.active&&!motion.lease);
  server.request("/api/centre",{{"token","42"}});assert(server.code==409);
  for(const char* path:{"/api/test","/api/test/config","/api/test/hold","/api/360","/api/360/config","/api/360/hold","/api/360/move","/api/360/reference"}){server.request(path,{{"token","42"}});assert(server.code==404);}

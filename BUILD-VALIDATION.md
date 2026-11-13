@@ -84,3 +84,7 @@ The owner reports leg motion with no body progress. `positional180-v4` implement
 ## Front/rear pair request —2026-11-13
 
 The owner replaces the one-leg crawl with front/rear paired push–lift–return–lower. `positional180-v5` groups CH0/CH2 with CH1/CH3, and CH4/CH6 with CH5/CH7, half a cycle apart. Nominal axial hip/knee amplitudes25/30°, final limits25/35°,20ms frames,180°/s slew and the existing enable/deadman behavior are retained. Fast timing is900/225/450/225ms per pair. Tests cover first front push from neutral, exact group order, paired knees, raised return, full hip stroke, inverse Forward/Backward and actual decoded PWM frames. Nominal support may be only the front or rear pair; no pitch stability, force, physical progression or full-CAD-build result is claimed.
+
+## Split controls and read-only servo telemetry —2026-11-13
+
+`positional180-v6` separates the four-button driving pad from the scrolling status/settings sidebar and hides the sidebar behind a mobile menu. Host tests check the actual shipped script, menu stop/release and telemetry null/failure states. Driver snapshots add no I²C transactions; HTTP snapshots are copied under the existing mutex, serialized outside it, and cannot arm the robot. Optional isolated Chromium layout tests exercise real mouse/touch holds through long status updates and compare unchanged control rectangles at four viewport sizes, including drawer scrolling. This is browser emulation, not physical-phone or motor validation. Gait, limits, pins, timing and the earlier full-CAD/manual gate are unchanged.

@@ -6,7 +6,7 @@
 
 ![The owner's actual orange-and-yellow crab, photographed on 11 November 2026](docs/images/crab-current.svg)
 
-*The real bench assembly, photographed on 11 November. The photo shows the existing continuous-rotation servos; the replacement180° servos have now arrived at the owner’s home and await installation at the bench.*
+*The real bench assembly, photographed on 11 November. The photo shows the existing continuous-rotation servos; the owner now reports180° replacements installed; stable walking remains under test.*
 
 ## What is on this robot?
 
@@ -81,17 +81,30 @@ At every socket: **orange → `PWM` / `S`**, **red → `V+`**, **brown → `GND`
 3. Use **Bật / tắt đèn** for the light. Home Wi-Fi is optional; connecting to the crab directly is enough. After joining a home network, the screen gives that network's robot address.
 4. Hold the running application's **BOOT** button for about eight seconds to forget saved Wi-Fi. BOOT/reset does not disconnect servo power.
 
+The four driving buttons stay on the left; status, logs and settings scroll independently on the right. On mobile, tap **☰** to open that panel. The servo table reports **commanded** angles and PWM, not measured position. [Controller and log guide](firmware/WEB-CONTROL.md).
+
+![Desktop controller: fixed left driving pad and independent right status/sidebar](docs/images/controller-desktop.png)
+
+*Rendered UI preview with simulated status and servo data.*
+
+<details>
+<summary>Mobile controller preview — settings and logs stay behind ☰</summary>
+
+<img src="docs/images/controller-mobile.png" width="320" alt="Mobile controller showing only the fixed direction pad and menu button">
+
+</details>
+
 ## Current status
 
 | Working or observed | Still waiting for a physical check |
 |---|---|
-| Owner opened the QR/web controller; individual servo direction tests worked | Replacement **180° positional** servos delivered home; bench fit and loaded torque not yet checked |
+| Owner opened the QR/web controller; individual servo direction tests worked | Owner reports180° replacements installed; loaded progression and torque remain under test |
 | Firmware includes direct AP access and the independent light switch | Servo supply capacity, loaded stopping and stable walking |
 | Firmware starts with servo PWM off and capped-brightness LEDs on | The future integrated PCB and matching new frame |
 
-**The two loaded 360° trials did not work reliably.** The first timed crawl caused leg collisions; the following hips-only trial moved erratically. Those experiments are retained in history; the current release is dedicated to positional180° servos, with eight directions after explicit enable. Equal reverse time cannot restore an accurately known joint angle. Read [the experiment record](firmware/EXPERIMENT-STATUS.md).
+**The two loaded 360° trials did not work reliably.** The first timed crawl caused leg collisions; the following hips-only trial moved erratically. Those experiments are retained in history; the current release is dedicated to positional180° servos, with four main direction buttons after explicit enable. The [web controls and servo command log](firmware/WEB-CONTROL.md) stay in separate panels. Equal reverse time cannot restore an accurately known joint angle. Read [the experiment record](firmware/EXPERIMENT-STATUS.md).
 
-This jointed-leg mechanism needs **eight positional servos**. The owner now reports delivery at home, with installation at the bench still pending. Before fitting the complete set, test one unloaded motor's position response and fit before replacing the whole set. Recheck centre, direction and cable slack during assembly. Use the new [180° first-connection procedure](firmware/POSITIONAL180.md). The current firmware starts PWM off; **Bật servo180°** enables channels gradually, and **Ngắt servo** turns PWM off. The normal-speed release defaults to **Bình thường**; choose **Chậm** for first clearance checks.
+This jointed-leg mechanism needs **eight positional servos**. The owner reports the180° set installed. For future replacements, test an unloaded motor's position response and fit before attaching its leg. Recheck centre, direction and cable slack during assembly. Use the new [180° first-connection procedure](firmware/POSITIONAL180.md). The current firmware starts PWM off; **Bật servo180°** enables channels gradually, and **Ngắt servo** turns PWM off. The normal-speed release defaults to **Bình thường**; choose **Chậm** for first clearance checks.
 
 ### Hands-on checks that remain
 

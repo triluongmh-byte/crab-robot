@@ -28,7 +28,7 @@ uint32_t millis(){return clockMs;}
 uint32_t esp_random(){return 42;}
 int lockDepth=0;
 struct Guard{Guard(){lockDepth++;}~Guard(){lockDepth--;}};
-struct Servos{int offCalls=0;bool disableOutputs(){assert(lockDepth>0);offCalls++;return true;}} servos;
+struct Servos{int offCalls=0;crab::ServoTelemetry samples[8];void snapshot(crab::ServoTelemetry (&out)[8])const{assert(lockDepth>0);for(int ch=0;ch<8;ch++)out[ch]=samples[ch];}bool disableOutputs(){assert(lockDepth>0);offCalls++;for(auto& s:samples){s.known=true;s.active=false;}return true;}} servos;
 struct Server{
  std::map<std::string,std::function<void()>> handlers;
  std::map<std::string,String> args;

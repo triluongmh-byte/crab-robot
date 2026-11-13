@@ -85,12 +85,16 @@ int main(){
   assert(p.pulse(ch,1500));auto w=Wire.writes.back();assert(w.size()==5&&w[0]==0x06+4*ch);int on=w[1]+(w[2]<<8),off=w[3]+(w[4]<<8);assert(on==ch*512);assert(((off-on)&4095)==307);assert((w[4]&0x10)==0);
   if(cfg::INTEGRATED_BOARD){assert(gpioCalls.back().value==LOW&&!gpioCalls.back().mode);assert(gpioCalls.back().writes==21+size_t(ch));}
  }
+ crab::ServoTelemetry snapshot[8];size_t snapshotWrites=Wire.writes.size();p.snapshot(snapshot);assert(Wire.writes.size()==snapshotWrites);
+ for(int ch=0;ch<8;ch++)assert(snapshot[ch].known&&snapshot[ch].active&&snapshot[ch].pulseUs==1500&&snapshot[ch].counts==307);
  auto count=Wire.writes.size();assert(!p.pulse(8,1500)&&Wire.writes.size()==count);
  auto gpioCount=gpioCalls.size();Wire.fail=true;assert(!p.pulse(0,1500));
  if(cfg::INTEGRATED_BOARD){assert(gpioCalls.size()==gpioCount+2);assert(gpioCalls[gpioCount].value==HIGH&&gpioCalls[gpioCount].writes==count+1);}
  count=Wire.writes.size();assert(!p.pulse(0,1500)&&Wire.writes.size()==count); // fault latched
+ p.snapshot(snapshot);for(const auto& x:snapshot)assert(!x.known&&!x.active);
  assert(!p.begin());Wire.fail=false;assert(!p.pulse(0,1500)); // init failure remains inhibited
- assert(p.begin());assert(p.pulse(0,1500));p.allOff();assert(!p.pulse(0,1500));
+ assert(p.begin());p.snapshot(snapshot);for(const auto& x:snapshot)assert(x.known&&!x.active);
+ assert(p.pulse(0,1500));p.allOff();assert(!p.pulse(0,1500));
  test_positional180();test_pair_frames();
  LightDriver light;assert(light.begin());assert(rmtCapture.gpio_num==1&&rmtCapture.clk_div==8&&rmtCapture.tx_config.idle_output_en);assert(rmtBits.size()==192);
  for(auto bit:rmtBits)assert(bit.duration0==4&&bit.duration1==9); // off at boot

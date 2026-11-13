@@ -3,6 +3,8 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const html=fs.readFileSync('firmware/assets/ui.html','utf8'),code=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const elements={};class Element{
  constructor(){this.value='';this.textContent='';this.id='';this.listeners={};this.children=[];this.dataset={};this.disabledWrites=0;this._disabled=false;this.capture=null;this.classList={toggle:(n,v)=>{if(n==='hidden')this.hidden=v;if(n==='holding')this.holding=v;}};}
+ focus(options){this.focusOptions=options;}
+ setAttribute(k,v){(this.attributes??={})[k]=v;}
  appendChild(e){this.children.push(e);if(e.id)elements[e.id]=e;return e;}replaceChildren(){this.children=[];}
  get disabled(){return this._disabled;}set disabled(v){this.disabledWrites++;this._disabled=v;}
  addEventListener(n,f){(this.listeners[n]??=[]).push(f);}setPointerCapture(id){this.capture=id;}
@@ -12,23 +14,25 @@ const elements={};class Element{
 for(const m of html.matchAll(/id="([^"]+)"/g)){const e=new Element();e.id=m[1];elements[e.id]=e;}
 const el=id=>{assert(elements[id],id+' must actually exist');return elements[id];};
 const dirs=[...html.matchAll(/data-dir="(\d+)"/g)].map(m=>{let e=new Element();e.dataset.dir=m[1];e.disabled=true;return e;});
-const events={},timers=[],calls=[],beacons=[];let failMove=false,failStatus=false,deferred=null;
+const events={},timers=[],calls=[],beacons=[];let failMove=false,failStatus=false,failTelemetry=false,mobile=false,deferred=null;
 const state={message:'Đã vào Wi-Fi',online:true,url:'http://192.168.4.1/',driver:true,positional:false,enabled:0,assembly:false,speed:0.65,offsets:Array(8).fill(0)};
+const samples=Array.from({length:8},(_,ch)=>({ch,known:true,active:false,angleDeg:null,pulseUs:null,counts:null}));
 const document={body:new Element(),hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:[],addEventListener:(n,f)=>events[n]=f};
 const fetch=async(path,opt={})=>{const data=Object.fromEntries(opt.body||[]);calls.push({path,data});let d={};
  if(path==='/api/move'){if(deferred)await deferred;if(failMove)throw Error('offline');}
  if(path==='/api/status'){if(failStatus)throw Error('offline');d={...state};}
+ if(path==='/api/servos'){if(failTelemetry)throw Error('telemetry offline');d={kind:'commanded',feedback:false,sampledAtMs:1234,servos:samples.map(x=>({...x}))};}
  if(path==='/api/session')d={token:'42'};
  if(path==='/api/actuator'){state.positional=data.value==='positional';state.enabled=0;}
  if(path==='/api/assembly')state.assembly=data.active==='1';
  if(path==='/api/trim')state.offsets[Number(data.ch)]+=Number(data.delta);
  if(path==='/api/scan')d={busy:false,networks:['Nhà tôi','<script>bad</script>']};
  return {ok:true,json:async()=>d};};
-const ctx=vm.createContext({document,window:{addEventListener:(n,f)=>events[n]=f},navigator:{sendBeacon:(path,b)=>beacons.push({path,data:Object.fromEntries(b)})},fetch,URLSearchParams,setInterval:(f,ms)=>timers.push({f,ms}),console});vm.runInContext(code,ctx);
+const ctx=vm.createContext({document,window:{matchMedia:()=>({matches:mobile}),addEventListener:(n,f)=>events[n]=f},navigator:{sendBeacon:(path,b)=>beacons.push({path,data:Object.fromEntries(b)})},fetch,URLSearchParams,setInterval:(f,ms)=>timers.push({f,ms}),console});vm.runInContext(code,ctx);
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 (async()=>{
  await flush();const poll=async()=>{await timers.find(t=>t.ms===1000).f();await flush();};const hold=()=>timers.find(t=>t.ms===150).f();
- assert(dirs.length===8&&dirs.every(b=>b.disabled));assert.equal(el('speed').value,'0.65');assert.equal(vm.runInContext('page',ctx),'control');
+ assert(dirs.length===4&&dirs.every(b=>b.disabled));assert.equal(el('speed').value,'0.65');assert.equal(vm.runInContext('page',ctx),'control');
  const before=calls.length;dirs[0].fire('pointerdown');await flush();assert.equal(calls.length,before);await el('light').onclick();assert(calls.some(c=>c.path==='/api/light'));
  await el('arm').onclick();await flush();assert(state.positional&&dirs.every(b=>b.disabled));assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
  state.enabled=8;await poll();assert(dirs.every(b=>!b.disabled));state.speed=1;el('speed').value='0.4';await poll();assert.equal(el('speed').value,'1');state.speed=0.4;await poll();assert.equal(el('speed').value,'0.4');
@@ -45,7 +49,19 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  first.fire('pointerdown');await flush();first.fire('lostpointercapture');assert.equal(vm.runInContext('held',ctx),0);
  first.fire('pointerdown');await flush();state.assembly=true;await poll();assert.equal(vm.runInContext('held',ctx),0);state.assembly=false;await poll();
  first.fire('pointerdown',{pointerType:'mouse',button:2});assert.equal(vm.runInContext('held',ctx),0);
- assert(html.includes('position:fixed')&&html.includes('overscroll-behavior-y:none')&&html.includes('-webkit-touch-callout:none'));
+ assert(html.includes('grid-template-columns:minmax(300px,1fr) minmax(340px,430px)')&&html.includes('position:fixed')&&html.includes('overscroll-behavior:none')&&html.includes('-webkit-touch-callout:none'));
+ assert.deepEqual(dirs.map(x=>Number(x.dataset.dir)).sort(),[1,2,3,4]);
+
+ // The mobile settings drawer owns its own scroll; opening it cancels hold.
+ mobile=true;const telemetry=()=>timers.find(t=>t.ms===500).f();
+ const countTelemetry=()=>calls.filter(c=>c.path==='/api/servos').length;
+ let previousTelemetry=countTelemetry();await telemetry();assert.equal(countTelemetry(),previousTelemetry);
+ first.fire('pointerdown');await flush();el('menuButton').onclick();await flush();assert.equal(vm.runInContext('held',ctx),0);assert.equal(document.body.dataset.panel,'open');assert.equal(el('menuButton').attributes['aria-expanded'],'true');assert(countTelemetry()>previousTelemetry);
+ samples[0]={ch:0,known:true,active:true,angleDeg:100.1,pulseUs:1556,counts:319};await telemetry();await flush();assert.equal(el('angle0').textContent,'100.1°');assert.equal(el('pulse0').textContent,'1556');assert.equal(el('counts0').textContent,'319');
+ samples[0].active=false;await telemetry();await flush();assert.equal(el('angle0').textContent,'—');assert.equal(el('servoState0').textContent,'Tắt xung');
+ first.fire('pointerdown');await flush();failTelemetry=true;await telemetry();await flush();assert.equal(vm.runInContext('held',ctx),Number(first.dataset.dir));assert.equal(el('angle0').textContent,'—');failTelemetry=false;first.fire('pointerup');
+ events.keydown({key:'Escape'});assert.equal(document.body.dataset.panel,'closed');assert.equal(el('menuButton').attributes['aria-expanded'],'false');previousTelemetry=countTelemetry();await telemetry();assert.equal(countTelemetry(),previousTelemetry);
+ el('menuButton').onclick();el('backdrop').onclick();assert.equal(document.body.dataset.panel,'closed');mobile=false;
  for(const event of ['blur','pagehide']){dirs[0].fire('pointerdown');await flush();events[event]();assert.equal(vm.runInContext('held',ctx),0);}
  dirs[0].fire('pointerdown');await flush();document.hidden=true;events.visibilitychange();assert.equal(vm.runInContext('held',ctx),0);document.hidden=false;
  dirs[1].fire('pointerdown');await flush();dirs[1].fire('pointercancel');assert.equal(beacons.at(-1).data.dir,'0');
@@ -61,5 +77,5 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  el('ssid').value='Home';el('password').value='example-password';await el('connect').onclick();assert.equal(el('password').value,'');assert(calls.some(c=>c.path==='/api/wifi'&&c.data.ssid==='Home'));
  failStatus=true;await poll();assert(dirs.every(b=>b.disabled));assert.equal(vm.runInContext('held',ctx),0);
  assert(!calls.some(c=>c.path.includes('/360')||c.path.includes('/test')));assert(!html.includes('id="show360"'));
- console.log('PASS: actual180-only UI, default off/explicit arm, enable8 readiness,8 directions/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
+ console.log('PASS: actual180-only UI, default off/explicit arm, enable8 readiness,4-direction split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

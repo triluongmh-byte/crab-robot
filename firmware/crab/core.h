@@ -11,6 +11,8 @@
 namespace crab {
 inline float clamp(float x,float lo,float hi){return std::max(lo,std::min(hi,x));}
 inline uint32_t elapsed(uint32_t now,uint32_t then){return now-then;}
+// Last acknowledged output command, not position feedback from the servo.
+struct ServoTelemetry {bool known=false,active=false;int pulseUs=0,counts=0;};
 struct Vec {float x,y; Vec(float x_=0,float y_=0):x(x_),y(y_){} };
 inline Vec direction(int n){
  const Vec d[9]={{0,0},{1,0},{-1,0},{0,1},{0,-1},{.70710678f,.70710678f},

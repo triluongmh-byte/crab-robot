@@ -2,7 +2,7 @@
 
 This release is for the owner's replacement **positional180° SG90-class servos**. On November13 the owner reports movement from the replacement180° motors, but finds it too slow. Their current power state and physical calibration are unconfirmed. The earlier360° experiments failed loaded tests and are [archived as unsuccessful](EXPERIMENT-STATUS.md).
 
-**Current behavior:** servo PWM is off at every boot. Saved Wi-Fi/direct AP and capped-brightness LEDs remain available. Use **Bật servo180°** to enable channels one at a time,300ms apart; approximately3seconds enables all eight. The main page then offers all eight directions. **Ngắt servo** disables every output. The default speed is **Bình thường**: about2.77seconds per front/rear cycle; **Chậm** is4.5seconds and **Nhanh** is1.8seconds. Releasing a direction or missing its heartbeat500ms stops walking and settles gently towards standing; it does not disconnect the servo supply.
+**Current behavior:** servo PWM is off at every boot. Saved Wi-Fi/direct AP and capped-brightness LEDs remain available. Use **Bật servo180°** to enable channels one at a time,300ms apart; approximately3seconds enables all eight. The left driving panel then offers Forward, Backward, Left and Right; settings and logs live in the right panel, hidden behind ☰ on mobile. **Ngắt servo** disables every output. The default speed is **Bình thường**: about2.77seconds per front/rear cycle; **Chậm** is4.5seconds and **Nhanh** is1.8seconds. Releasing a direction or missing its heartbeat500ms stops walking and settles gently towards standing; it does not disconnect the servo supply.
 
 The360°/single-servo speed-test pages and HTTP routes are removed from this release. The unknown actuator value is retained only as the explicit PWM-off state and cannot start the old hips-only/timed gait. Historical helper sources remain in the repository, but the final actuator output boundary emits only positional pulses.
 
@@ -54,7 +54,7 @@ The gait requests hip amplitude25° and knee lift30° nominal. Final mirror-plus
 
 ## Validation scope
 
-Host core, actual PCA register output, real HTTP handlers and the shipped web script are checked for boot-off, explicit enable/disable, sequential startup,8directions, release/deadman, raw centre/trim, post-trim pulse limits, removed360 routes and unchanged AP/QR/Wi-Fi behavior. The LILYGO target is the one to flash to the owned modules. Physical stopping, horn fit, power under load and stable walking remain unverified by this update.
+Host core, actual PCA register output, real HTTP handlers and the shipped web script are checked for boot-off, explicit enable/disable, sequential startup,8 core directions and4 main UI buttons, release/deadman, raw centre/trim, post-trim pulse limits, removed360 routes and unchanged AP/QR/Wi-Fi behavior. The LILYGO target is the one to flash to the owned modules. Physical stopping, horn fit, power under load and stable walking remain unverified by this update.
 
 The full repository CAD/source-build manual step remains documented in [BUILD-VALIDATION.md](../BUILD-VALIDATION.md); this firmware update does not change printed parts or the PCB.
 
@@ -81,3 +81,9 @@ The owner explicitly replaces the one-leg crawl with front and rear pairs. Front
 At Fast each pair spends900ms pushing,225ms lifting,450ms returning and225ms lowering; the rear pair is offset900ms. Normal scales these times by1/0.65. Hip demand uses the full nominal±25° axial stroke, with30° knee lift and unchanged25°/35° final output limits after trim,180°/s slew and20ms shared frames. This increases stroke, not motor torque; the pulse-to-angle calibration and power under load remain unmeasured. Trim can clip an endpoint at the unchanged final limits.
 
 This release is `positional180-v5`; [the trial guide](CRAWL.md) describes the current paired gait. It follows the owner's requested pairing rather than claiming three-foot support: at parts of the cycle only a front or rear pair is nominally grounded. That support line does not prove pitch balance or floor progress. Host tests cover the exact group/order, knee lift before hip return, Forward/Backward inversion, emitted pair pulses and final limits; physical walking still awaits the owner.
+
+## Separate controls and servo command log —2026-11-13
+
+The owner identifies the changing status block as the source of control movement and requests driving on the left, with logs/settings on the right and a hidden mobile menu. Release `positional180-v6` uses two independent scroll/layout regions. Only four main arrows and Stop remain on the driving pad. Status, enable/disable, speed, lights, Wi-Fi, assembly and telemetry are in the sidebar; ☰ opens it on narrow screens and stops a held command. Closing the menu restores focus without scrolling. The paired gait, limits, pins, timings and default-off behavior are unchanged.
+
+`GET /api/servos` reports the last acknowledged PWM command for each channel, copied under the motion mutex and serialized after releasing it. It makes no I²C transactions and cannot arm or move the robot. Unknown or inactive channels return null angles/pulses. The UI labels nominal command angles about90°, requested pulse widths and PCA counts; these are not measured SG90 positions or XYZ coordinates. Polling is500ms while the sidebar is visible and paused while the mobile menu is closed. The status history is held only in browser memory. See [the web-control guide](WEB-CONTROL.md).

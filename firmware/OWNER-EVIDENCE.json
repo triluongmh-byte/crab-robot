@@ -113,5 +113,14 @@
     "changes": "Front/rear pairs half cycle apart, push/lift/return/lower timing900/225/450/225ms at Fast, full nominal axial hip25/knee30, final limits unchanged.",
     "physicalWalkingVerified": false,
     "torqueIncreased": false
+  },
+  "splitUiTelemetry": {
+    "profile": "positional180-v6",
+    "date": "2026-11-13",
+    "ownerRequest": "Drive buttons on left; status/log and remaining controls on right; hide as mobile menu; request servo coordinates.",
+    "changes": "Four main arrows/Stop with independent sidebar; last acknowledged command-angle/pulse/count snapshot, not position feedback.",
+    "gaitChanged": false,
+    "physicalPhoneTested": false,
+    "physicalWalkingVerified": false
   }
 }

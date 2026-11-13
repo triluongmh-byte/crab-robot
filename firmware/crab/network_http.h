@@ -22,7 +22,21 @@ void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° t
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v5\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"offsets\":"+offsets+"}");});
+  json(200,String("{\"firmware\":\"positional180-v6\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"offsets\":"+offsets+"}");});
+ // Read-only view of last acknowledged output commands. No writes or arming.
+ server.on("/api/servos",HTTP_GET,[]{
+  crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
+  {Guard g;servos.snapshot(samples);driver=driverReady.load();sampledAt=millis();}
+  String body="{\"kind\":\"commanded\",\"feedback\":false,\"driver\":"+String(driver?"true":"false")+",\"sampledAtMs\":"+String(sampledAt)+",\"servos\":[";
+  for(int ch=0;ch<8;ch++){
+   const auto& x=samples[ch];if(ch)body+=",";
+   body+="{\"ch\":"+String(ch)+",\"known\":"+String(x.known?"true":"false")+",\"active\":"+String(x.known&&x.active?"true":"false");
+   if(x.known&&x.active)body+=",\"angleDeg\":"+String(90.f+(x.pulseUs-cfg::CENTRE_US)/cfg::US_PER_DEG,1)+",\"pulseUs\":"+String(x.pulseUs)+",\"counts\":"+String(x.counts);
+   else body+=",\"angleDeg\":null,\"pulseUs\":null,\"counts\":null";
+   body+="}";
+  }
+  body+="]}";json(200,body);
+ });
  server.on("/api/session",HTTP_POST,[]{uint32_t token=esp_random()&0x7fffffff;if(!token)token=1;{Guard g;offForChangeLocked();motion.newSession(token);}json(200,"{\"token\":\""+String(token)+"\"}");});
  server.on("/api/move",HTTP_POST,[]{uint32_t token,seq,dir,fresh;if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("dir",dir)||!uintArg("fresh",fresh)||fresh>1||dir>8){error();return;}bool accepted,blocked;{Guard g;blocked=dir&&(!motion.positional()||motion.enabled<8||motion.assembly);accepted=!blocked&&motion.command(token,seq,int(dir),millis(),fresh==1);}if(blocked){actuatorError();return;}if(accepted)ok();else error(409);});
  server.on("/api/scan",HTTP_POST,[]{
