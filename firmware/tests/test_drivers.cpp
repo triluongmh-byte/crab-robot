@@ -38,7 +38,7 @@ static void test_positional180(){
   assert(m.velocity.x==0&&m.velocity.y==0&&m.amplitude==0);now+=4100;
  }
  // Independently decode every actual pulse, including trimmed channels.
- for(const auto& w:Wire.writes)if(w.size()==5){int ch=(w[0]-6)/4,on=w[1]+256*w[2],off=w[3]+256*w[4];assert(ch>=0&&ch<8);int count=(off-on)&4095;assert(count>=(ch%2?267:279)&&count<=(ch%2?347:336));}
+ for(const auto& w:Wire.writes)if(w.size()==5){int ch=(w[0]-6)/4,on=w[1]+256*w[2],off=w[3]+256*w[4];assert(ch>=0&&ch<8);int count=(off-on)&4095;assert(count>=(ch%2?267:205)&&count<=(ch%2?347:410));}
  assert(m.command(70,++seq,1,now,true));assert(out.service(m,d,now));assert(out.service(m,d,now+510));assert(!m.lease);
  assert(!m.command(70,++seq,1,now+520,false));
  assert(m.selectActuator(false,now+600));assert(out.service(m,d,now+600)&&activeOutputs()==0);
@@ -66,7 +66,7 @@ static void test_pair_frames(crab::Pattern which){
   if(trot)assert((std::abs(pulses[1]-307)<=1&&std::abs(pulses[7]-307)<=1)||(std::abs(pulses[3]-307)<=1&&std::abs(pulses[5]-307)<=1)); // a full diagonal grounded
   assert(grounded>=2); // zero trims, actual quantised output; not physical contact
   if(t>6000)for(int leg=0;leg<4;leg++){
-   const float delta=(pulses[2*leg]-previous[2*leg])*crab::hipProjection(leg,crab::direction(1));
+   const float delta=(pulses[2*leg]-previous[2*leg])*crab::hipProjection(leg,crab::bodyDirection(1));
    if(delta>.5f){assert(std::abs(pulses[2*leg+1]-307)>=12);checkedReturns++;}
   }
   for(int ch=0;ch<8;ch++)previous[ch]=pulses[ch];frames++;

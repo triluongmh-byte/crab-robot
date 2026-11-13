@@ -68,6 +68,8 @@ LED data is separate from the servo channels. Do not connect DIN to a PCA PWM so
       Knee → CH5                       Knee → CH7
 ```
 
+> **Owner build, 2026-11-13:** on the real robot CH0 sits at the **rear right**. The robot's front is the CH4/CH6 end: CH0/1 rear right, CH2/3 rear left, CH4/5 front right, CH6/7 front left. Firmware `positional180-v11` and later use this layout; see the README. The diagram above is the original plan.
+
 | Leg | Body-mounted hip plug | Leg-mounted knee plug |
 |---|---|---|
 | Front left | **CH0** | **CH1** |

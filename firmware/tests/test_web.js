@@ -32,10 +32,21 @@ const ctx=vm.createContext({document,window:{matchMedia:()=>({matches:mobile}),a
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 (async()=>{
  await flush();const poll=async()=>{await timers.find(t=>t.ms===1000).f();await flush();};const hold=()=>timers.find(t=>t.ms===150).f();
- assert(dirs.length===4&&dirs.every(b=>b.disabled));assert.equal(el('speed').value,'0.65');assert.equal(vm.runInContext('page',ctx),'control');
+ assert(dirs.length===4&&dirs.every(b=>b.disabled));assert.equal(el('speed').value,'65');assert.equal(el('speedValue').textContent,'65%');assert.equal(vm.runInContext('page',ctx),'control');
  const before=calls.length;dirs[0].fire('pointerdown');await flush();assert.equal(calls.length,before);await el('light').onclick();assert(calls.some(c=>c.path==='/api/light'));
  await el('arm').onclick();await flush();assert(state.positional&&dirs.every(b=>b.disabled));assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
- state.enabled=8;await poll();assert(dirs.every(b=>!b.disabled));state.speed=1;el('speed').value='0.4';await poll();assert.equal(el('speed').value,'1');state.speed=0.4;await poll();assert.equal(el('speed').value,'0.4');
+ state.enabled=8;await poll();assert(dirs.every(b=>!b.disabled));state.speed=1;el('speed').value='40';await poll();assert.equal(el('speed').value,'100');state.speed=0.4;await poll();assert.equal(el('speed').value,'40');
+ // Slider: dragging is not overwritten by polls; release sends a decimal fraction.
+ el('speed').value='75';el('speed').oninput();assert.equal(el('speedValue').textContent,'75%');state.speed=0.4;await poll();assert.equal(el('speed').value,'75');
+ el('speed').onchange();await flush();assert(calls.some(c=>c.path==='/api/speed'&&c.data.value==='0.75'&&c.data.token==='42'));state.speed=.75;await poll();assert.equal(el('speed').value,'75');
+ // Armed state is spelled out on the disabled arm button, and Trạng thái lists details.
+ assert(el('arm').disabled&&/Servo đang bật/.test(el('arm').textContent));
+ const detail=el('statusDetail').children.map(x=>x.textContent);assert(detail.includes('Bật đủ 8/8')&&detail.includes('75%')&&detail.includes('Chéo'));
+ // Flick hip slider only shows in flick; release posts whole degrees.
+ assert(el('flickHipBox').hidden);state.gait='flick';state.flickHip=90;await poll();assert(!el('flickHipBox').hidden&&el('flickHip').value==='90');
+ el('flickHip').value='60';el('flickHip').oninput();await poll();assert.equal(el('flickHip').value,'60');el('flickHip').onchange();await flush();
+ assert(calls.some(c=>c.path==='/api/flickhip'&&c.data.value==='60'));state.flickHip=60;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='Búng gối · hông 60°'));state.gait='trot';await poll();assert(el('flickHipBox').hidden);
+ assert(/CH0 · Hông sau phải/.test(el('trim0').textContent)&&/CH6 · Hông trước trái/.test(el('trim6').textContent));
  assert.equal(el('gait').value,'trot');assert(/chéo/.test(el('gaitHint').textContent));state.gait='pairs';await poll();assert.equal(el('gait').value,'pairs');assert(/trước và sau/.test(el('gaitHint').textContent));
  el('gait').value='trot';await el('gait').onchange();await flush();assert(calls.some(c=>c.path==='/api/gait'&&c.data.value==='trot'&&c.data.token==='42'));state.gait='flick';await poll();assert.equal(el('gait').value,'flick');assert(/búng/.test(el('gaitHint').textContent));state.gait='trot';await poll();assert.equal(el('gait').value,'trot');
  for(const b of dirs){b.fire('pointerdown');await flush();let cmd=calls.filter(c=>c.path==='/api/move').at(-1);assert.equal(cmd.data.dir,b.dataset.dir);assert.equal(cmd.data.fresh,'1');await hold();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');}

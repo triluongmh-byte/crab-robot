@@ -103,3 +103,20 @@ Release `positional180-v9` raises the slew limit to 600°/s (about SG90 no-load 
 ## Emotion studio —2026-11-13
 
 Release `positional180-v10` adds an emotion page at `/emo`, linked as **🎭 Cảm xúc** from the control page. It has built-in emotions, a keyframe editor with live preview, mirroring and LED colour, and emotions saved on the robot. The firmware gains a pose mode under the walking lease and deadman (`/api/pose`), RGB LED colour within the brightness cap (`/api/led`) and a bounded NVS list (`/api/emotions`). Releasing a pose relaxes to standing at 120°/s. See [EMOTIONS.md](EMOTIONS.md). Host tests cover pose timing, clamps, lease, deadman, relax, cancel and assembly blocking; endpoint validation; GRB colour; and the page's unit mapping, presets and playback timeline.
+
+## Real front, 90° flick and speed slider — 2026-11-13
+
+Release `positional180-v11` makes these changes:
+
+- **Channel positions.** The owner found CH0 physically at the **rear right**. The firmware CAD frame (CH0 = front left) is treated as rotated 180° (`cfg::FRONT_IS_CH46`), so the real legs are:
+  - CH0/1: rear right
+  - CH2/3: rear left
+  - CH4/5: front right
+  - CH6/7: front left
+
+  Drive commands are rotated into the CAD frame, so Forward now heads towards CH4/CH6. The calibration labels and the emotion page use these physical positions. CH0 is the owner's observation; CH2/4/6 follow from the 180° assumption.
+- **Knee flick.** Hips go to 90° nominal; a 30–90° slider adjusts this live. The knee timing is set by each leg's geometry; see [CRAWL.md](CRAWL.md).
+- **Speed.** Speed is a 20–100% slider, default 90%; the API accepts decimals 0.2–1.
+- **Status panel.** The **Trạng thái** tab now lists firmware, PCA9685, servo, mode, gait, speed, light and Wi-Fi.
+- **Arm button.** The greyed **Bật servo** button now reads "✅ Servo đang bật" when the servos are already on. That is why it was disabled.
+

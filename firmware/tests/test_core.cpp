@@ -163,7 +163,7 @@ static void test_tracking(){
   for(uint32_t t=2200;t<12200;t+=10){
    if(t%150==100)assert(m.command(5,++seq,dir,t,!m.lease));
    if(m.tick(t)!=0||t<6200)continue;
-   float target[8];gait(m.phase,direction(dir),m.amplitude,target,which);
+   float target[8];gait(m.phase,bodyDirection(dir),m.amplitude,target,which);
    for(int ch=0;ch<8;ch++)worst=std::max(worst,double(std::fabs(target[ch]-m.position[ch])));
   }
   if(worst>=2.5)std::cerr<<"Tracking lag: pattern="<<int(which)<<" dir="<<dir<<" worstDeg="<<worst<<"\n";
@@ -172,30 +172,51 @@ static void test_tracking(){
 }
 static void test_flick(){
  assert(std::string(patternName(Pattern::Flick))=="flick");
+ // Owner frame: CH0 is rear right, so Forward/Left are rotated 180 deg into CAD.
+ assert(cfg::FRONT_IS_CH46&&bodyDirection(1).x==-1&&bodyDirection(2).x==1&&bodyDirection(3).y==-1&&bodyDirection(4).y==1);
  assert(flickActive(Pattern::Flick,direction(1))&&flickActive(Pattern::Flick,direction(2)));
  assert(!flickActive(Pattern::Flick,direction(3))&&!flickActive(Pattern::Flick,direction(5))&&!flickActive(Pattern::Trot,direction(1)));
  assert(cyclePeriod(Pattern::Flick,direction(1))==cfg::FLICK_PERIOD_S&&cyclePeriod(Pattern::Flick,direction(3))==cfg::PERIOD_S);
  // Left/Right in flick mode are exactly the trot.
  for(int d:{3,4})for(float ph:{0.f,1.f,2.5f,4.f}){float a[8],b[8];gait(ph,direction(d),1,a,Pattern::Flick);gait(ph,direction(d),1,b);for(int i=0;i<8;i++)assert(a[i]==b[i]);}
- for(int d:{1,2}){
-  double rise=-1,fall=-1;float first[8];gait(0,direction(d),1,first,Pattern::Flick);
-  for(int k=0;k<1000;k++){
-   float ph=k*6.2831853072f/1000,o[8];gait(ph,direction(d),1,o,Pattern::Flick);
-   // Hips hold one pose: front feet towards +X, rear feet towards -X.
-   for(int leg=0;leg<4;leg++)assert(o[2*leg]==first[2*leg]);
-   assert(o[0]<-24.9f&&o[2]>24.9f&&o[4]>24.9f&&o[6]<-24.9f);
-   // Diagonal knees together; never lower than neutral, never above the lift.
-   assert(std::fabs(o[1]-o[7])<.001f&&std::fabs(o[3]-o[5])<.001f);
-   for(int leg=0;leg<4;leg++)assert(o[2*leg+1]<=0.0001f&&o[2*leg+1]>=-cfg::KNEE_LIFT-.0001f);
-   const double u=k/1000.;
-   if(rise<0&&o[1]<=-cfg::KNEE_LIFT+.001f)rise=u;
-   if(rise>=0&&fall<0&&o[1]>=-.05f&&u>rise)fall=u;
-  }
-  // Forward: fast lift (~stroke), slow return. Backward: slow lift, fast drop.
+ // Knee profile of one leg over a cycle: when it first reaches full lift and
+ // when it is next back near the ground.
+ auto profile=[](int dir,int leg,double& rise,double& fall){
+  rise=fall=-1;
+  for(int k=0;k<1000;k++){float o[8];gait(k*6.2831853072f/1000,bodyDirection(dir),1,o,Pattern::Flick);const double u=k/1000.;
+   if(rise<0&&o[2*leg+1]<=-cfg::KNEE_LIFT+.001f)rise=u;
+   if(rise>=0&&fall<0&&o[2*leg+1]>=-.05f&&u>rise)fall=u;}
   assert(rise>=0&&fall>rise);
-  if(d==1)assert(rise<=cfg::FLICK_STROKE+.01&&fall-rise>.7);
-  else assert(rise>.7&&fall-rise<=cfg::FLICK_STROKE+.01);
+ };
+ for(int dir:{1,2}){
+  float first[8];gait(0,bodyDirection(dir),1,first,Pattern::Flick);
+  for(int k=0;k<1000;k++){
+   float o[8];gait(k*6.2831853072f/1000,bodyDirection(dir),1,o,Pattern::Flick);
+   // Hips hold the 90 deg stance: CAD legs 0,1 (CH0-3, physical rear) towards
+   // CAD +X = physical rear; CH4-7 (physical front) towards physical front.
+   for(int leg=0;leg<4;leg++)assert(o[2*leg]==first[2*leg]&&std::fabs(std::fabs(o[2*leg])-cfg::FLICK_HIP)<.001f);
+   assert(o[0]<-89.9f&&o[2]>89.9f&&o[4]>89.9f&&o[6]<-89.9f);
+   for(int leg=0;leg<4;leg++)assert(o[2*leg+1]<=0.0001f&&o[2*leg+1]>=-cfg::KNEE_LIFT-.0001f);
+   // Same-side legs (same stance) run the same profile half a cycle apart.
+   float h[8];gait((k/1000.f+.5f)*6.2831853072f,bodyDirection(dir),1,h,Pattern::Flick);
+   assert(std::fabs(o[1]-h[3])<.001f&&std::fabs(o[7]-h[5])<.001f);
+  }
+  // Physical Forward (dir 1): rear legs (CH1 knee) trail and get the fast
+  // drop; front legs (CH7 knee) lead and snap up fast. Backward swaps them.
+  double rr,rf,fr,ff;profile(dir,0,rr,rf);profile(dir,3,fr,ff);
+  const bool rearTrails=dir==1;
+  const double trailRise=rearTrails?rr:fr,trailFall=rearTrails?rf:ff,leadRise=rearTrails?fr:rr,leadFall=rearTrails?ff:rf;
+  assert(trailRise>.7&&trailFall-trailRise<=cfg::FLICK_STROKE+.01);
+  assert(leadRise<=cfg::FLICK_STROKE+.01&&leadFall-leadRise>.7);
  }
+ // Owner hip slider scales the stance; it never exceeds FLICK_HIP.
+ {float o[8];gait(0,bodyDirection(1),1,o,Pattern::Flick,45);for(int leg=0;leg<4;leg++)assert(std::fabs(std::fabs(o[2*leg])-45)<.001f);
+  gait(0,bodyDirection(1),1,o,Pattern::Flick,200);for(int leg=0;leg<4;leg++)assert(std::fabs(std::fabs(o[2*leg])-cfg::FLICK_HIP)<.001f);
+  Motion m;assert(m.flickHip==cfg::FLICK_HIP);}
+ // The fix for IMG_2637: Forward and Backward knee patterns now differ.
+ float f[8],b[8];bool differ=false;
+ for(int k=0;k<100;k++){gait(k*.0628f,bodyDirection(1),1,f,Pattern::Flick);gait(k*.0628f,bodyDirection(2),1,b,Pattern::Flick);for(int i=1;i<8;i+=2)differ=differ||std::fabs(f[i]-b[i])>1;}
+ assert(differ);
 }
 static void test_pose(){
  Motion m;const float a[8]={20,-30,-20,-30,10,0,-10,0};
@@ -219,18 +240,18 @@ static void test_pose(){
  m.stop();m.setAssembly(true);assert(!m.poseCommand(5,m.lastSeq+1,a,0,k+20,true));
 }
 static void test_normal_speed(){
- Motion m;assert(std::fabs(m.speed-.65f)<.001f);assert(cfg::SLEW_DPS==600&&cfg::PERIOD_S==0.8f);
- // Half a second of Normal advances about0.41 of a cycle (1.23 s period).
+ Motion m;assert(std::fabs(m.speed-cfg::SPEED_DEFAULT)<.001f&&cfg::SPEED_DEFAULT==.9f);assert(cfg::SLEW_DPS==600&&cfg::PERIOD_S==0.8f);
+ // Half a second at the 90% default advances about 0.56 of a cycle (0.89 s period).
  ready(m);m.newSession(91);uint32_t seq=0;const uint32_t begin=2200;
  const float phase=m.phase;
  for(uint32_t t=begin;t<begin+500;t+=10){if((t-begin)%150==0)assert(m.command(91,++seq,1,t,true));m.tick(t);}
- const float advance=m.phase-phase;assert(advance>2.5f&&advance<2.85f);
+ const float advance=m.phase-phase;assert(advance>3.46f&&advance<3.95f);
  m.stop();for(uint32_t t=begin+500;t<begin+1000;t+=10)m.tick(t);assert(!m.lease&&m.amplitude==0);
 }
 static void test_motion(){
  Motion m;m.newSession(12);m.begin(0);assert(!m.command(12,1,1,0));m.stop();assert(m.enabled==0);ready(m);
- assert(m.command(12,2,1,2200,true));assert(m.velocity.x==1);assert(!m.command(12,1,2,2210));
- m.tick(2699);assert(m.velocity.x==1);m.tick(2709);assert(m.velocity.x==0&&!m.lease);
+ assert(m.command(12,2,1,2200,true));assert(m.velocity.x==-1);assert(!m.command(12,1,2,2210));
+ m.tick(2699);assert(m.velocity.x==-1);m.tick(2709);assert(m.velocity.x==0&&!m.lease);
  assert(!m.command(12,3,1,2710,false));assert(m.command(12,4,1,2720,true));
  assert(m.command(12,6,0,2730,false));assert(!m.command(12,5,1,2740,false));assert(!m.lease);
  assert(!m.command(13,7,1,2800));m.setAssembly(true);assert(!m.command(12,7,1,2810));
@@ -238,7 +259,9 @@ static void test_motion(){
  assert(m.trim(2,1));assert(!m.raw&&m.offsets[2]==1);for(int i=0;i<99;i++)m.trim(2,1);assert(m.offsets[2]==cfg::TRIM_LIMIT);
  assert(!m.trim(8,1));assert(!m.trim(2,22));m.setAssembly(false);assert(!m.trim(2,-1));
  m.inhibit=true;assert(!m.command(12,8,1,2900));m.inhibit=false;assert(m.command(12,9,1,3000));m.newSession(99);assert(!m.lease&&!m.command(12,10,1,3010));
- for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1033&&p<=1967);const int limit=ch%2?195:139;assert(std::abs(p-1500)<=limit);}
+ for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1000&&p<=2000);const int limit=ch%2?195:500;assert(std::abs(p-1500)<=limit);}
+ // Hips reach the full 90 deg flick stance; knees still stop at 35 deg.
+ assert(pulse(0,90,0)==2000&&pulse(0,-90,0)==1000&&pulse(1,90,0)==1667&&pulse(1,90,12)==1694);
  Motion wrap;ready(wrap,0xfffff000);wrap.newSession(2);assert(wrap.command(2,1,1,0xffffff00));wrap.tick(0x200);assert(!wrap.lease);
  // Long realistic run tests the production scheduler, lease renewal, limits, ramp and exact startup order.
  for(int dir=1;dir<=8;dir++){

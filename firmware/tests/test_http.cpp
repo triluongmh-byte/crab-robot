@@ -1,3 +1,4 @@
+#include <cmath>
 #include "../crab/core.h"
 #include "http_stubs.h"
 // Use the exact embedded page served by the device.
@@ -6,7 +7,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v10")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v11")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -27,6 +28,20 @@ int main(){
  server.request("/api/status");assert(server.body.find("\"gait\":\"pairs\"")!=String::npos);
  server.request("/api/gait",{{"token","42"},{"value","flick"}});assert(server.code==200&&motion.gaitPattern==crab::Pattern::Flick);server.request("/api/status");assert(server.body.find("\"gait\":\"flick\"")!=String::npos);
  server.request("/api/gait",{{"token","42"},{"value","trot"}});assert(server.code==200&&motion.gaitPattern==crab::Pattern::Trot);
+ // Speed slider: decimal fraction .2-1, default .9; malformed or out-of-range refused.
+ assert(std::fabs(crab::Motion{}.speed-.9f)<1e-6f);
+ server.request("/api/speed",{{"token","42"},{"value","0.55"}});assert(server.code==200&&std::fabs(motion.speed-.55f)<1e-4f);
+ server.request("/api/speed",{{"token","42"},{"value","1"}});assert(server.code==200&&motion.speed==1.f);
+ server.request("/api/speed",{{"token","42"},{"value",".2"}});assert(server.code==200&&std::fabs(motion.speed-.2f)<1e-4f);
+ for(const char* bad:{"0.1","1.5","","abc","0.5.5","-0.5","0.900001","nan"}){server.request("/api/speed",{{"token","42"},{"value",bad}});assert(server.code==400&&std::fabs(motion.speed-.2f)<1e-4f);}
+ server.request("/api/speed",{{"token","7"},{"value","0.9"}});assert(server.code==409);
+ // Flick hip slider: whole degrees 30-90, reported in status.
+ assert(motion.flickHip==cfg::FLICK_HIP);
+ server.request("/api/flickhip",{{"token","42"},{"value","55"}});assert(server.code==200&&motion.flickHip==55);
+ for(const char* bad:{"29","91","","4.5","-60"}){server.request("/api/flickhip",{{"token","42"},{"value",bad}});assert(server.code==400&&motion.flickHip==55);}
+ server.request("/api/flickhip",{{"token","7"},{"value","60"}});assert(server.code==409&&motion.flickHip==55);
+ server.request("/api/status");assert(server.body.find("\"flickHip\":55")!=String::npos);
+ server.request("/api/flickhip",{{"token","42"},{"value","90"}});assert(server.code==200);
  server.request("/api/move",{{"token","42"},{"seq","2"},{"dir","1"},{"fresh","1"}});assert(server.code==409); // not enabled8 yet
  for(int ch=0;ch<8;ch++)motion.tick(clockMs+20+300*ch);
  motion.newSession(42);assert(motion.enabled==8);
@@ -60,7 +75,7 @@ int main(){
  server.request("/api/emotions");assert(server.code==200&&server.body=="[{\"n\":\"Vui\"}]");
  motion.newSession(42);
  server.request("/api/move",{{"token","42"},{"seq","1"},{"dir","1"},{"fresh","1"}});
- assert(server.code==200&&motion.lease&&motion.velocity.x==1); // no STA connection
+ assert(server.code==200&&motion.lease&&motion.velocity.x==crab::bodyDirection(1).x); // no STA connection; Forward heads to CH4/CH6
  server.request("/api/light",{{"token","42"}});assert(server.code==200&&light.on);
  server.request("/api/assembly",{{"token","42"},{"active","1"}});assert(server.code==200&&motion.assembly);
  server.request("/api/centre",{{"token","42"}});assert(server.code==200&&motion.raw);
@@ -69,7 +84,7 @@ int main(){
  // Loss of STA changes status only; AP command lease survives until the real watchdog expires.
  storedSsid="Saved";network.begin(true,clockMs);WiFi.ssid=storedSsid;WiFi.state=WL_CONNECTED;stationHasIp=true;
  serviceNetwork(clockMs);assert(network.state==crab::NetState::Online);
- stationHasIp=false;WiFi.state=0;serviceNetwork(++clockMs);assert(motion.lease&&motion.velocity.x==1);
+ stationHasIp=false;WiFi.state=0;serviceNetwork(++clockMs);assert(motion.lease&&motion.velocity.x==crab::bodyDirection(1).x);
  for(int i=0;i<200;i++){serviceNetwork(clockMs+=1000);assert(WiFi.beginCalls==0);}
  // Renew over AP even though saved network is unreachable.
  server.request("/api/move",{{"token","42"},{"seq","3"},{"dir","2"},{"fresh","1"}});assert(server.code==200);

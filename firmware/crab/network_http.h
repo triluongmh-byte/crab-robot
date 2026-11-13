@@ -18,6 +18,13 @@ bool poseArg(float out[8]){
  }
  return *p==0;
 }
+// Speed slider: plain decimal fraction ("0.9"), SPEED_MIN..SPEED_MAX.
+bool speedArg(float& out){
+ String s=server.arg("value");if(s.length()<1||s.length()>5)return false;
+ int dots=0;for(char c:s){if(c=='.'){if(++dots>1)return false;}else if(c<'0'||c>'9')return false;}
+ const float v=s.toFloat();if(!(v>=cfg::SPEED_MIN-1e-4f&&v<=cfg::SPEED_MAX+1e-4f))return false;
+ out=crab::clamp(v,cfg::SPEED_MIN,cfg::SPEED_MAX);return true;
+}
 // Saved emotions are opaque JSON for the page; bound size and reject control bytes.
 bool emotionListValid(const String& s){
  if(s.length()<2||s.length()>3800||s[0]!='['||s[s.length()-1]!=']')return false;
@@ -38,7 +45,7 @@ void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° t
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v10\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"offsets\":"+offsets+"}");});
+  json(200,String("{\"firmware\":\"positional180-v11\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"offsets\":"+offsets+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -79,7 +86,9 @@ void configureHttp(){
  server.on("/api/emotions",HTTP_GET,[]{String list=emoteStore.getString("list","[]");json(200,list.length()?list:String("[]"));});
  server.on("/api/emotions/save",HTTP_POST,[]{if(!owns()){error(409);return;}String data=server.arg("data");if(!emotionListValid(data)){error();return;}if(emoteStore.putString("list",data)!=data.length()){error(500);return;}ok();});
  server.on("/emo",HTTP_GET,[]{server.sendHeader("Cache-Control","no-store");server.send_P(200,"text/html; charset=utf-8",EMOTE_UI);});
- server.on("/api/speed",HTTP_POST,[]{if(!owns()){error(409);return;}String s=server.arg("value");if(s!="0.4"&&s!="0.65"&&s!="1"){error();return;}{Guard g;offForChangeLocked();motion.speed=s.toFloat();}ok();});
+ server.on("/api/speed",HTTP_POST,[]{if(!owns()){error(409);return;}float v;if(!speedArg(v)){error();return;}{Guard g;offForChangeLocked();motion.speed=v;}ok();});
+ // Knee-flick hip stance, whole degrees FLICK_HIP_MIN..FLICK_HIP.
+ server.on("/api/flickhip",HTTP_POST,[]{if(!owns()){error(409);return;}uint32_t v;if(!uintArg("value",v)||v<cfg::FLICK_HIP_MIN||v>cfg::FLICK_HIP){error();return;}{Guard g;offForChangeLocked();motion.flickHip=float(v);}ok();});
  server.on("/api/gait",HTTP_POST,[]{if(!owns()){error(409);return;}String s=server.arg("value");if(s!="trot"&&s!="pairs"&&s!="flick"){error();return;}{Guard g;offForChangeLocked();motion.gaitPattern=s=="pairs"?crab::Pattern::Pairs:s=="flick"?crab::Pattern::Flick:crab::Pattern::Trot;}ok();});
  server.on("/api/assembly",HTTP_POST,[]{if(!owns()){error(409);return;}uint32_t a;if(!uintArg("active",a)||a>1){error();return;}bool accepted;{Guard g;offForChangeLocked();accepted=motion.setAssembly(a);}if(!accepted){error(409);return;}ok();});
  server.on("/api/centre",HTTP_POST,[]{if(!owns()){error(409);return;}bool accepted;{Guard g;offForChangeLocked();accepted=motion.centre();}if(!accepted){actuatorError();return;}ok();});

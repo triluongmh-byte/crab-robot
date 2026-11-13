@@ -22,8 +22,9 @@ async function advance(ms){const end=now+ms;for(;;){await flush();timers.sort((a
 (async()=>{
  await flush();
  // Page units -> firmware frame: left hips negate (forward), knees negate (lift).
- assert.equal(E.toCommand([10,20,10,20,-5,0,-5,0]),'-10,-20,10,-20,5,0,-5,0');
- assert.equal(E.toCommand([99,-99,0,0,0,0,0,0]),'-30,30,0,0,0,0,0,0');
+ // Physical front-left (slider leg 0) is CH6/CH7: CH0 sits at the rear right.
+ assert.equal(E.toCommand([10,20,10,20,-5,0,-5,0]),'-5,0,5,0,10,-20,-10,-20');
+ assert.equal(E.toCommand([99,-99,0,0,0,0,0,0]),'0,0,0,0,0,0,-30,30');
  assert.deepEqual({...E.hexRgb('#ff4000')},{r:255,g:64,b:0});
  // Every preset frame is 8 bounded angles, a colour, move and hold times; ends standing.
  for(const p of E.PRESETS){assert(p.f.length>=2);for(const f of p.f){assert.equal(f.length,11);for(let i=0;i<8;i++)assert(Math.abs(f[i])<=30);assert(/^#[0-9a-f]{6}$/i.test(f[8]));assert(f[9]>=0&&f[9]<=3000&&f[10]>=0&&f[10]<=5000);}

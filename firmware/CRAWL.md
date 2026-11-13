@@ -29,7 +29,18 @@ This is unchanged from `positional180-v5`. Front hips CH0/CH2 push rearwards wit
 
 ## Option: knee flick (`flick`, owner trial)
 
-Forward/Backward only; Left/Right keep the trot. The hips hold a pose: front feet swung forwards and rear feet swung backwards (±25°). Only the knees move. Diagonal knees (FL+RR, FR+RL) flick together, half a cycle apart. Forward is a fast 30° lift in 20% of the cycle followed by a slow return; Backward reverses that in time (slow lift, fast drop). The cycle is 0.5 s at Fast, 0.77 s at Normal and 1.25 s at Slow. The fast lift peaks at 450°/s. Net travel depends on stick-slip friction, so the direction is a physical trial: if Forward moves backwards, report it and the waveforms will be swapped.
+Forward/Backward only; Left/Right keep the trot. Release `positional180-v11` follows the owner's request: the hips turn **90° nominal** and hold, front feet swung forwards and rear feet swung backwards. Only the knees move. Same-side knees run half a cycle apart.
+
+The v10 version used the same knee waveform on every leg. That stance is 180° symmetric, so forward and backward pushes cancelled out and the robot only bounced (owner video IMG_2637). v11 chooses the timing from each leg's geometry instead:
+
+- A **trailing** leg (its foot points away from the travel direction) gets the power stroke: a slow lift, then a fast 30° drop in 20% of the cycle.
+- A **leading** leg snaps up fast and lowers slowly.
+
+For Forward, the rear legs trail; for Backward, the front legs trail. The cycle is 0.5 s at 100% speed. The fast stroke peaks at 450°/s.
+
+Net travel depends on stick-slip friction, so this is still a physical trial. If it travels the wrong way, the two waveforms can be swapped.
+
+Hips at ±90° nominal (1000–2000 µs) exceed the old hand-reported 30/60° body clearances. The owner explicitly asked for this range. When gait is flick, a **Góc hông búng** slider (30–90°, default 90°, `/api/flickhip`) appears. Lower it if the front or rear legs touch each other or the body; this needs no reflash.
 
 ## Trial
 
