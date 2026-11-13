@@ -22,9 +22,9 @@ async function advance(ms){const end=now+ms;for(;;){await flush();timers.sort((a
 (async()=>{
  await flush();
  // Page units -> firmware frame: left hips negate (forward), knees negate (lift).
- // Physical front-left (slider leg 0) is CH6/CH7: CH0 sits at the rear right.
- assert.equal(E.toCommand([10,20,10,20,-5,0,-5,0]),'-5,0,5,0,10,-20,-10,-20');
- assert.equal(E.toCommand([99,-99,0,0,0,0,0,0]),'0,0,0,0,0,0,-30,30');
+ // Physical front-left (slider leg 0) is CH0/CH1; CH6 is the rear right.
+ assert.equal(E.toCommand([10,20,10,20,-5,0,-5,0]),'-10,-20,10,-20,5,0,-5,0');
+ assert.equal(E.toCommand([99,-99,0,0,0,0,0,0]),'-30,30,0,0,0,0,0,0');
  assert.deepEqual({...E.hexRgb('#ff4000')},{r:255,g:64,b:0});
  // Every preset frame is 8 bounded angles, a colour, move and hold times; ends standing.
  for(const p of E.PRESETS){assert(p.f.length>=2);for(const f of p.f){assert.equal(f.length,11);for(let i=0;i<8;i++)assert(Math.abs(f[i])<=30);assert(/^#[0-9a-f]{6}$/i.test(f[8]));assert(f[9]>=0&&f[9]<=3000&&f[10]>=0&&f[10]<=5000);}
@@ -52,7 +52,7 @@ async function advance(ms){const end=now+ms;for(;;){await flush();timers.sort((a
  // Touching a slider starts live preview (owner: sliders looked dead); not ready -> hint.
  E.halt();await advance(500);calls.length=0;E.setReady(false);elements.j0.value='12';elements.j0.oninput();await advance(300);assert(!E.state().liveOn&&/Bật servo/.test(elements.status.textContent));assert.equal(calls.filter(c=>c.path==='/api/pose').length,0);
  E.setReady(true);elements.j0.value='12';elements.j0.oninput();assert(E.state().liveOn);await advance(400);
- const live=calls.filter(c=>c.path==='/api/pose');assert(live.length>=2&&live[0].data.fresh==='1');assert.equal(live[0].data.a.split(',')[6],'-12'); // front-left hip = CH6
+ const live=calls.filter(c=>c.path==='/api/pose');assert(live.length>=2&&live[0].data.fresh==='1');assert.equal(live[0].data.a.split(',')[0],'-12'); // front-left hip = CH0
  assert.equal(elements.j2.value,'12'); // mirrored to front-right
  E.halt();await advance(500);assert(!E.state().liveOn);
  console.log('PASS: emotion page unit mapping/preset bounds/saved-list filter/timeline renewals with fresh-first lease/colour changes/stop at end and on halt');

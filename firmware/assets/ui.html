@@ -30,8 +30,8 @@
 const $=id=>document.getElementById(id);
 let token='',seq=0,held=0,busy=false,page='control',requestEpoch=0,freshPress=false,ready=false,activePointer=null,activeButton=null,menuOpen=false,telemetryBusy=false;
 const logLines=[];
-// Physical positions: the owner found CH0 at the REAR RIGHT (firmware cfg::FRONT_IS_CH46).
-const names=['Hông sau phải','Gối sau phải','Hông sau trái','Gối sau trái','Hông trước phải','Gối trước phải','Hông trước trái','Gối trước trái'];
+// Physical positions, owner-confirmed CH6 = rear right (firmware cfg::FRONT_IS_CH46=false).
+const names=['Hông trước trái','Gối trước trái','Hông trước phải','Gối trước phải','Hông sau trái','Gối sau trái','Hông sau phải','Gối sau phải'];
 const GAITS={trot:'Chéo',pairs:'Cặp trước/sau',flick:'Búng gối'};let speedDragging=false,hipDragging=false,balanceDragging=false,kneeDragging=false;
 function balanceText(v){v=Number(v);return v===0?'0':(v>0?'+'+v+'% phải':v+'% (trái mạnh hơn)');}
 function showSpeed(pct){$('speedValue').textContent=pct+'%';}

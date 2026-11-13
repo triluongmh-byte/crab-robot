@@ -52,7 +52,7 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  // Knee lift slider.
  state.knee=45;await poll();assert.equal(el('knee').value,'45');el('knee').value='55';el('knee').oninput();assert.equal(el('kneeValue').textContent,'55°');await poll();assert.equal(el('knee').value,'55');
  el('knee').onchange();await flush();assert(calls.some(c=>c.path==='/api/knee'&&c.data.value==='55'));
- assert(/CH0 · Hông sau phải/.test(el('trim0').textContent)&&/CH6 · Hông trước trái/.test(el('trim6').textContent));
+ assert(/CH0 · Hông trước trái/.test(el('trim0').textContent)&&/CH6 · Hông sau phải/.test(el('trim6').textContent));
  assert.equal(el('gait').value,'trot');assert(/chéo/.test(el('gaitHint').textContent));state.gait='pairs';await poll();assert.equal(el('gait').value,'pairs');assert(/trước và sau/.test(el('gaitHint').textContent));
  el('gait').value='trot';await el('gait').onchange();await flush();assert(calls.some(c=>c.path==='/api/gait'&&c.data.value==='trot'&&c.data.token==='42'));state.gait='flick';await poll();assert.equal(el('gait').value,'flick');assert(/búng/.test(el('gaitHint').textContent));state.gait='trot';await poll();assert.equal(el('gait').value,'trot');
  for(const b of dirs){b.fire('pointerdown');await flush();let cmd=calls.filter(c=>c.path==='/api/move').at(-1);assert.equal(cmd.data.dir,b.dataset.dir);assert.equal(cmd.data.fresh,'1');await hold();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');}
