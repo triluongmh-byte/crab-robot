@@ -18,6 +18,12 @@ bool poseArg(float out[8]){
  }
  return *p==0;
 }
+bool intArg(const char* name,int32_t& value){
+ String s=server.arg(name);const size_t first=s.length()&&s[0]=='-'?1:0;
+ if(s.length()<=first||s.length()-first>6)return false;
+ int32_t v=0;for(size_t i=first;i<s.length();i++){if(s[i]<'0'||s[i]>'9')return false;v=v*10+(s[i]-'0');}
+ value=first?-v:v;return true;
+}
 // Speed slider: plain decimal fraction ("0.9"), SPEED_MIN..SPEED_MAX.
 bool speedArg(float& out){
  String s=server.arg("value");if(s.length()<1||s.length()>5)return false;
@@ -45,7 +51,7 @@ void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° t
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v12\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"offsets\":"+offsets+"}");});
+  json(200,String("{\"firmware\":\"positional180-v13\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"offsets\":"+offsets+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -87,6 +93,8 @@ void configureHttp(){
  server.on("/api/emotions/save",HTTP_POST,[]{if(!owns()){error(409);return;}String data=server.arg("data");if(!emotionListValid(data)){error();return;}if(emoteStore.putString("list",data)!=data.length()){error(500);return;}ok();});
  server.on("/emo",HTTP_GET,[]{server.sendHeader("Cache-Control","no-store");server.send_P(200,"text/html; charset=utf-8",EMOTE_UI);});
  server.on("/api/speed",HTTP_POST,[]{if(!owns()){error(409);return;}float v;if(!speedArg(v)){error();return;}{Guard g;offForChangeLocked();motion.speed=v;}ok();});
+ // Left/right heading trim, percent; persisted with the trims.
+ server.on("/api/balance",HTTP_POST,[]{if(!owns()){error(409);return;}int32_t v;if(!intArg("value",v)){error();return;}bool accepted;{Guard g;accepted=motion.setBalance(v);}if(!accepted){error();return;}trimStore.putInt("balance",v);ok();});
  // Knee-flick hip stance, whole degrees FLICK_HIP_MIN..FLICK_HIP.
  server.on("/api/flickhip",HTTP_POST,[]{if(!owns()){error(409);return;}uint32_t v;if(!uintArg("value",v)||v<cfg::FLICK_HIP_MIN||v>cfg::FLICK_HIP){error();return;}{Guard g;offForChangeLocked();motion.flickHip=float(v);}ok();});
  server.on("/api/gait",HTTP_POST,[]{if(!owns()){error(409);return;}String s=server.arg("value");if(s!="trot"&&s!="pairs"&&s!="flick"){error();return;}{Guard g;offForChangeLocked();motion.gaitPattern=s=="pairs"?crab::Pattern::Pairs:s=="flick"?crab::Pattern::Flick:crab::Pattern::Trot;}ok();});

@@ -14,6 +14,11 @@ constexpr float HIP_LIMIT=90, KNEE_PULSE_LIMIT=35;
 // frame (CH0 = front left) is therefore rotated 180 deg from the real robot.
 // Drive commands are rotated into the CAD frame so Forward goes to CH4/CH6.
 constexpr bool FRONT_IS_CH46=true;
+// Owner, 2026-11-13: arm the servos at boot (was: PWM off until Bật servo).
+constexpr bool AUTO_ARM=true;
+// Heading trim: +N% gives the physical right hips N% more stroke and the left
+// N% less (owner: Forward drifts right, right servos are slower). Saved.
+constexpr int BALANCE_LIMIT=30;
 // Case D7: hip shafts point up; single mirrors FR/RL reverse knee sense.
 // Knees FL +1, FR -1, RL -1, RR +1; negative angle lifts each foot.
 constexpr int SIGN[8]={1,1,1,-1,1,-1,1,1};

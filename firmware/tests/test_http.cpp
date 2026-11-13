@@ -7,7 +7,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v12")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v13")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -42,6 +42,13 @@ int main(){
  server.request("/api/flickhip",{{"token","7"},{"value","60"}});assert(server.code==409&&motion.flickHip==55);
  server.request("/api/status");assert(server.body.find("\"flickHip\":55")!=String::npos);
  server.request("/api/flickhip",{{"token","42"},{"value","90"}});assert(server.code==200);
+ // Heading trim: signed percent -30..30, persisted, in status.
+ server.request("/api/balance",{{"token","42"},{"value","-12"}});assert(server.code==200&&motion.balance==-12&&trimStore.getInt("balance",0)==-12);
+ server.request("/api/balance",{{"token","42"},{"value","15"}});assert(server.code==200&&motion.balance==15&&trimStore.getInt("balance",0)==15);
+ for(const char* bad:{"31","-31","","abc","1.5","--3","-"}){server.request("/api/balance",{{"token","42"},{"value",bad}});assert(server.code==400&&motion.balance==15&&trimStore.getInt("balance",0)==15);}
+ server.request("/api/balance",{{"token","7"},{"value","0"}});assert(server.code==409&&motion.balance==15);
+ server.request("/api/status");assert(server.body.find("\"balance\":15")!=String::npos);
+ server.request("/api/balance",{{"token","42"},{"value","0"}});assert(server.code==200&&motion.balance==0);
  server.request("/api/move",{{"token","42"},{"seq","2"},{"dir","1"},{"fresh","1"}});assert(server.code==409); // not enabled8 yet
  for(int ch=0;ch<8;ch++)motion.tick(clockMs+20+300*ch);
  motion.newSession(42);assert(motion.enabled==8);

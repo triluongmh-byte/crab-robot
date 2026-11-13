@@ -219,6 +219,19 @@ static void test_flick(){
  {float o[8];gait(0,bodyDirection(1),1,o,Pattern::Flick,45);for(int leg=0;leg<4;leg++)assert(std::fabs(std::fabs(o[2*leg])-45)<.001f);
   gait(0,bodyDirection(1),1,o,Pattern::Flick,200);for(int leg=0;leg<4;leg++)assert(std::fabs(std::fabs(o[2*leg])-cfg::FLICK_HIP)<.001f);
   Motion m;assert(m.flickHip==cfg::FLICK_HIP);}
+ // Heading trim: physical right legs are CH0 (rear right) and CH4 (front right).
+ assert(physicalRight(0)&&!physicalRight(1)&&physicalRight(2)&&!physicalRight(3));
+ {float o[8]={10,5,10,5,10,5,10,5};applyBalance(o,20);assert(std::fabs(o[0]-12)<1e-4f&&std::fabs(o[2]-8)<1e-4f&&std::fabs(o[4]-12)<1e-4f&&std::fabs(o[6]-8)<1e-4f&&o[1]==5&&o[7]==5);
+  float c[8]={10,0,10,0,10,0,10,0};applyBalance(c,99);assert(std::fabs(c[0]-13)<1e-4f&&std::fabs(c[2]-7)<1e-4f);} // clamped to 30%
+ {Motion m;assert(m.balance==0&&m.setBalance(-30)&&m.balance==-30&&!m.setBalance(31)&&!m.setBalance(-31)&&m.balance==-30);}
+ {// Walking applies the trim to the hip targets the joints track.
+  Motion a,b;ready(a);ready(b);a.newSession(3);b.newSession(3);b.setBalance(25);
+  for(uint32_t t=2200;t<5200;t+=10){if(t%150==100){assert(a.command(3,a.lastSeq+1,1,t,!a.lease));assert(b.command(3,b.lastSeq+1,1,t,!b.lease));}a.tick(t);b.tick(t);}
+  double ra=0,rb=0,la=0,lb=0;for(int leg=0;leg<4;leg++){if(physicalRight(leg)){ra+=std::fabs(a.position[2*leg]);rb+=std::fabs(b.position[2*leg]);}else{la+=std::fabs(a.position[2*leg]);lb+=std::fabs(b.position[2*leg]);}}
+  assert(rb>ra*1.15&&lb<la*.85);}
+ // Boot arm follows the Bật servo path, only with a working driver.
+ {Motion m;assert(cfg::AUTO_ARM&&!m.bootArm(false,0)&&!m.positional());assert(m.bootArm(true,0)&&m.positional()&&m.enabled==0);
+  for(uint32_t t=0;t<3000;t+=10)m.tick(t);assert(m.enabled==8);}
  // The fix for IMG_2637: Forward and Backward knee patterns now differ.
  float f[8],b[8];bool differ=false;
  for(int k=0;k<100;k++){gait(k*.0628f,bodyDirection(1),1,f,Pattern::Flick);gait(k*.0628f,bodyDirection(2),1,b,Pattern::Flick);for(int i=1;i<8;i+=2)differ=differ||std::fabs(f[i]-b[i])>1;}

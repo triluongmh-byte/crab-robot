@@ -129,3 +129,17 @@ Release `positional180-v12` makes two changes:
 - **Radio sleep.** Wi-Fi modem sleep is disabled (`WiFi.setSleep(false)`).
 - **Status after a slow connect.** A saved-network attempt that was marked failed but then connected anyway is now adopted as online. Before, the robot kept the wrong status and called `WiFi.disconnect()` on the working link every 30 s.
 
+## Auto-arm, heading trim, live emotion sliders — 2026-11-13
+
+Release `positional180-v13` makes three changes.
+
+**Auto-arm.** Servos now arm at boot (`cfg::AUTO_ARM`), at the owner's request. This replaces the earlier "PWM off at boot" policy. The arm path is the same as **Bật servo**: the eight channels come on 300 ms apart. **Ngắt servo** still turns all pulses off until the next arm or reboot.
+
+**Bù lệch trái ↔ phải.** This slider trims heading, from −30% to +30%. It is saved on the robot (`/api/balance`, Preferences `balance`). At +N%:
+- the physical right hips (CH0, CH4) get N% more stroke;
+- the left hips (CH2, CH6) get N% less.
+
+Use it when Forward drifts towards the slower side.
+
+**Emotion sliders.** Moving a slider on `/emo` now starts live preview on its own. Before, the sliders only changed numbers until **Xem trực tiếp** was pressed.
+

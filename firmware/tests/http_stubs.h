@@ -68,6 +68,9 @@ struct Store{
  size_t putString(const char* key,const String& s){data[key]=s;return s.length();}
  String getString(const char* key,const String& fallback){auto it=data.find(key);return it==data.end()?fallback:it->second;}
  size_t putBytes(const char*,const void*,size_t n){return n;}
+ std::map<std::string,int32_t> ints;
+ size_t putInt(const char* key,int32_t v){ints[key]=v;return 4;}
+ int32_t getInt(const char* key,int32_t fallback){auto it=ints.find(key);return it==ints.end()?fallback:it->second;}
 } wifiStore,trimStore,emoteStore;
 struct Light{bool on=false;int r=-1,g=-1,b=-1;void set(bool v){on=v;}void color(int r_,int g_,int b_){r=r_;g=g_;b=b_;}} light;
 crab::Motion motion;crab::Network network;

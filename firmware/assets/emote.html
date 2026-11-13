@@ -29,7 +29,7 @@ main{max-width:1100px;margin:auto;padding:14px;display:grid;gap:14px;grid-templa
 <section class="card"><h2>Cảm xúc có sẵn</h2><div class="presets" id="presets"></div>
 <div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="loopPreset" style="width:auto;min-height:0"> Lặp lại</label></div></section>
 <section class="card span2"><h2>Tạo cảm xúc</h2>
-<p class="dim">Hông: + là đưa bàn chân ra trước. Gối: + là nhấc chân lên, − là đạp xuống (thân cao lên). Mỗi khung có thời gian chuyển và thời gian giữ.</p>
+<p class="dim">Hông: + là đưa bàn chân ra trước. Gối: + là nhấc chân lên, − là đạp xuống (thân cao lên). Mỗi khung có thời gian chuyển và thời gian giữ. Kéo thanh là cua cử động theo ngay.</p>
 <div class="legs" id="legs"></div>
 <div class="row"><label>Màu đèn <input type="color" id="color" value="#ffc400"></label><label>Chuyển (ms) <input type="number" id="ms" min="0" max="3000" step="10" value="300"></label><label>Giữ (ms) <input type="number" id="hold" min="0" max="5000" step="10" value="0"></label></div>
 <div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="mirror" style="width:auto;min-height:0" checked> Đối xứng trái/phải</label><button id="live">Xem trực tiếp: tắt</button><button id="zero">Về đứng</button></div>
@@ -97,14 +97,17 @@ function liveOff(){if(!liveOn)return;liveOn=false;$('live').textContent='Xem tr�
 async function poll(){try{const r=await fetch('/api/status',{cache:'no-store'});const d=await r.json();ready=!!d.driver&&!!d.positional&&d.enabled===8&&!d.assembly;$('arm').disabled=!!d.positional||!d.driver;setStatus((ready?'Sẵn sàng diễn cảm xúc.':!d.driver?'Kiểm tra dây PCA9685.':d.assembly?'Đang ở trang Ráp: thoát Ráp trước.':d.positional?'Đang bật servo '+d.enabled+'/8…':'Servo đang tắt — bấm Bật servo.')+(run?'':''));}catch(e){ready=false;setStatus('Mất kết nối. Cua tự về đứng.');}}
 function build(){
  const legs=$('legs');LEGS.forEach((n,leg)=>{const box=document.createElement('div');box.className='leg';const h=document.createElement('h3');h.textContent=n;box.appendChild(h);
-  ['Hông','Gối'].forEach((jn,joint)=>{const i=2*leg+joint,l=document.createElement('label'),v=document.createElement('span'),r=document.createElement('input');v.className='val';v.id='v'+i;v.textContent='0°';r.type='range';r.min=-LIMIT;r.max=LIMIT;r.step=1;r.value=0;r.id='j'+i;r.oninput=()=>{v.textContent=r.value+'°';mirrorFrom(i);};l.append(jn,v,r);box.appendChild(l);});legs.appendChild(box);});
+  ['Hông','Gối'].forEach((jn,joint)=>{const i=2*leg+joint,l=document.createElement('label'),v=document.createElement('span'),r=document.createElement('input');v.className='val';v.id='v'+i;v.textContent='0°';r.type='range';r.min=-LIMIT;r.max=LIMIT;r.step=1;r.value=0;r.id='j'+i;r.oninput=()=>{v.textContent=r.value+'°';mirrorFrom(i);autoLive();};l.append(jn,v,r);box.appendChild(l);});legs.appendChild(box);});
  PRESETS.forEach(e=>{const b=document.createElement('button');b.textContent=e.n;b.onclick=()=>{if(!ready){setStatus('Bật servo trước đã.');return;}playFrames(e.f,$('loopPreset').checked);};$('presets').appendChild(b);});
 }
 build();
 $('arm').onclick=async()=>{try{halt();await api('actuator',{token,seq:++seq,value:'positional',confirm:'1'});await poll();}catch(e){setStatus(e.message);}};
 $('stopAll').onclick=halt;
 $('zero').onclick=()=>writeEditor(F(STAND,$('color').value,Number($('ms').value)||0,Number($('hold').value)||0));
-$('live').onclick=()=>{if(liveOn){liveOff();halt();return;}if(!ready){setStatus('Bật servo trước đã.');return;}run++;liveOn=true;$('live').textContent='Xem trực tiếp: bật';liveLoop();};
+function startLive(){if(!ready){setStatus('Servo chưa sẵn sàng — bấm Bật servo rồi chờ 3 giây.');return false;}run++;liveOn=true;$('live').textContent='Xem trực tiếp: bật';liveLoop();return true;}
+// Owner: sliders looked dead because preview was opt-in. Touching one now drives the crab.
+function autoLive(){if(!liveOn)startLive();}
+$('live').onclick=()=>{if(liveOn){liveOff();halt();return;}startLive();};
 $('addFrame').onclick=()=>{if(frames.length>=40)return;frames.splice(selected+1,0,readEditor());selected++;renderFrames();};
 $('updateFrame').onclick=()=>{if(selected<0)return;frames[selected]=readEditor();renderFrames();};
 $('deleteFrame').onclick=()=>{if(selected<0)return;frames.splice(selected,1);selected=Math.min(selected,frames.length-1);if(selected>=0)writeEditor(frames[selected]);renderFrames();};
@@ -112,6 +115,6 @@ $('playOnce').onclick=()=>{if(ready&&frames.length)playFrames(frames,false);};
 $('playLoop').onclick=()=>{if(ready&&frames.length)playFrames(frames,true);};
 $('save').onclick=async()=>{const n=$('name').value.trim().slice(0,24);if(!n||!frames.length){setStatus('Đặt tên và thêm ít nhất một khung.');return;}const list=saved.filter(e=>e.n!==n).concat([{n,f:frames.map(f=>f.slice())}]);if(await store(list))setStatus('Đã lưu “'+n+'” vào cua.');};
 for(const ev of ['blur','pagehide'])window.addEventListener(ev,halt);document.addEventListener('visibilitychange',()=>{if(document.hidden)halt();});
-window.CuaEmote={toCommand,hexRgb,PRESETS,playFrames,halt,state:()=>({run,seq,ready,liveOn,frames,saved}),setReady:v=>{ready=v;}};
+window.CuaEmote={toCommand,hexRgb,PRESETS,playFrames,halt,autoLive,state:()=>({run,seq,ready,liveOn,frames,saved}),setReady:v=>{ready=v;}};
 api('session').then(d=>{token=d.token;seq=0;poll();loadSaved();setInterval(poll,1000);}).catch(e=>setStatus(e.message));
 </script></body></html>
