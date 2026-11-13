@@ -74,5 +74,13 @@
     "physicalPositionalMotionTested": false,
     "automaticMotorClassification": false,
     "historicalFieldsNote": "Other top-level fields are the preserved Nov11 continuous-servo report, not current setup prerequisites. Current behavior is documented in POSITIONAL180.md."
+  },
+  "normalSpeedUpdate": {
+    "profile": "positional180-v2",
+    "date": "2026-11-13",
+    "exactOwnerMessage": "chậm quá fen ơi, cho nó nhanh như bìh thường đi",
+    "ownerObservation": "180deg servo movement is reported too slow; no measured rate or loaded walking result supplied",
+    "servoPowerStateToday": "not confirmed; prior-day power-disconnection report is historical",
+    "runtimeChanges": "period1second,default0.65,slew180nominaldeg/s; angular envelope and saved positional trims unchanged"
   }
 }

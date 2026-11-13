@@ -11,7 +11,7 @@ RELEASE_TIP = '4cadb190eb0b3a92a9e7805c9956f41af7b085d71a2e18de54edbae19829277c'
 IMPLEMENTED_NOTES = [10,11,12,13,14,15,16,17,18]
 
 def release_metadata():
-    return {'applicationProfile':'positional180-v1','releaseChainTip': RELEASE_TIP, 'implementedFirmwareNotes': IMPLEMENTED_NOTES,
+    return {'applicationProfile':'positional180-v2','releaseChainTip': RELEASE_TIP, 'implementedFirmwareNotes': IMPLEMENTED_NOTES,
             'ownerEvidence': 'firmware/OWNER-EVIDENCE.json'}
 
 def sha(path):

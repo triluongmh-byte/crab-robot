@@ -107,6 +107,15 @@ static void test_manual90(){
  assert(m.continuous.confirmReference());assert(m.openContinuous(false));assert(!m.continuous.referenceValid); // mode/settings
  assert(m.openTest(true));assert(m.test.config(0,307));assert(m.testCommand(2,1,4,100,true));assert(!m.continuous.referenceValid); // untracked motion
 }
+static void test_normal_speed(){
+ Motion m;assert(std::fabs(m.speed-.65f)<.001f);assert(cfg::SLEW_DPS==180);
+ // One second of held Normal must advance about0.65cycles, not the old0.067.
+ ready(m);m.newSession(91);uint32_t seq=0;const uint32_t begin=2200;
+ const float phase=m.phase;
+ for(uint32_t t=begin;t<begin+1000;t+=10){if((t-begin)%150==0)assert(m.command(91,++seq,1,t,true));m.tick(t);}
+ const float advance=m.phase-phase;assert(advance>3.9f&&advance<4.5f);
+ m.stop();for(uint32_t t=begin+1000;t<begin+1500;t+=10)m.tick(t);assert(!m.lease&&m.amplitude==0);
+}
 static void test_motion(){
  Motion m;m.newSession(12);m.begin(0);assert(!m.command(12,1,1,0));m.stop();assert(m.enabled==0);ready(m);
  assert(m.command(12,2,1,2200,true));assert(m.velocity.x==1);assert(!m.command(12,1,2,2210));
@@ -166,4 +175,4 @@ static void simulation(const std::string& dir){
  }
  report<<"],\"sidewaysSupportedByModel\":true,\"hardwareTested\":false}\n";
 }
-int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, gait direction and diagonal foot support, pulse bounds, QR encoding\n";}
+int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, gait direction and diagonal foot support, pulse bounds, QR encoding\n";}

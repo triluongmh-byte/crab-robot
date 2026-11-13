@@ -16,6 +16,6 @@ Use the [same photo wiring sheet and CH0–CH7 map](WIRING.md). Hip channels are
 
 Support the body with the feet clear. Reapply power, enable the positional servos and use **Ráp → Tư thế đứng**. Adjust small +/− trims, use **Lưu tâm**, then **Xong ráp**. Old experiment-era trim data is not loaded into this release; the new trim namespace starts at zero.
 
-Use **Chậm** and a short held direction for the first direction check while the body is supported. Release stops the walking sequence and settles towards standing. **Ngắt servo** turns PWM off; removing servo5V is the physical power disconnect. Only try the floor after direction, neutral, clearance, cable slack and supply behavior are satisfactory. Stable walking has not been demonstrated with these motors.
+Normal-speed firmware defaults to **Bình thường**. Choose **Chậm** and a short held direction for the first direction check while the body is supported. Release stops the walking sequence and settles towards standing. **Ngắt servo** turns PWM off; removing servo5V is the physical power disconnect. Only try the floor after direction, neutral, clearance, cable slack and supply behavior are satisfactory. Stable walking has not been demonstrated with these motors.
 
 All degree labels are nominal: the initial pulse span is conservative, and actual loaded angles/torque depend on the received units. Firmware has no external encoder or collision detector. Increasing pulse ranges is not part of this first setup.

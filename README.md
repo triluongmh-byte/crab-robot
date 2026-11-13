@@ -91,7 +91,7 @@ At every socket: **orange → `PWM` / `S`**, **red → `V+`**, **brown → `GND`
 
 **The two loaded 360° trials did not work reliably.** The first timed crawl caused leg collisions; the following hips-only trial moved erratically. Those experiments are retained in history; the current release is dedicated to positional180° servos, with eight directions after explicit enable. Equal reverse time cannot restore an accurately known joint angle. Read [the experiment record](firmware/EXPERIMENT-STATUS.md).
 
-This jointed-leg mechanism needs **eight positional servos**. The owner now reports delivery at home, with installation at the bench still pending. Before fitting the complete set, test one unloaded motor's position response and fit before replacing the whole set. Recheck centre, direction and cable slack during assembly. Use the new [180° first-connection procedure](firmware/POSITIONAL180.md). The current firmware starts PWM off; **Bật servo180°** enables channels gradually, and **Ngắt servo** turns PWM off. Start with **Chậm**.
+This jointed-leg mechanism needs **eight positional servos**. The owner now reports delivery at home, with installation at the bench still pending. Before fitting the complete set, test one unloaded motor's position response and fit before replacing the whole set. Recheck centre, direction and cable slack during assembly. Use the new [180° first-connection procedure](firmware/POSITIONAL180.md). The current firmware starts PWM off; **Bật servo180°** enables channels gradually, and **Ngắt servo** turns PWM off. The normal-speed release defaults to **Bình thường**; choose **Chậm** for first clearance checks.
 
 ### Hands-on checks that remain
 

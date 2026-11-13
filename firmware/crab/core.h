@@ -132,7 +132,7 @@ struct Motion {
  }
  float offsets[8]={},position[8]={};
  Vec velocity{};
- float amplitude=0,phase=0,speed=.4f;
+ float amplitude=0,phase=0,speed=.65f;
  bool assembly=false,raw=false,inhibit=false,lease=false;
  uint32_t session=0,lastSeq=0,lastCommand=0,start=0,lastTick=0;
  int enabled=0,cursor=0;
