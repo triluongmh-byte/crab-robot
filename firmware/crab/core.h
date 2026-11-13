@@ -19,6 +19,8 @@ inline Vec direction(int n){
  {.70710678f,-.70710678f},{-.70710678f,.70710678f},{-.70710678f,-.70710678f}};
  return n>=0&&n<=8?d[n]:Vec{};
 }
+// Owner drive command (1 Forward,2 Backward,3 Left,4 Right,...) in the CAD frame.
+inline Vec bodyDirection(int n){Vec d=direction(n);return cfg::FRONT_IS_CH46?Vec{-d.x,-d.y}:d;}
 // Project body translation onto each hip tangent in the nominal CAD frame.
 inline float hipProjection(int leg,Vec v){return -std::sin(cfg::RADIAL[leg])*v.x+std::cos(cfg::RADIAL[leg])*v.y;}
 inline float smooth(float x){x=clamp(x,0,1);return x*x*(3-2*x);}
@@ -28,21 +30,27 @@ inline const char* patternName(Pattern p){return p==Pattern::Pairs?"pairs":p==Pa
 // Flick only replaces axial Forward/Backward; sideways and diagonals trot.
 inline bool flickActive(Pattern p,Vec v){return p==Pattern::Flick&&std::fabs(v.x)>std::fabs(v.y)+.01f;}
 inline float cyclePeriod(Pattern p,Vec v){return flickActive(p,v)?cfg::FLICK_PERIOD_S:cfg::PERIOD_S;}
-inline void flick(float phase,Vec v,float amplitude,float out[8]){
- const float cycle=phase/6.2831853072f;const bool forward=v.x>0;
+// The stance is 180-deg symmetric, so identical knee timing on every leg
+// cannot pick a direction (owner video IMG_2637: it only bounced). Timing is
+// set by geometry instead: a trailing leg (foot pointing away from travel)
+// gets the power stroke, a slow lift then a fast drop that strikes and pushes;
+// a leading leg snaps up fast and lowers slowly so it drags little.
+inline void flick(float phase,Vec v,float amplitude,float out[8],float hip=cfg::FLICK_HIP){
+ const float cycle=phase/6.2831853072f;
  for(int leg=0;leg<4;leg++){
-  // Front legs (0,1) swing their feet towards +X, rear legs (2,3) towards -X.
+  // CAD legs 0,1 swing their feet towards +X, legs 2,3 towards -X.
   const Vec pose(leg<2?1.f:-1.f,0);
-  out[2*leg]=cfg::FLICK_HIP*clamp(hipProjection(leg,pose)*1.4142135624f,-1,1)*amplitude;
+  out[2*leg]=clamp(hip,0,cfg::FLICK_HIP)*clamp(hipProjection(leg,pose)*1.4142135624f,-1,1)*amplitude;
   const float group=(leg==0||leg==3)?0:.5f;
   float u=cycle-group-std::floor(cycle-group);
-  if(!forward)u=1-u;
+  const bool leading=pose.x*v.x>0;
+  if(!leading)u=1-u;
   const float k=u<cfg::FLICK_STROKE?smooth(u/cfg::FLICK_STROKE):1-smooth((u-cfg::FLICK_STROKE)/(1-cfg::FLICK_STROKE));
   out[2*leg+1]=-cfg::KNEE_LIFT*k*amplitude;
  }
 }
-inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pattern::Trot){
- if(flickActive(which,v)){flick(phase,v,amplitude,out);return;}
+inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pattern::Trot,float flickHip=cfg::FLICK_HIP){
+ if(flickActive(which,v)){flick(phase,v,amplitude,out,flickHip);return;}
  const cfg::GaitPattern& g=pattern(which);
  // Begin at mid stance: hips start from neutral, not an opposite kick.
  const float cycle=phase/6.2831853072f+g.start;
@@ -63,8 +71,9 @@ inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pa
 inline int pulse(int ch,float angle,float offset,bool raw=false){
  if(raw)return cfg::CENTRE_US;
  // Clamp AFTER mirror and trim: trim cannot bypass the owner's travel budget.
- const float limit=ch%2?35.f:25.f; // symmetric inside reported hip30/60 and knee40, with margin
- float degrees=clamp(cfg::SIGN[ch]*clamp(angle,-cfg::JOINT_LIMIT,cfg::JOINT_LIMIT)+clamp(offset,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT),-limit,limit);
+ // Owner-requested hip range for the 90 deg knee-flick stance; knees unchanged.
+ const float limit=ch%2?cfg::KNEE_PULSE_LIMIT:cfg::HIP_LIMIT,request=ch%2?cfg::JOINT_LIMIT:cfg::HIP_LIMIT;
+ float degrees=clamp(cfg::SIGN[ch]*clamp(angle,-request,request)+clamp(offset,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT),-limit,limit);
  return int(std::lround(cfg::CENTRE_US+cfg::US_PER_DEG*degrees));
 }
 inline std::string apName(uint32_t mac){char s[24];snprintf(s,sizeof(s),"CuaRobot-%04X",unsigned(mac&0xFFFF));return s;}
@@ -165,7 +174,7 @@ struct Motion {
  }
  float offsets[8]={},position[8]={};
  Vec velocity{};
- float amplitude=0,phase=0,speed=.65f;
+ float amplitude=0,phase=0,speed=cfg::SPEED_DEFAULT,flickHip=cfg::FLICK_HIP;
  Pattern gaitPattern=Pattern::Trot;
  bool assembly=false,raw=false,inhibit=false,lease=false;
  uint32_t session=0,lastSeq=0,lastCommand=0,start=0,lastTick=0;
@@ -196,7 +205,7 @@ struct Motion {
   if(actuator==Actuator::Unknown)return false; //180-only release: no timed360 fallback
   if(!positional()||enabled<8)return false;
   if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
-  velocity=direction(dir);posing=false;relaxing=false;lastCommand=now;lease=true;return true;
+  velocity=bodyDirection(dir);posing=false;relaxing=false;lastCommand=now;lease=true;return true;
  }
  void newSession(uint32_t id){stop();test.opened=false;continuous.opened=false;session=id;lastSeq=0;}
  bool setAssembly(bool active){if(active&&(test.opened||continuous.opened))return false;stop();assembly=active;raw=false;return true;}
@@ -219,7 +228,7 @@ struct Motion {
   if(moving)heading=velocity;
   if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cyclePeriod(gaitPattern,heading),6.2831853072f);
   if(posing){for(int ch=0;ch<8;ch++)position[ch]+=clamp(pose[ch]-position[ch],-poseRate[ch]*dt,poseRate[ch]*dt);return 0;}
-  float target[8]={};if(!assembly)gait(phase,heading,amplitude,target,gaitPattern);
+  float target[8]={};if(!assembly)gait(phase,heading,amplitude,target,gaitPattern,flickHip);
   const float rate=relaxing&&!moving?cfg::RELAX_DPS:cfg::SLEW_DPS;bool settled=true;
   for(int ch=0;ch<8;ch++){position[ch]+=clamp(target[ch]-position[ch],-rate*dt,rate*dt);settled=settled&&std::fabs(target[ch]-position[ch])<.01f;}
   if(settled||moving)relaxing=false;
