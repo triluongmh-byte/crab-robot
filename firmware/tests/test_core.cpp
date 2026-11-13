@@ -16,6 +16,12 @@ static void test_network(){
  n.tick(53000,true);assert(n.state==NetState::Online&&!n.saveRequested);
  n.erase(54000);assert(!n.saved&&!n.pending&&n.state==NetState::Setup);n.tick(90000,false);assert(!n.retryRequested);
  n.begin(true,0xfffffff0);n.tick(0x00005000,false);assert(n.state==NetState::Setup); // timer wrap
+ // Boot attempt hard-fails early but the link comes up anyway: adopt it, never
+ // retry (retry = WiFi.disconnect of a working link every 30 s).
+ {Network late;late.begin(true,0);late.tick(600,false,true);assert(late.state==NetState::Setup&&std::string(late.message)==msg::FAILED);
+  late.tick(5000,true);assert(late.state==NetState::Online&&std::string(late.message)==msg::ONLINE);
+  for(uint32_t t=6000;t<200000;t+=1000){late.tick(t,true);assert(late.state==NetState::Online&&!late.retryRequested);}
+  Network fresh;fresh.begin(false,0);fresh.tick(100,true);assert(fresh.state==NetState::Setup);} // no saved network: unchanged
  Network ap;ap.begin(true,0);ap.tick(100,false,false,true);
  assert(ap.state==NetState::Setup&&ap.pauseRequested&&!ap.retryRequested);
  ap.pauseRequested=false;
