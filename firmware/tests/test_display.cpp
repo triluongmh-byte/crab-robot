@@ -65,6 +65,8 @@ int main(int argc,char** argv){
  {Screen& f=s;for(const char* t:{"1. Quét QR vào Wi-Fi cua","3. Chọn Wi-Fi nhà","Giữ BOOT 8s: xóa Wi-Fi"})assert(f.textWidth(t)<=2*154);
   assert(f.textWidth("Giữ BOOT 8s: xóa Wi-Fi")<=154&&f.textWidth("2. Mở 192.168.4.1")<=154);
   for(const char* m:{crab::msg::SETUP,crab::msg::FAILED,crab::msg::WRONG_PASS,crab::msg::NOT_FOUND,crab::msg::LOST,crab::msg::DRIVER})assert(f.textWidth(m)<=2*150);
+  // Auto mode lines replace the Wi-Fi message on the face and must keep the address beside them.
+  for(const char* m:{crab::automsg::ON,crab::automsg::MANUAL,crab::automsg::LOST,crab::automsg::STUCK})assert(f.textWidth(m)+f.textWidth("  192.168.100.200")<=Screen::STATUS_MAX_PX);
   const int before=draws;assert(f.show("WIFI:T:nopass;S:CuaRobot-6C13;;",crab::msg::WRONG_PASS,"192.168.4.1","CuaRobot-6C13")&&draws==before+1);}
  // Status line fits one row: long Wi-Fi failure drops the message, keeps the address.
  {Screen& f=s;char b[192];

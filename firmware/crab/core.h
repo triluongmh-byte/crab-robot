@@ -4,6 +4,7 @@
 #include "continuous360.h"
 #include "config.h"
 #include "eyes.h"
+#include "autopilot.h"
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
@@ -223,6 +224,7 @@ struct Motion {
  float kneeLift=cfg::KNEE_LIFT;
  Pattern gaitPattern=Pattern::Trot;
  bool assembly=false,raw=false,inhibit=false,lease=false;
+ bool autoMode=false; // Auto mode drives via autoDrive; cleared by any stop or manual command
  uint32_t session=0,lastSeq=0,lastCommand=0,start=0,lastTick=0;
  int enabled=0;
  uint32_t outputEpoch=0; // invalidate cached output after synchronous off/settings
@@ -235,7 +237,7 @@ struct Motion {
  // negative lifts). Same lease/deadman as walking; release relaxes slowly.
  float pose[8]={},poseRate[8]={};
  bool posing=false,relaxing=false;
- void stop(){if(posing)relaxing=true;posing=false;velocity={};yaw=0;dir=0;lease=false;test.stop();continuous.stop();drive.stop();}
+ void stop(){if(posing)relaxing=true;posing=false;autoMode=false;velocity={};yaw=0;dir=0;lease=false;test.stop();continuous.stop();drive.stop();}
  bool poseCommand(uint32_t id,uint32_t seq,const float angles[8],uint32_t ms,uint32_t now,bool fresh){
   if(!sequence(id,seq)||inhibit||assembly||test.opened||continuous.opened||!positional()||enabled<8)return false;
   if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
@@ -246,7 +248,7 @@ struct Motion {
    const float distance=std::fabs(pose[ch]-position[ch]);
    poseRate[ch]=seconds>0?clamp(distance/seconds,1,cfg::SLEW_DPS):cfg::SLEW_DPS;
   }
-  velocity={};amplitude=0;posing=true;relaxing=false;lastCommand=now;lease=true;return true;
+  velocity={};amplitude=0;posing=true;relaxing=false;autoMode=false;lastCommand=now;lease=true;return true;
  }
  bool command(uint32_t id,uint32_t seq,int dir,uint32_t now,bool fresh=true){
   if(dir<0||dir>8||!sequence(id,seq))return false;
@@ -255,6 +257,18 @@ struct Motion {
   if(actuator==Actuator::Unknown)return false; //180-only release: no timed360 fallback
   if(!positional()||enabled<8)return false;
   if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
+  velocity=bodyDirection(dir);yaw=bodyYaw(dir);this->dir=dir;posing=false;relaxing=false;autoMode=false;lastCommand=now;lease=true;return true;
+ }
+ // Auto mode: same readiness as a manual drive command, but no page session.
+ bool startAuto(uint32_t now){
+  if(inhibit||assembly||test.opened||continuous.opened||!positional()||enabled<8)return false;
+  stop();autoMode=true;lastCommand=now;lease=true;return true;
+ }
+ // Called by the autopilot every frame; each call refreshes the deadman, so a
+ // stalled loop still stops the crab (and ends Auto) after DEADMAN_MS.
+ bool autoDrive(int dir,uint32_t now){
+  if(!autoMode||dir<0||dir>8)return false;
+  if(inhibit||assembly||!positional()||enabled<8){stop();return false;}
   velocity=bodyDirection(dir);yaw=bodyYaw(dir);this->dir=dir;posing=false;relaxing=false;lastCommand=now;lease=true;return true;
  }
  void newSession(uint32_t id){stop();test.opened=false;continuous.opened=false;session=id;lastSeq=0;}
@@ -267,7 +281,7 @@ struct Motion {
  int tick(uint32_t now){
   test.tick(now);continuous.tick(now);drive.tick(now);
   if(inhibit){test.stop();continuous.stop();drive.stop();}
-  if(!positional()||inhibit){velocity={};lease=false;return -1;}
+  if(!positional()||inhibit){velocity={};lease=false;autoMode=false;return -1;}
   if(assembly||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)stop();
   if(elapsed(now,lastTick)<cfg::FRAME_MS)return -1;
   const float dt=std::min(elapsed(now,lastTick)*.001f,.05f);lastTick=now;

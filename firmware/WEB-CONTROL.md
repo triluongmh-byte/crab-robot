@@ -33,4 +33,6 @@ node firmware/tests/test_layout.js /private/tmp/crab-layout-results
 The test uses a fresh headless profile and mocked API routes; it never calls the robot or uses an existing browser profile. The repository build installs no browser dependencies.
 
 
+**2026-11-14 (`positional180-v22`):** a **🤖 Tự đi** (Auto) button sits above the pad. It is enabled when both front ultrasonic sensors answer and the servos are armed. **DỪNG** or any drive button returns to Manual. Leaving the page, phone sleep and the ☰ menu only release a held button and no longer send a stop on their own, so Auto keeps walking. See [BATTERY-AUTONOMY.md](BATTERY-AUTONOMY.md).
+
 **2026-11-14 (`positional180-v21`):** the pad has eight buttons. The four corners walk forward or back while turning the body (↖ ↗ ↙ ↘, `dir` 5–8). The Wi-Fi password field is plain text, and **Tìm Wi-Fi** fills the name from the first network found.

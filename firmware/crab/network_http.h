@@ -57,11 +57,18 @@ bool hexColorArg(uint32_t& out){
  for(size_t i=0;i<6;i++){const char c=s[i];const int d=c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:c>='A'&&c<='F'?c-'A'+10:-1;if(d<0)return false;v=v*16+uint32_t(d);}
  out=v;return true;
 }
+// Auto mode fields for /api/status: running state, last stop reason, sensors (cm, null when silent).
+String autoJson(){
+ const uint32_t now=millis();const char* note=autopilot.active()?nullptr:autopilot.message(now);
+ String s="\"autoSupported\":"+String(cfg::SONAR_TRIG[0]>=0?"true":"false")+",\"auto\":"+String(autopilot.active()?"true":"false")+",\"autoState\":"+jsonString(crab::autoStateName(autopilot.state))+",\"autoNote\":"+(note?jsonString(note):String("null"))+",\"sonarOk\":"+String(sonar.ok(now)?"true":"false")+",\"sonar\":[";
+ for(int i=0;i<2;i++){if(i)s+=",";s+=sonar.side[i].fresh(now)?String(int(sonar.side[i].cm())):String("null");}
+ return s+"]";
+}
 void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° trước, chờ bật đủ8 kênh và thoát Ráp để lái.\"}");}
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v21\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+"}");});
+  json(200,String("{\"firmware\":\"positional180-v22\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+","+autoJson()+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -129,6 +136,16 @@ void configureHttp(){
   String value=server.arg("value");if(value!="unknown"&&value!="positional"){error();return;}
   if(value=="positional"&&server.arg("confirm")!="1"){error();return;}
   bool accepted;{Guard g;accepted=motion.sequence(motion.session,seq);if(accepted){offForChangeLocked();accepted=motion.selectActuator(value=="positional",millis());}}if(!accepted){error(409);return;}ok();
+ });
+ // Auto mode on/off (owner token). Needs both sensors answering and the servos
+ // armed for walking; any later manual command or STOP returns to Manual.
+ server.on("/api/auto",HTTP_POST,[]{
+  if(!owns()){error(409);return;}uint32_t a;if(!uintArg("active",a)||a>1){error();return;}
+  const uint32_t now=millis();
+  if(!a){{Guard g;motion.stop();}if(autopilot.active())autopilot.stop(now,crab::automsg::MANUAL);ok();return;}
+  if(!sonar.ok(now)){json(409,"{\"error\":\"Chưa thấy cảm biến siêu âm. Cắm đủ 2 cảm biến (trái GPIO10/11, phải GPIO12/13) rồi thử lại.\"}");return;}
+  bool accepted;{Guard g;accepted=motion.startAuto(now);}if(!accepted){actuatorError();return;}
+  autopilot.start(now);ok();
  });
  // The former /api/test and /api/360 routes are intentionally not registered.
  // Captive portal probes (Android/iOS/Windows) all land on our embedded page.

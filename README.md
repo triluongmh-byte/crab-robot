@@ -1,8 +1,8 @@
 # 🦀 Crab Robot
 
-**An 8-servo crab whose face is a screen with two eyes. Drive it from your phone, play emotions, change the lamp colour.**
+**An 8-servo crab whose face is a screen with two eyes. Drive it from your phone, or let it walk by itself and dodge obstacles. Play emotions, change the lamp colour.**
 
-[Drive](#open-the-controls) · [Gaits](#gaits-and-sliders) · [Emotions](#emotions) · [Calibration](#calibration-ráp) · [Servo channels](#which-servo-goes-where) · [Wiring](#wiring) · [Firmware](#firmware)
+[Drive](#open-the-controls) · [Tự đi (Auto)](#tự-đi-auto-mode) · [Gaits](#gaits-and-sliders) · [Emotions](#emotions) · [Calibration](#calibration-ráp) · [Servo channels](#which-servo-goes-where) · [Wiring](#wiring) · [Firmware](#firmware)
 
 <p align="center">
   <img src="docs/images/crab-walk-2026-11-14.gif" width="480" alt="The crab crawling on the floor with happy eyes while it walks">
@@ -24,6 +24,7 @@ The web controls are in Vietnamese. Button names below are quoted as they appear
 | **PCA9685** | Blue board with 16 rows of 3-pin headers | Servo pulses for CH0–CH7 |
 | **8 × SG90 positional 180°** | 4 hips on the body, 4 knees on the legs | Joints. **Do not use 360° continuous servos** |
 | **WS2812 strip ×8** | Thin strip with 8 LEDs | Colour lamp |
+| **2 × HC-SR04P** (round 1, optional) | Two ultrasonic "eyes" at the front | Obstacle sensing for **Tự đi** (Auto) |
 | **Separate 5 V servo supply** | Into the PCA `V+` / `GND` screw terminal | Powers servos and LEDs; kept apart from the LILYGO's USB |
 
 ## Open the controls
@@ -37,6 +38,19 @@ The web controls are in Vietnamese. Button names below are quoted as they appear
 4. To forget the saved Wi-Fi, hold **BOOT** for about 8 seconds.
 
 On the phone, tap **☰** for settings. The **Trạng thái** (status) tab lists firmware, PCA9685, servos, gait, speed, lamp and Wi-Fi.
+
+## Tự đi (Auto mode)
+
+Needs the two front ultrasonic sensors (round 1 in [firmware/BATTERY-AUTONOMY.md](firmware/BATTERY-AUTONOMY.md)): left on GPIO10/11, right on GPIO12/13.
+
+1. Arm the servos as usual. When both sensors answer, the green **🤖 Tự đi** button above the pad lights up, and the line beside it shows both distances.
+2. Tap **🤖 Tự đi**.
+   - The crab walks forward and veers away from things on one side.
+   - At an obstacle closer than 25 cm it stops with surprised eyes, backs off turning towards the freer side, and carries on.
+   - Now and then it wanders off or stops to look around.
+3. **DỪNG** or any drive button takes back control (Manual). So do an emotion, **Ráp** and **BOOT**.
+
+It never starts by itself, even after a reset. If it gets stuck 5 times in a row it stops and shows **Kẹt rồi, nhờ giúp** with sad eyes. Locking the phone doesn't stop it; only DỪNG does.
 
 ## Gaits and sliders
 
@@ -142,7 +156,7 @@ Add `--dry-run` to preview the requests. The script needs all 8 servos armed, an
 
 ## Firmware
 
-- **Running now:** `positional180-v20`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
+- **Running now:** `positional180-v22`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
 - **Build, flash and version history:** [firmware/README.md](firmware/README.md). See also [gaits](firmware/CRAWL.md), [web controls](firmware/WEB-CONTROL.md) and [emotions](firmware/EMOTIONS.md).
 
 ```sh
@@ -168,7 +182,7 @@ Building doesn't flash a board, run motors, print or order anything.
 | Looking for | Open |
 |---|---|
 | Printed parts, assembly, body edits | [case/README.md](case/README.md) · [printed parts list](case/PRINTED-INVENTORY.md) |
-| Battery power, sensors, Auto mode (plan) | [firmware/BATTERY-AUTONOMY.md](firmware/BATTERY-AUTONOMY.md) |
+| Sensors and Auto mode (round 1), battery power (round 2) | [firmware/BATTERY-AUTONOMY.md](firmware/BATTERY-AUTONOMY.md) |
 | Integrated ESP32-S3 + PCA9685 board | [docs/INTEGRATED-CONTROLLER.md](docs/INTEGRATED-CONTROLLER.md) · [KiCad sources](design/) |
 | Build-from-source results | [BUILD-VALIDATION.md](BUILD-VALIDATION.md) |
 | 360° servo trials (didn't work out) | [firmware/EXPERIMENT-STATUS.md](firmware/EXPERIMENT-STATUS.md) |

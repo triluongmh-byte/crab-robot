@@ -25,6 +25,7 @@ const fetch=async(path,opt={})=>{const data=Object.fromEntries(opt.body||[]);cal
  if(path==='/api/session')d={token:'42'};
  if(path==='/api/actuator'){state.positional=data.value==='positional';state.enabled=0;}
  if(path==='/api/assembly')state.assembly=data.active==='1';
+ if(path==='/api/auto'){state.auto=data.active==='1';state.autoState='cruise';}
  if(path==='/api/trim')state.offsets[Number(data.ch)]+=Number(data.delta);
  if(path==='/api/scan')d={busy:false,networks:['Nhà tôi','<script>bad</script>']};
  return {ok:true,json:async()=>d};};
@@ -59,6 +60,19 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  el('gait').value='trot';await el('gait').onchange();await flush();assert(calls.some(c=>c.path==='/api/gait'&&c.data.value==='trot'&&c.data.token==='42'));state.gait='flick';await poll();assert.equal(el('gait').value,'flick');assert(/búng/.test(el('gaitHint').textContent));state.gait='trot';await poll();assert.equal(el('gait').value,'trot');
  for(const b of dirs){b.fire('pointerdown');await flush();let cmd=calls.filter(c=>c.path==='/api/move').at(-1);assert.equal(cmd.data.dir,b.dataset.dir);assert.equal(cmd.data.fresh,'1');await hold();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');}
 
+ // Tự đi: needs both sensors and armed servos; toggles /api/auto. Only DỪNG (or a
+ // drive button) ends it: blur, sleep and the menu must not stop the robot.
+ assert(el('auto').disabled&&/Chưa thấy cảm biến/.test(el('autoInfo').textContent));
+ state.sonarOk=true;state.sonar=[120,400];state.autoSupported=true;await poll();assert(!el('auto').disabled&&/trái 120 cm · phải xa/.test(el('autoInfo').textContent));
+ assert(el('statusDetail').children.some(x=>x.textContent==='trái 120 cm · phải xa')&&el('statusDetail').children.some(x=>x.textContent==='Tay'));
+ await el('auto').onclick();await flush();assert(calls.some(c=>c.path==='/api/auto'&&c.data.active==='1'&&c.data.token==='42'));
+ assert.equal(el('auto').textContent,'🤖 Đang tự đi');assert.equal(el('auto').attributes['aria-pressed'],'true');assert(/đang đi/.test(el('autoInfo').textContent));assert.equal(el('readiness').textContent,'🤖 Tự đi');
+ const quiet=beacons.length;events.blur();events.pagehide();document.hidden=true;events.visibilitychange();document.hidden=false;el('menuButton').onclick();el('menuButton').onclick();assert.equal(beacons.length,quiet);
+ state.autoState='halt';await poll();assert(/thấy vật cản/.test(el('autoInfo').textContent));
+ el('stop').onclick();assert.equal(beacons.length,quiet+1);assert.equal(beacons.at(-1).data.dir,'0');
+ state.auto=false;state.autoNote='Đã về lái tay';await poll();assert.equal(el('auto').textContent,'🤖 Tự đi');assert.equal(el('autoInfo').textContent,'Đã về lái tay');
+ state.auto=true;await poll();await el('auto').onclick();await flush();assert.equal(calls.filter(c=>c.path==='/api/auto').at(-1).data.active,'0');assert(!state.auto);
+ state.autoNote=null;state.sonarOk=false;state.sonar=[null,null];await poll();assert(el('auto').disabled);
  // Polls and unrelated touches must not interrupt the captured finger.
  const first=dirs[0];assert(first.fire('pointerdown',{pointerId:7}));await flush();assert(first.holding&&first.capture===7);
  const writes=dirs.map(b=>b.disabledWrites);state.message='Đã vào Wi-Fi — trạng thái thay đổi';await poll();
@@ -101,5 +115,5 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  const wifiCalls=calls.filter(c=>c.path==='/api/wifi').length;el('ssid').value='';await el('connect').onclick();assert.equal(calls.filter(c=>c.path==='/api/wifi').length,wifiCalls);
  failStatus=true;await poll();assert(dirs.every(b=>b.disabled));assert.equal(vm.runInContext('held',ctx),0);
  assert(!calls.some(c=>c.path.includes('/360')||c.path.includes('/test')));assert(!html.includes('id="show360"'));
- console.log('PASS: actual180-only UI, auto-arm/explicit arm, enable8 readiness, 8-direction (4 straight + 4 turning arcs) split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
+ console.log('PASS: Tự đi toggle (sensors/armed gating, DỪNG ends it, blur/sleep/menu do not), actual180-only UI, auto-arm/explicit arm, enable8 readiness, 8-direction (4 straight + 4 turning arcs) split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

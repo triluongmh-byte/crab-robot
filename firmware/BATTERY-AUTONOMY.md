@@ -1,103 +1,142 @@
-# Battery power and self-driving parts (plan)
+# Battery power and self-driving parts
 
-**Status: plan, parts not bought or fitted yet (2026-11-14).** Nothing here is in the firmware yet. The current robot still uses the [two-port USB power bank wiring](WIRING.md#2-connect-power--two-different-pca-labels). This page records what to buy and how it will be wired, so the parts fit the pins the firmware will use.
+**Status, 2026-11-14:**
+- **Auto mode (Tự đi) is in the firmware** from `positional180-v22`. It waits for the two ultrasonic sensors from round 1. Without them the button stays greyed out.
+- **The battery (round 2) is a plan.** Nothing in this round has been bought or fitted yet.
+
+The robot still runs on the [two-port USB power bank wiring](WIRING.md#2-connect-power--two-different-pca-labels).
 
 [Back to wiring](WIRING.md) · [Back to README](../README.md)
 
-## Why change the power
+The parts come in **two buying rounds**:
 
-The power bank's servo port sags under walking load, and that causes brownouts. A self-driving robot that resets mid-walk is worse than a remote-control one. Power is step 0, before sensors or the Auto mode.
+1. **Round 1** is what turns the toy into a robot, for under 100k VND.
+2. **Round 2** is a power kit that only works as a whole, so it is bought in one go.
 
-**Do not use a 1S 3.7 V LiPo for the servos.** SG90 servos need 4.8–6 V. At 3.0–4.2 V they are weak and jittery, and the brownouts get worse.
+## Round 1: sensors, about 75–95k VND
 
-## Planned power wiring
+| Part | Qty | Notes |
+|---|---|---|
+| **HC-SR04P** (or RCWL-1601) ultrasonic module | 2 | 3.3 V parts. Skip the 5 V SRF04 / HC-SR04. Two at the front are enough; see below |
+| **1000 µF electrolytic capacitor**, 10 V or more | 1–3 | Across PCA `V+`/`GND`. It softens the brownouts with the current power bank too. Long leg +, striped side − |
 
-Use one 2S LiPo (7.4 V nominal, 1000–1500 mAh) split into two branches. The servo branch and the logic branch each get their own regulator, so a servo current spike cannot pull the ESP32 down.
+With round 1 fitted, Auto mode runs on the power bank as it is now. It still has the trailing USB cable, and brownouts become rarer but do not go away.
+
+### Why two sensors and not four
+
+- **Auto mode mostly walks forward and turns** (↖ ↗ arcs). Two sensors angled about 25° left and right see what is ahead and which side is freer.
+- **Reversing is short and blind.** The robot backs off for 1.5 s along ground it has just crossed.
+- **Four sensors would take 8 of the 9 free header GPIOs.** That leaves nothing for battery sense or a speaker, and the round of pings gets twice as slow.
+
+For safer reversing, a third sensor can go at the back later. For table edges, the better buy is a **VL53L0X** pointing down. It shares the PCA's I²C bus, so it needs no GPIO.
+
+### Wiring the sensors
+
+| Sensor | VCC | GND | TRIG | ECHO |
+|---|---|---|---|---|
+| Front left | LILYGO `3V` | `G` | GPIO10 | GPIO11 |
+| Front right | LILYGO `3V` | `G` | GPIO12 | GPIO13 |
+
+- **Mounting.** Fit both on the front of the body (the Tiến side), angled about 25° outwards, eyes level and clear of the legs' swing.
+- **A 5 V HC-SR04 instead of the P version** needs 5 V on VCC and a 1k (series) / 2k (to GND) divider on ECHO. The ESP32-S3 cannot take a 5 V ECHO.
+- **Pull-downs.** The firmware sets ECHO with a pull-down. An unplugged sensor never answers, so **Tự đi** stays greyed out and the page says **Chưa thấy cảm biến siêu âm**.
+
+### How Auto mode behaves
+
+| It sees | It does | Eyes |
+|---|---|---|
+| Nothing within 45 cm | Walks forward (**Tiến**) | Happy, bouncing |
+| One side nearer than 45 cm | Veers away (↗ or ↖) while walking forward | Looking the way it goes |
+| Anything nearer than 25 cm | Stops for 0.6 s | **Surprised** |
+| …then | Backs off 1.5 s, swinging its nose to the freer side, then arcs that way for 1.4 s | Normal |
+| Clear road for a while | Every 8–16 s it wanders off in an arc, or stands still and looks around | Idle glances |
+| 5 obstacles in a row without 4 s of clear walking | Gives up and stands: **Kẹt rồi, nhờ giúp** | **Sad** |
+| A sensor goes silent for 0.7 s | Stops: **Mất cảm biến siêu âm** | **Sad** |
+
+Rules that keep it safe:
+- **It never starts by itself.** Boot, a brownout reset and every reboot come up in Manual.
+- **Back to Manual on any of these:**
+  - **DỪNG**
+  - any drive button
+  - an emotion from `/emo`
+  - **Ráp**
+  - holding **BOOT**
+  - opening the page on another phone (a new page session)
+- **A stalled loop stops the crab.** The firmware drives Auto through the same 0.5 s deadman as the web page, so if the loop hangs, the crab stops and Auto ends.
+- **The phone does not have to stay awake.** Locking the phone, switching apps or opening the ☰ menu does not stop Tự đi; only DỪNG does.
+
+The distances live in `firmware/crab/config.h` (`AUTO_STOP_CM`, `AUTO_SLOW_CM`, timings). They are first guesses and still need tuning on the floor.
+
+## Round 2: battery power, about 600k VND
+
+**Buy all of these together.** A LiPo without the balance charger, the UBEC or the battery-sense resistors is useless or unsafe.
+
+| Part | Notes |
+|---|---|
+| 2S LiPo 7.4 V 1500 mAh 30C, **15 × 35 × 72 mm**, T-plug | Chosen pack. It fits the power bank's slot (100 × 65 × 15 mm, case D5) with 30 mm spare beside it |
+| B3 balance charger (2S/3S) | Charges through the white balance lead. It stays on the table, not on the crab |
+| UBEC 5 A (2–6S), **jumper on 5 V** | Servo branch. 6 V would overdrive the WS2812 lamp on the same rail |
+| LM2596 adjustable buck | Logic branch. **Set it to 5.0 V with a multimeter before connecting it** |
+| T-plug lead pair (male + female, 16 AWG) | Do not cut the battery leads: cutting both wires at once shorts the pack |
+| Rocker switch 6 A | In the red lead, after the T-plug. Needs a ~21 × 15 mm cut-out in the body |
+| 100k + 33k resistors | Battery-sense divider |
+
+Do not use a 1S 3.7 V pack or a single 18650 for the servos. SG90 servos need 4.8–6 V; at 3.0–4.2 V they are weak and the brownouts get worse.
+
+### Planned power wiring
 
 ```text
-2S LiPo 7.4V ──┬── switch ──┬── UBEC 5–6 V, ≥3 A ───► PCA9685 V+ (8 servos) + LED 5V
-               │            │                         └ 1000 µF 10 V across V+/GND, at the PCA
-               │            └── buck 5.0 V, ≥1 A ───► LILYGO header "5V" (+ camera board later)
-               └── 100k / 33k divider ──► LILYGO GPIO2 (battery sense, ADC1)
+2S LiPo 7.4V ─T-plug─ switch ─┬── UBEC 5 V, ≥3 A ───► PCA9685 V+ (8 servos) + LED 5V
+                              │                       └ 1000 µF across V+/GND, at the PCA
+                              ├── LM2596 5.0 V ─────► LILYGO header "5V"
+                              └── 100k / 33k ───────► LILYGO GPIO2 (battery sense, ADC1)
 All GNDs common: battery −, UBEC −, buck −, LILYGO G/GND, PCA GND.
 ```
 
-A 2S 1000 mAh pack weighs about 60–80 g, which is lighter than the 120 g power bank. Charge it only with a 2S balance charger.
+**Fitting it in the body:**
+- The pack slides into the power bank slot, held by the existing strap.
+- A piece of foam behind it stops it sliding, because it is 28 mm shorter than the slot.
+- The UBEC and LM2596 sit in the 30 mm gap beside the pack. The LM2596 is about 14 mm tall in a 15 mm slot, so set its voltage before fitting it.
+- Leave the T-plug and the balance lead at the front so the pack can come out for charging.
+- Never squeeze the pack. If it swells, stop using it.
 
 ### Powering the LILYGO without USB
 
-A buck module without a USB socket feeds the LILYGO through its **header `5V` pin** and **`G`/`GND`**.
+The LM2596 has no USB socket, so it feeds the LILYGO's **header `5V` pin** and **`G`/`GND`**.
 
-The LILYGO schematic (`engineering/sources/schematic.txt`) shows how this works:
+The LILYGO schematic (`engineering/sources/schematic.txt`) shows the path:
 - USB-C VBUS → 2 A fuse → the `+5V` net.
 - The header `5V` pin is on that `+5V` net.
-- `+5V` feeds the AP2112K 3.3 V LDO for the ESP32.
+- `+5V` feeds the AP2112K 3.3 V LDO.
 
-So feeding the `5V` pin is the same as powering the board by USB.
+Feeding the `5V` pin is therefore the same as powering the board by USB.
 
-Three rules:
+1. **Set the buck to 5.0–5.1 V with a multimeter before connecting it.** Adjustable modules ship at arbitrary voltages; 9–12 V on that pin destroys the board.
+2. **Never have the battery switched on while a computer USB cable is plugged in.** The header `5V` pin and USB VBUS are joined through the fuse only, with no blocking diode, so the battery would feed the computer's port. To flash: switch the battery off first, then plug in USB. This joins the existing rule of removing servo power before reset or flashing.
+3. **Never feed the `3V` pin.** That bypasses the LDO.
 
-1. **Set the buck to 5.0–5.1 V with a multimeter before connecting it.** Adjustable modules such as the LM2596 or MP1584 ship at arbitrary voltages, and 9–12 V on that pin destroys the board.
-2. **Never have the battery switch on and a computer USB cable plugged in at the same time.** Between the header `5V` pin and the USB port there is only the fuse, with no blocking diode, so battery current flows back into the computer's port. To flash: switch the battery off first, then plug in USB. This joins the existing rule of removing servo power before reset or flashing.
-3. **Never feed the `3V` pin.** That bypasses the LDO, and a small overshoot kills the ESP32.
+### Battery sense (firmware still to do)
 
-### Battery sense
+The 100k (top) / 33k (bottom) divider maps 8.4 V full charge to about 2.08 V at GPIO2. GPIO2 is on ADC1, which still works while Wi-Fi is on.
 
-A 100k (top) / 33k (bottom) divider maps 8.4 V full charge to about 2.08 V at GPIO2. GPIO2 is on ADC1, which still works while Wi-Fi is on.
-
-The planned firmware behaviour, not built yet:
-- Stop walking and show sleepy, "hungry" eyes at about 3.5 V per cell (7.0 V pack).
-- Refuse to arm the servos below that level.
-
-## Planned sensors
-
-Two ultrasonic sensors at the front, angled about 25° left and right, so the robot knows which side is freer.
-
-Prefer the **HC-SR04P** or **RCWL-1601**, which run at 3.3 V. A 5 V SRF04 or HC-SR04 drives ECHO at 5 V, which the ESP32-S3 cannot take. If you use one, put a 1k (series) / 2k (to GND) divider on ECHO.
-
-| Sensor | VCC | TRIG | ECHO |
-|---|---|---|---|
-| Left | LILYGO `3V` (3.3 V part) | GPIO10 | GPIO11 |
-| Right | LILYGO `3V` (3.3 V part) | GPIO12 | GPIO13 |
-
-The firmware will fire the two sensors alternately so they do not hear each other, and take the median of three readings because the body bounces while walking. Soft things such as curtains and sofas absorb the sound and read badly.
-
-A forward-looking sensor cannot see a table edge. An optional **VL53L0X** time-of-flight sensor pointing down can share the PCA's I²C bus (GPIO18 SDA, GPIO17 SCL) to catch drops.
+Planned behaviour, which needs the round 2 parts:
+- At about 3.5 V per cell (7.0 V pack) the crab stops walking and ends Auto with sleepy, "hungry" eyes.
+- Below that level the servos do not arm.
 
 ## Pin budget
 
 The current build uses GPIO 17 and 18 (I²C), 1 (LED) and 21 (PCA OE). The header GPIOs still free are 2, 3, 10, 11, 12, 13, 16, 43 and 44.
 
-| Use | GPIO |
-|---|---|
-| Battery sense | 2 |
-| Ultrasonic left TRIG / ECHO | 10 / 11 |
-| Ultrasonic right TRIG / ECHO | 12 / 13 |
-| Speaker (MAX98357A BCLK / LRC / DIN), later | 16 / 43 / 44 |
-| Spare | 3 |
+| Use | GPIO | Status |
+|---|---|---|
+| Ultrasonic left TRIG / ECHO | 10 / 11 | In firmware v22 |
+| Ultrasonic right TRIG / ECHO | 12 / 13 | In firmware v22 |
+| Battery sense | 2 | Round 2 |
+| Speaker (MAX98357A BCLK / LRC / DIN) | 16 / 43 / 44 | Later |
+| Spare | 3 | |
 
-## Shopping list
+## Later
 
-| Part | Notes |
-|---|---|
-| 2S LiPo 7.4 V, 1000–1500 mAh | With a JST or XT30 lead; check the size fits the body |
-| 2S balance charger | Never charge a LiPo unattended |
-| UBEC 5 V (or 6 V), ≥3 A | Servo branch |
-| Buck 5 V, ≥1 A | Logic branch. A USB-socket version is optional; the header `5V` pin works |
-| 1000 µF 10 V capacitor | Across PCA V+/GND |
-| Switch | In the battery lead |
-| 2 × HC-SR04P (or RCWL-1601) | 3.3 V parts; skip the 5 V SRF04 |
-| Later: MAX98357A + 8 Ω speaker | Robot sounds |
-| Later: XIAO ESP32S3 Sense | Camera and mic, streams to the phone over its own Wi-Fi |
-| Optional: VL53L0X | Table-edge detection on I²C |
-
-## Order of work
-
-0. Power: 2S pack, UBEC, buck, battery sense.
-1. Two ultrasonic sensors and **Auto mode**. Auto is a state machine, no ML model:
-   - Wander until something is closer than about 25 cm.
-   - Then stop with surprised eyes, back off, scan, and arc toward the freer side.
-   - The web UI gets a Manual/Auto toggle and a STOP button. Any manual drive command returns to Manual.
-2. Speaker for robot sounds.
-3. Camera board streaming MJPEG into the control page.
-4. Voice: the phone is the brain. Speech recognition → Claude API with tools (walk, emote, eyes) → speech out. The API key never goes into the firmware or the crab's web page.
+- **Speaker.** A MAX98357A + 8 Ω speaker for robot chirps.
+- **Camera.** A XIAO ESP32S3 Sense (camera + mic) streaming MJPEG into the control page. Power it from the logic branch.
+- **Voice.** The phone is the brain: speech recognition → Claude API with tools (walk, emote, eyes) → speech out. The API key never goes into the firmware or the crab's web page.
