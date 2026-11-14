@@ -1,134 +1,174 @@
-# Crab Robot
+# 🦀 Crab Robot
 
-**A small, open-frame crab toy. Connect to its Wi-Fi, open the controller, switch on the lights.**
+**An 8-servo crab whose face is a screen with two eyes. Drive it from your phone, play emotions, change the lamp colour.**
 
-[Wire it](#wire-it) · [Servo sockets](#which-servo-goes-where) · [Open the controller](#open-the-controller) · [Current status](#current-status) · [Firmware & CAD](#source-and-future-hardware)
+[Drive](#open-the-controls) · [Gaits](#gaits-and-sliders) · [Emotions](#emotions) · [Calibration](#calibration-ráp) · [Servo channels](#which-servo-goes-where) · [Wiring](#wiring) · [Firmware](#firmware)
 
-![The owner's actual orange-and-yellow crab, photographed on 11 November 2026](docs/images/crab-current.svg)
+<p align="center">
+  <img src="docs/images/crab-walk-2026-11-14.gif" width="480" alt="The crab crawling on the floor with happy eyes while it walks">
+</p>
 
-*The real bench assembly, photographed on 11 November. The photo shows the existing continuous-rotation servos; the owner now reports180° replacements installed; stable walking remains under test.*
+| Idle: eyes open, blink, glance | Walking: happy eyes ^ ^ |
+|---|---|
+| ![The crab standing still, two rounded white eyes on the screen](docs/images/crab-eyes-2026-11-14.jpg) | ![The crab with arc-shaped happy eyes](docs/images/crab-happy-2026-11-14.jpg) |
 
-## What is on this robot?
+*Photos and video by the owner, 14 Nov 2026, firmware `positional180-v19`.*
 
-| Part | Recognise it | Job |
+The web controls are in Vietnamese. Button names below are quoted as they appear on screen, with the English meaning next to them.
+
+## What's on the crab
+
+| Part | How to spot it | Job |
 |---|---|---|
-| **LILYGO T-Display-S3, non-touch** | Black board, built-in screen and USB-C | Wi-Fi, QR screen and web controller |
-| **PCA9685 breakout** | Blue board, green screw terminal, sixteen groups of three pins | Eight servo sockets, CH0–CH7 |
-| **8 × SG90-class servos** | Four body-mounted hips and four knees carried on the legs | Joint motion; this mechanism needs **positional** servos |
-| **WS2812 LED stick ×8** | Thin bar with eight square LEDs | Light controlled from the web page |
-| **Separate 5 V servo supply** | Plugs into PCA terminal `V+` and `GND` | Servo and LED power; separate from LILYGO USB power |
+| **LILYGO T-Display-S3** (non-touch) | Black board with the screen and USB-C port | Wi-Fi, web controls, the eyes |
+| **PCA9685** | Blue board with 16 rows of 3-pin headers | Servo pulses for CH0–CH7 |
+| **8 × SG90 positional 180°** | 4 hips on the body, 4 knees on the legs | Joints. **Do not use 360° continuous servos** |
+| **WS2812 strip ×8** | Thin strip with 8 LEDs | Colour lamp |
+| **Separate 5 V servo supply** | Into the PCA `V+` / `GND` screw terminal | Powers servos and LEDs; kept apart from the LILYGO's USB |
 
-The wiring below is for these **separate modules**. The [future integrated PCB](docs/INTEGRATED-CONTROLLER.md) has its own connectors and wiring guide.
+## Open the controls
 
-## Wire it
+1. Power it on. The servos **arm themselves** one channel at a time over about 3 seconds, then the crab stands up. Keep fingers out from between the legs.
+2. Read the **small line at the bottom of the screen**:
+   - On home Wi-Fi: the line shows the address, e.g. `Đã vào Wi-Fi  192.168.x.x` ("joined Wi-Fi"). Open that address on a phone on the same network.
+   - Not on home Wi-Fi: join the crab's own network **`CuaRobot-XXXX`** (no password) and open **http://192.168.4.1/**.
+   - Never saved a Wi-Fi network: the screen shows a QR code to join quickly.
+3. Hold a button to walk, release to stop: **↑ Tiến** (forward) · **← Trái** (left) · **Phải →** (right) · **↓ Lùi** (back). If the link drops, the crab stops within 0.5 s.
+4. To forget the saved Wi-Fi, hold **BOOT** for about 8 seconds.
 
-**Unplug both supplies before changing wires.** Keep this sheet beside the robot: the board photo, five signal leads, power, servo-plug colours and channel map are together.
+On the phone, tap **☰** for settings. The **Trạng thái** (status) tab lists firmware, PCA9685, servos, gait, speed, lamp and Wi-Fi.
 
-[![Complete photo wiring card: LILYGO pins, PCA9685, 5 V power, LED and eight servo sockets](docs/images/wiring-quick-reference.svg)](docs/images/wiring-quick-reference.svg)
+## Gaits and sliders
 
-<details>
-<summary><strong>Text version: the same wires, power and LED connections</strong></summary>
+| Gait | How it moves | When to use it |
+|---|---|---|
+| **Chéo** (diagonal, default) | Diagonal leg pairs push in turn, with moments where all 4 feet are down | Steady, doesn't spin. The owner's favourite |
+| **Cặp trước/sau** (front/rear pairs) | Front pair pushes, then the rear pair | Old gait, kept for comparison. Sideways walking rotates the body |
+| **Búng gối** (knee flick, experimental) | Forward/back: hips swing out (front legs forward, rear legs back), then all 4 knees flick. Left/right still uses the diagonal gait | Experiments |
 
-**Match the letters A–E on the photo:**
+Sliders in the settings panel:
 
-| Lead | LILYGO pin | Other end | Suggested colour |
+| Slider | Range | Saved on the crab? | Use it when |
 |---|---|---|---|
-| **A** | `3V` | PCA **`VCC`** — 3.3 V logic | Red |
-| **B** | `G` / `GND` | PCA **`GND`** | Black |
-| **C** | `18` | PCA **`SDA`** | Green |
-| **D** | `17` | PCA **`SCL`** | Blue |
-| **E** | `1` | LED **`DIN` / `IN`** | Yellow |
+| **Tốc độ** (speed) | 20–100%, default 90% | No (back to 90% at boot) | You want to walk slowly to watch |
+| **Độ nhấc gối** (knee lift) | 20–60°, default 45° | Yes | Feet drag on the table while the hips swing back: raise it |
+| **Bù lệch trái ↔ phải** (heading trim) | −30 … +30% | Yes | Drifts right walking forward: move towards **+**; drifts left: towards **−** |
+| **Góc hông búng** (flick hip angle) | 30–90°, only shown for Búng gối | No | Legs touch each other: lower it |
+| **Lamp colour** | Colour picker next to **Bật / tắt đèn** (lamp on/off) | Yes | Changes the LED strip colour |
 
-`18` and `17` are on the right in the **back/component-side view with USB-C down**. `18` is immediately below `44`; `17` is immediately below `18`. The `U1RXD` / `U1TXD` names in a pinout are alternate functions: this firmware uses these pins for I²C.
+Angles on the page are **nominal command angles**, not measured ones. On the usual SG90 scale, 1° nominal is about ½° real.
 
-**Two power connections:**
+## Emotions
 
-- **USB output 1 → LILYGO USB-C**, using a data-capable USB cable when flashing.
-- **Separate 5 V output → labelled USB-to-terminal adapter → PCA screw terminal:** positive to **`V+`**, negative to **`GND`**. The B ground lead must also stay connected.
-- **LED power:** PCA servo-side **`V+` → LED `5V`** and **`GND` → LED `GND`**. Lead E carries only LED data. Follow the arrow into the LED stick's input end.
+Tap **🎭 Cảm xúc** at the top of the main page, or open `/emo`.
 
-**`VCC` is 3.3 V logic. `V+` is 5 V servo power.** Do not bridge them or power the eight servos through LILYGO. Use printed `+`/`−` labels on the screw terminal; left/right can change when the board is turned over. Leave PCA `OE` unconnected on this reference breakout.
+- **7 built-in emotions:** 😄 happy, 😢 sad, 😡 angry, 👋 hello, 💃 dance, 😴 sleep, 😲 surprised. Each has its own lamp colour.
+- **Make your own:** drag a leg's Hip/Knee sliders and the crab follows live. Tick **Đối xứng trái/phải** (mirror left/right) to make both sides match. Add frames, set move/hold times, name it and tap **Lưu vào cua** (save to crab).
+- **Slider direction:** Hip **+** moves the foot forward. Knee **+** lifts the leg, **−** pushes down (body goes up).
+- **Safety:** leaving the page or losing the link returns the crab to its standing pose, slowly at 120°/s.
 
-Use female-to-female Dupont leads for A–E. These colours are a suggestion; the label at each end decides the connection. For close-up photos, assembly order and fault fixes, open the [step-by-step wiring guide](firmware/WIRING.md#original-lilygo-and-bought-pca9685).
+## The eye screen
 
+Two white eyes on black, drawn from shapes in the style of the Claude pet:
 
-</details>
+- **Idle:** blinks every 2.5–5.5 s and glances left/right now and then.
+- **Walking or playing an emotion:** happy eyes ^ ^.
+- **Bottom line:** Wi-Fi state and address. PCA9685 wiring errors show here too.
+
+## Calibration (Ráp)
+
+Open **☰ → Ráp** (assembly). Assembly mode locks the drive buttons.
+
+1. Tap **Tư thế đứng** (standing pose).
+2. For each hip, tap **±3** until the leg sits at an even diagonal, then fine-tune with **±1**. A ±1 step is close to the SG90 deadband, so the servo may not move on the first tap.
+3. For each knee, adjust until all 4 feet touch the floor and the body is level.
+4. Tap **Lưu tâm** (save centres), then **Xong ráp** (done). Without Lưu tâm the trims are lost at reboot.
+
+Trims max out at ±30°. If a channel is at ±30°, pull the horn off and refit it one spline over (about 14°) to bring the trim back near 0.
+
+Replacing a servo:
+1. Unplug the 5 V supply and remove the horn.
+2. Plug it back in, go to **Ráp → Giữa thô · 1500 µs** (rough centre), wait about 3 seconds.
+3. Fit the horn so the leg sits on the diagonal.
+4. Set that channel's trim back to 0, tune it again, then **Lưu tâm**.
 
 ## Which servo goes where?
 
-**One servo = one complete three-wire plug = one CH socket.** A hip sits on the body; a knee sits on the leg. Mark **FRONT** on the body and use this top view; robot left/right stay fixed when you walk around it.
+**One servo = one 3-wire plug = one CH socket.** Hips sit on the body, knees on the legs. Leg names on the Ráp and Cảm xúc pages follow this table:
 
-```text
-                         FRONT ↑
+| Leg | Hip | Knee |
+|---|---|---|
+| Front left | **CH0** | CH1 |
+| Front right | **CH2** | CH3 |
+| Rear left | **CH4** | CH5 |
+| Rear right | **CH6** | CH7 |
 
-      FRONT LEFT                       FRONT RIGHT
-      Hip  → CH0                       Hip  → CH2
-      Knee → CH1                       Knee → CH3
-                ┌──────────────────┐
-                │    ROBOT BODY    │
-                └──────────────────┘
-      REAR LEFT                        REAR RIGHT
-      Hip  → CH4                       Hip  → CH6
-      Knee → CH5                       Knee → CH7
+> ⚠️ **Walking direction and leg names are set separately.** The owner turned the crab around, so **Tiến** (forward) walks towards the **CH4/CH6** end (`cfg::FRONT_IS_CH46 = true` in `firmware/crab/config.h`). If forward/back/left/right are all reversed, flip that constant and reflash.
+
+At each socket: **orange → `PWM`/`S`**, **red (middle) → `V+`**, **brown → `GND`/`−`**. Check the GND label printed on the board before plugging in. Leave CH8–CH15 empty.
+
+## Wiring
+
+**Unplug both supplies before changing any wire.**
+
+[![Wiring card: LILYGO pins, PCA9685, 5 V supply, LEDs and the 8 servo sockets](docs/images/wiring-quick-reference.svg)](docs/images/wiring-quick-reference.svg)
+
+| Lead | LILYGO pin | Other end |
+|---|---|---|
+| **A** | `3V` | PCA **`VCC`**, 3.3 V logic |
+| **B** | `G` / `GND` | PCA **`GND`** |
+| **C** | `18` | PCA **`SDA`** |
+| **D** | `17` | PCA **`SCL`** |
+| **E** | `1` | LED **`DIN`** |
+
+**Power:**
+- **USB:** into the LILYGO's USB-C. Use a data cable when flashing.
+- **Separate 5 V:** into the PCA terminal, positive to **`V+`**, negative to **`GND`**.
+- **LEDs:** powered from the PCA's servo-side **`V+`/`GND`**.
+
+**`VCC` is 3.3 V logic; `V+` is the 5 V servo supply. Never join them, and never power servos from the LILYGO.** Close-up photos and troubleshooting are in the [wiring guide](firmware/WIRING.md).
+
+## Saving and restoring settings
+
+The owner's tuned settings are in [`firmware/settings/owner-2026-11-13.json`](firmware/settings/owner-2026-11-13.json): trims for all 8 channels, speed, knee lift, heading trim, flick hip angle, gait and lamp colour.
+
+After wiping the flash or swapping the board, restore them with:
+
+```sh
+python3 tools/firmware/restore_settings.py firmware/settings/owner-2026-11-13.json --host <crab-ip>
 ```
 
-At every socket: **orange → `PWM` / `S`**, **red → `V+`**, **brown → `GND` / `−`**. Red is the middle wire. Check which outer row is labelled GND before plugging in. Keep CH8–CH15 empty; two spare servos remain loose.
+Add `--dry-run` to preview the requests. The script needs all 8 servos armed, and it takes control away from any open web page (reload the page afterwards).
 
-## Open the controller
+## Firmware
 
-1. Power the LILYGO by USB. Scan its screen QR, join **`CuaRobot-XXXX`**, and choose to stay connected if the phone reports no internet.
-2. Open **http://192.168.4.1/** in the browser. The interface is Vietnamese: **Lái cua** = controller, **Wi-Fi** = optional home-network setup, **Ráp** = assembly/trim.
-3. Use **Bật / tắt đèn** for the light. Home Wi-Fi is optional; connecting to the crab directly is enough. After joining a home network, the screen gives that network's robot address.
-4. Hold the running application's **BOOT** button for about eight seconds to forget saved Wi-Fi. BOOT/reset does not disconnect servo power.
+- **Running now:** `positional180-v19`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
+- **Build, flash and version history:** [firmware/README.md](firmware/README.md). See also [gaits](firmware/CRAWL.md), [web controls](firmware/WEB-CONTROL.md) and [emotions](firmware/EMOTIONS.md).
 
-The four driving buttons stay on the left; status, logs and settings scroll independently on the right. On mobile, tap **☰** to open that panel. The servo table reports **commanded** angles and PWM, not measured position. [Controller and log guide](firmware/WEB-CONTROL.md).
+```sh
+# Host-side tests (don't touch the crab)
+python3 tools/firmware/check.py core web drivers display http targets
+python3 tools/firmware/test_restore_settings.py
 
-![Desktop controller: fixed left driving pad and independent right status/sidebar](docs/images/controller-desktop.png)
+# Build both targets (no flashing, no motors)
+python3 tools/firmware/build.py --target all
+```
 
-*Rendered UI preview with simulated status and servo data.*
+Building doesn't flash a board, run motors, print or order anything.
 
-<details>
-<summary>Mobile controller preview — settings and logs stay behind ☰</summary>
+## Known issues
 
-<img src="docs/images/controller-mobile.png" width="320" alt="Mobile controller showing only the fixed direction pad and menu button">
+- **The bottom screen line gets cut off when it's long.** For example, after a Wi-Fi failure `Sai mật khẩu hoặc mất sóng  CuaRobot-XXXX 192.168.4.1` ("wrong password or no signal") doesn't fit on one line.
+- **Speed, gait and flick hip angle aren't saved on the crab.** A reboot brings back the defaults: 90%, Chéo, 90°.
+- **Walking direction and leg names are set separately** (see the warning under [servo channels](#which-servo-goes-where)). Built-in emotions and the heading trim may feel "back to front" relative to Tiến.
+- **A USB cable dragging behind** can pull the crab off course. A power bank mounted on the body walks straighter.
+- **Knee flick at 90° goes past the body's old clearance** (30/60°). On the first run, watch for legs hitting each other.
 
-</details>
-
-## Current status
-
-| Working or observed | Still waiting for a physical check |
-|---|---|
-| Owner opened the QR/web controller; individual servo direction tests worked | Owner reports180° replacements installed; loaded progression and torque remain under test |
-| Firmware includes direct AP access and the independent light switch | Servo supply capacity, loaded stopping and stable walking |
-| Firmware starts with servo PWM off and capped-brightness LEDs on | The future integrated PCB and matching new frame |
-
-**The two loaded 360° trials did not work reliably.** The first timed crawl caused leg collisions; the following hips-only trial moved erratically. Those experiments are retained in history; the current release is dedicated to positional180° servos, with four main direction buttons after explicit enable. The [web controls and servo command log](firmware/WEB-CONTROL.md) stay in separate panels. Equal reverse time cannot restore an accurately known joint angle. Read [the experiment record](firmware/EXPERIMENT-STATUS.md).
-
-This jointed-leg mechanism needs **eight positional servos**. The owner reports the180° set installed. For future replacements, test an unloaded motor's position response and fit before attaching its leg. Recheck centre, direction and cable slack during assembly. Use the new [180° first-connection procedure](firmware/POSITIONAL180.md). The current firmware starts PWM off; **Bật servo180°** enables channels gradually, and **Ngắt servo** turns PWM off. The normal-speed release defaults to **Bình thường**; choose **Chậm** for first clearance checks.
-
-### Hands-on checks that remain
-
-- Test one received positional servo unloaded and centre it before attaching a leg.
-- Confirm the 5 V supply and screw-terminal polarity. A power LED alone does not establish adequate servo power.
-- Check the owner's hand-cut wire openings, direct servo-tab screws, horn fit and free joint motion with power disconnected.
-- The future frame still needs first-print fit checks. Its full case build has an outstanding official-checker intent/manual-review step; see [build validation](BUILD-VALIDATION.md).
-
-## Source and future hardware
+## More docs
 
 | Looking for | Open |
 |---|---|
-| Photo wiring instructions for the existing robot | [Wiring guide](firmware/WIRING.md) |
-| Build/flash instructions and two firmware targets | [Firmware README](firmware/README.md) |
-| Exact status of the 360° experiments | [Experiment record](firmware/EXPERIMENT-STATUS.md) |
-| Printed parts, assembly and owner modifications | [Assembly guide](case/README.md) · [Printed inventory](case/PRINTED-INVENTORY.md) |
-| Source-build results and outstanding full-build step | [Build validation](BUILD-VALIDATION.md) |
-| Future ESP32-S3 + PCA9685 custom board | [Integrated controller](docs/INTEGRATED-CONTROLLER.md) · [Native KiCad sources](design/) |
-
-The current module build uses the **`lilygo`** firmware target. The **`integrated`** target is for the future custom PCB and uses a different display interface. Building does not flash a board, move motors, start a print or place an order.
-
-```sh
-# Regenerate/check the complete project; read the outstanding manual step first.
-./build.sh
-```
-
-Photos are the owner's supplied references. Diagram pin assignments come from [firmware hardware.h](firmware/crab/hardware.h), cross-checked against the [LILYGO reference](https://github.com/Xinyuan-LilyGO/T-Display-S3) and [PCA9685 pin definitions](https://learn.adafruit.com/16-channel-pwm-servo-driver/pinouts). GPIO 1 → LED data at 3.3 V remains an actual-stick compatibility assumption. Historical exposed-cell/module photos document the bench, not a verified power solution; this guide uses a closed 5 V USB supply.
+| Printed parts, assembly, body edits | [case/README.md](case/README.md) · [printed parts list](case/PRINTED-INVENTORY.md) |
+| Integrated ESP32-S3 + PCA9685 board | [docs/INTEGRATED-CONTROLLER.md](docs/INTEGRATED-CONTROLLER.md) · [KiCad sources](design/) |
+| Build-from-source results | [BUILD-VALIDATION.md](BUILD-VALIDATION.md) |
+| 360° servo trials (didn't work out) | [firmware/EXPERIMENT-STATUS.md](firmware/EXPERIMENT-STATUS.md) |
