@@ -77,8 +77,10 @@ void loop(){
  if(displayOk&&face&&now-lastDraw>=40){lastDraw=now;
   bool active;{Guard g;active=motion.amplitude>.05f||motion.posing;}
   const crab::EyeFrame f=eyes.frame(now,active);
-  const String line=!driverReady?String(crab::msg::DRIVER):network.state==crab::NetState::Online?String(network.message)+"  "+WiFi.localIP().toString():String(network.message)+"  "+ap+" 192.168.4.1";
-  if(!faceShown||f!=drawnEyes||line!=drawnKey){if(screen.face(f,line.c_str())){drawnEyes=f;drawnKey=line;faceShown=true;}}
+  const String message=driverReady?String(network.message):String(crab::msg::DRIVER);
+  const String address=!driverReady?String():network.state==crab::NetState::Online?WiFi.localIP().toString():ap+" 192.168.4.1";
+  const String line=message+"|"+address;
+  if(!faceShown||f!=drawnEyes||line!=drawnKey){if(screen.face(f,message.c_str(),address.c_str())){drawnEyes=f;drawnKey=line;faceShown=true;}}
  }else if(!face&&now-lastDraw>=250){lastDraw=now;if(faceShown){faceShown=false;drawnKey="";}
   String url="192.168.4.1";String message=driverReady?String(network.message):String(crab::msg::DRIVER);String key=url+message;
   if(displayOk&&key!=drawnKey){String payload=crab::wifiQr(ap.c_str()).c_str();if(screen.show(payload.c_str(),message.c_str(),url.c_str(),ap.c_str()))drawnKey=key;}
