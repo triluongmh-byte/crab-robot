@@ -313,6 +313,70 @@ static void test_pose(){
  assert(m.poseCommand(5,m.lastSeq+1,a,0,k,true));assert(m.command(5,m.lastSeq+1,1,k+10,true)&&!m.posing&&!m.relaxing);
  m.stop();m.setAssembly(true);assert(!m.poseCommand(5,m.lastSeq+1,a,0,k+20,true));
 }
+static void feed(Sonar& s,int left,int right,uint32_t now){for(int i=0;i<3;i++){s.side[0].add(uint16_t(left),now);s.side[1].add(uint16_t(right),now);}}
+static void test_sonar(){
+ // Median of three: one stray echo (near or far) cannot steer; two readings take the nearer.
+ SonarSide x;assert(x.cm()==0&&!x.fresh(0));x.add(100,0);assert(x.cm()==100&&x.fresh(0));x.add(20,10);assert(x.cm()==20);
+ x.add(400,20);assert(x.cm()==100);x.add(90,30);assert(x.cm()==90);x.add(400,40);assert(x.cm()==400||x.cm()==90);
+ assert(x.fresh(40+cfg::SONAR_STALE_MS-1)&&!x.fresh(40+cfg::SONAR_STALE_MS));
+ // One ping: no rising edge = no sensor (nothing added, goes stale); rise without
+ // fall = out of range; below the 2 cm blind zone = noise; 58 us per cm.
+ SonarSide y;y.ping(false,false,0,0);assert(y.count==0);y.ping(true,false,0,5);assert(y.count==1&&y.cm()==SONAR_FAR_CM);
+ y.ping(true,true,cfg::SONAR_MIN_US-1,6);assert(y.count==1);y.ping(true,true,58*30,7);assert(y.count==2&&y.cm()==30);
+ assert(sonarCm(58*30)==30&&sonarCm(58*1000)==SONAR_FAR_CM&&sonarCm(0)==0);
+ Sonar s;assert(!s.ok(0));s.side[0].add(50,0);assert(!s.ok(0));s.side[1].add(50,0);assert(s.ok(0)&&!s.ok(cfg::SONAR_STALE_MS));
+}
+static void test_autopilot(){
+ Sonar s;Autopilot a;assert(!a.active()&&a.tick(0,s)==0&&a.message(0)==nullptr);
+ uint32_t t=1000;feed(s,200,200,t);a.start(t);a.nextWander=t+100000;assert(a.active()&&a.tick(t,s)==1&&a.message(t)==automsg::ON);
+ // Something near one side: veer away while still walking forward.
+ feed(s,40,200,t);assert(a.tick(t,s)==6&&bodyYaw(6)<0);feed(s,200,40,t);assert(a.tick(t,s)==5&&bodyYaw(5)>0);
+ // Obstacle, right side freer: stop with a surprised face, back off with the
+ // tail swung left (nose turns right), then arc forward-right, then cruise.
+ feed(s,20,60,t);assert(a.tick(t,s)==0&&a.state==AutoState::Halt&&a.side==-1&&a.mood(t)==Mood::Surprised);
+ assert(a.tick(t+cfg::AUTO_HALT_MS-1,s)==0);t+=cfg::AUTO_HALT_MS;assert(a.tick(t,s)==0&&a.state==AutoState::Backoff&&a.mood(t)==Mood::Normal);
+ assert(a.tick(t+20,s)==7&&bodyYaw(7)<0&&bodyDirection(7).x==bodyDirection(2).x);
+ t+=cfg::AUTO_BACK_MS;feed(s,200,200,t);assert(a.tick(t,s)==6&&a.state==AutoState::Turn);
+ feed(s,200,200,t+cfg::AUTO_TURN_MS-1);assert(a.tick(t+cfg::AUTO_TURN_MS-1,s)==6);t+=cfg::AUTO_TURN_MS;assert(a.tick(t,s)==1&&a.state==AutoState::Cruise);
+ // Left freer: back-right (nose turns left), then forward-left.
+ feed(s,90,20,t);assert(a.tick(t,s)==0&&a.side==1);t+=cfg::AUTO_HALT_MS;feed(s,90,20,t);a.tick(t,s);assert(a.tick(t+20,s)==8&&bodyYaw(8)>0);
+ t+=cfg::AUTO_BACK_MS;feed(s,200,200,t);assert(a.tick(t,s)==5);
+ // An obstacle during the turn stops again.
+ feed(s,10,10,t+50);assert(a.tick(t+50,s)==0&&a.state==AutoState::Halt);
+ // A long clear cruise forgets earlier obstacles; repeated ones without it mean stuck.
+ Autopilot b;feed(s,200,200,0);b.start(0);b.nextWander=1000000;uint32_t u=0;
+ for(int i=0;i<cfg::AUTO_STUCK_AVOIDS;i++){
+  feed(s,200,200,u);b.tick(u,s);feed(s,10,30,u);b.tick(u,s);
+  if(i<cfg::AUTO_STUCK_AVOIDS-1){assert(b.state==AutoState::Halt);u+=cfg::AUTO_HALT_MS;feed(s,200,200,u);b.tick(u,s);u+=cfg::AUTO_BACK_MS;feed(s,200,200,u);b.tick(u,s);u+=cfg::AUTO_TURN_MS;feed(s,200,200,u);b.tick(u,s);assert(b.state==AutoState::Cruise);}
+ }
+ assert(!b.active()&&b.note==automsg::STUCK&&b.mood(u)==Mood::Sad&&b.message(u)==automsg::STUCK&&b.message(u+5000)==nullptr);
+ Autopilot c;feed(s,200,200,0);c.start(0);c.nextWander=1000000;feed(s,10,30,0);c.tick(0,s);assert(c.avoids==1);
+ uint32_t v=cfg::AUTO_HALT_MS;feed(s,200,200,v);c.tick(v,s);v+=cfg::AUTO_BACK_MS;feed(s,200,200,v);c.tick(v,s);v+=cfg::AUTO_TURN_MS;feed(s,200,200,v);c.tick(v,s);assert(c.state==AutoState::Cruise);
+ v+=cfg::AUTO_CLEAR_MS;feed(s,200,200,v);assert(c.tick(v,s)==1&&c.avoids==0);
+ // Wandering: sometimes stop and look around, sometimes arc a random way.
+ int looks=0,turns=0;
+ for(int i=0;i<40;i++){Autopilot w;w.seed=uint32_t(i*7919+1);feed(s,200,200,0);w.start(0);w.nextWander=10;const int d=w.tick(10,s);
+  if(w.state==AutoState::Look){assert(d==0);looks++;feed(s,200,200,10+w.turnMs);assert(w.tick(10+w.turnMs,s)==0&&w.state==AutoState::Cruise);}else{assert(w.state==AutoState::Turn&&(d==5||d==6));turns++;}}
+ assert(looks>0&&turns>0);
+ // A silent sensor ends Auto with a sad face; Manual is not a sad reason.
+ Autopilot l;feed(s,200,200,0);l.start(0);l.nextWander=1000000;assert(l.tick(100,s)==1);
+ assert(l.tick(cfg::SONAR_STALE_MS,s)==0&&!l.active()&&l.note==automsg::LOST&&l.mood(cfg::SONAR_STALE_MS)==Mood::Sad);
+ l.stop(1000,automsg::MANUAL);assert(l.mood(1000)==Mood::Normal);
+ // Motion: Auto needs the same readiness as manual driving and never starts itself.
+ Motion m;m.newSession(5);assert(!m.startAuto(0)&&!m.autoMode);ready(m);m.setAssembly(true);assert(!m.startAuto(2200));m.setAssembly(false);
+ assert(!m.autoDrive(1,2200));assert(m.startAuto(2200)&&m.autoMode&&m.lease);
+ for(uint32_t k=2200;k<4200;k+=10){if(k%20==0)assert(m.autoDrive(1,k));m.tick(k);}
+ assert(m.amplitude>.9f&&m.dir==1&&m.velocity.x==bodyDirection(1).x);
+ assert(m.autoDrive(0,4200)&&m.dir==0&&m.autoMode);
+ // Any manual command takes over (and STOP is dir 0); autoDrive then refuses.
+ assert(m.command(5,1,2,4210,true)&&!m.autoMode&&!m.autoDrive(1,4220));
+ assert(m.startAuto(4300)&&m.command(5,2,0,4310,false)&&!m.autoMode);
+ // A pose from the emotion page, a new page session or the deadman also end it.
+ const float pose[8]={};assert(m.startAuto(4400)&&m.poseCommand(5,3,pose,100,4410,true)&&!m.autoMode);m.stop();
+ assert(m.startAuto(4500));m.newSession(6);assert(!m.autoMode);
+ assert(m.startAuto(4600)&&m.autoDrive(1,4600));uint32_t k=4600;while(m.autoMode)m.tick(k+=10);assert(k-4600>=cfg::DEADMAN_MS&&!m.lease);
+ assert(m.startAuto(6000));m.inhibit=true;m.tick(6010);assert(!m.autoMode);m.inhibit=false;
+}
 static void test_normal_speed(){
  Motion m;assert(std::fabs(m.speed-cfg::SPEED_DEFAULT)<.001f&&cfg::SPEED_DEFAULT==.9f);assert(cfg::SLEW_DPS==600&&cfg::PERIOD_S==0.8f);
  // Half a second at the 90% default advances about 0.56 of a cycle (0.89 s period).
@@ -401,4 +465,4 @@ static void simulation(const std::string& dir){
  simulatePattern(Pattern::Pairs,out,report);
  report<<"],\"sidewaysSupportedByModel\":true,\"hardwareTested\":false}\n";
 }
-int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_pair_sequence();test_trot_sequence();test_flick();test_arcs();test_pose();test_tracking();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, diagonal trot default/owner knee flick forward-back with held hip pose/emotion pose timing/clamp/lease/deadman relax/walk cancel/assembly block/four-foot overlap/zero yaw all 8 directions/Fast slew tracking, owner front-rear pairs option push/lift/return/lower/full hip stroke/forward-back reversal, pulse bounds, QR encoding\n";}
+int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_pair_sequence();test_trot_sequence();test_flick();test_arcs();test_pose();test_sonar();test_autopilot();test_tracking();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: sonar median/ping/stale, autopilot cruise/veer/halt/backoff/turn/stuck/wander/lost and Motion auto takeover/deadman; manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, diagonal trot default/owner knee flick forward-back with held hip pose/emotion pose timing/clamp/lease/deadman relax/walk cancel/assembly block/four-foot overlap/zero yaw all 8 directions/Fast slew tracking, owner front-rear pairs option push/lift/return/lower/full hip stroke/forward-back reversal, pulse bounds, QR encoding\n";}

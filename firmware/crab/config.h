@@ -75,4 +75,14 @@ constexpr float ARC_YAW=.5f;
 constexpr int EYE_LOOK_SIGN=1;
 // Idle face: sleepy after this long without a drive/pose command, asleep later.
 constexpr uint32_t SLEEPY_MS=60000, ASLEEP_MS=180000;
+// Auto mode (crab/autopilot.h). Pings alternate left/right every
+// SONAR_PERIOD_MS, so each side updates every 100 ms; a side with no answer
+// for SONAR_STALE_MS ends Auto. Echoes beyond SONAR_MAX_CM count as clear.
+constexpr uint32_t SONAR_PERIOD_MS=50, SONAR_STALE_MS=700, SONAR_MIN_US=116;
+constexpr int SONAR_MAX_CM=250;
+// Stop under AUTO_STOP_CM, veer away under AUTO_SLOW_CM. The crab walks a few
+// cm/s, so 25 cm leaves several seconds of margin. Owner tunes on the floor.
+constexpr int AUTO_STOP_CM=25, AUTO_SLOW_CM=45, AUTO_STUCK_AVOIDS=5;
+constexpr uint32_t AUTO_HALT_MS=600, AUTO_BACK_MS=1500, AUTO_TURN_MS=1400, AUTO_CLEAR_MS=4000;
+constexpr uint32_t AUTO_WANDER_MIN_MS=8000, AUTO_WANDER_MAX_MS=16000;
 }

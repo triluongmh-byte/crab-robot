@@ -79,3 +79,4 @@ String candidateSsid,candidatePass,storedSsid,storedPass;
 bool lightOn=false;uint32_t lightRgb=0xffffff;
 std::atomic<uint8_t> staFail(0);uint32_t shownRgb=0xffffff;bool ledOverride=false;uint32_t ledAt=0;
 crab::Mood emoteMood=crab::Mood::Normal;uint32_t moodAt=0;
+crab::Sonar sonar;crab::Autopilot autopilot;

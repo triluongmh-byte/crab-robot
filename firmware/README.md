@@ -243,3 +243,39 @@ Release `positional180-v21`, for the owner's list of small issues:
   - Changing between the 90° flick stance and the trot now ramps down first instead of whipping the hips across.
 
 Host tests cover all of this: the stale-status regression, rescans, the wrong-password retry, the turn direction and travel of all four arcs in the equal-reach model, arc tracking at Fast, the flick-to-trot ramp, mood drawings, eye colour byte order, eye timing (wrap-safe), the QR guide text widths, the 8-button UI, the Wi-Fi form and emotion moods. The eye look direction assumes the screen faces outwards like a face (`cfg::EYE_LOOK_SIGN`). The colours on the real panel, the turn radius on the floor and the home Wi-Fi join still need the owner's eyes.
+
+## Tự đi: Auto mode with two ultrasonic sensors — 2026-11-14
+
+Release `positional180-v22`. The owner wanted a robot that walks by itself instead of a remote-control toy. Two HC-SR04P sensors at the front (left TRIG/ECHO GPIO10/11, right GPIO12/13; LILYGO target only) drive a small state machine in `crab/autopilot.h`. No ML model is involved. Parts and wiring are in [BATTERY-AUTONOMY.md](BATTERY-AUTONOMY.md) (round 1).
+
+- **Sensors.**
+  - Pings alternate left and right every 50 ms. Echo edges are timestamped in a GPIO interrupt, so the motion task's I²C frames cannot stretch a reading.
+  - Each side keeps the median of its last three readings.
+  - An echo beyond 250 cm, or one that never falls, counts as clear.
+  - No rising edge at all means no sensor, and a side silent for 0.7 s ends Auto.
+- **Behaviour.**
+  - Cruise forward. Veer with ↗/↖ when one side is under 45 cm.
+  - Under 25 cm: stop for 0.6 s with surprised eyes, back off 1.5 s swinging the nose towards the freer side (↙/↘), then arc that way for 1.4 s.
+  - Every 8–16 s it wanders in an arc or stands and looks around.
+  - Five obstacles without 4 s of clear walking in between: it stops with sad eyes and **Kẹt rồi, nhờ giúp**.
+- **Safety.**
+  - `Motion::autoDrive` refreshes the same 0.5 s deadman as the page.
+  - `motion.autoMode` is cleared by any stop, manual command, pose, new page session, Ráp, inhibit or the deadman, and the autopilot follows it.
+  - Boot always comes up in Manual. `/api/auto` needs the owner token, both sensors answering and all 8 servos armed outside Ráp.
+- **Page.**
+  - A **🤖 Tự đi** button above the pad shows the state and both distances.
+  - **DỪNG** sends stop and ends Auto. Blur, phone sleep and the ☰ menu no longer send a stop unless a drive button is held, so Auto keeps going while the phone sleeps.
+  - The **Trạng thái** tab lists the mode (**Lái**: Tay / Tự đi) and the sensor distances.
+- **Status.** `/api/status` adds `autoSupported`, `auto`, `autoState` (`off`, `cruise`, `halt`, `backoff`, `turn`, `look`), `autoNote` and `sonarOk`, plus `sonar: [left, right]` in cm, or `null` when a side is silent (400 = clear).
+- **Screen.** The bottom line shows **Đang tự đi**, or why Auto stopped, for 5 s.
+
+Host tests cover all of this:
+- the median filter, ping outcomes and staleness
+- every autopilot transition, its turn directions, stuck, wander and lost sensor
+- Motion takeover and the deadman
+- the interrupt-timed driver, including alternation, out-of-range and an absent sensor
+- `/api/auto` gating and status
+- the page toggle, including that DỪNG ends Auto and blur, sleep and the menu do not
+- the face-line widths
+
+The thresholds are first guesses; tune them on the floor (`AUTO_*` in `config.h`).

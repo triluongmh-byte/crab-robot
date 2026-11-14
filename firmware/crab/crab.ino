@@ -13,7 +13,8 @@
 WebServer server(80);DNSServer dns;
 Preferences wifiStore,trimStore,emoteStore;
 crab::Motion motion;crab::Network network;crab::HoldButton boot;
-ServoDriver servos;LightDriver light;Screen screen;
+ServoDriver servos;LightDriver light;Screen screen;SonarDriver sonarHw;
+crab::Sonar sonar;crab::Autopilot autopilot;uint32_t lastAuto=0;
 SemaphoreHandle_t motionLock;
 std::atomic<bool> driverReady(false);
 std::atomic<bool> eraseHold(false),stationHasIp(false);
@@ -28,6 +29,17 @@ crab::Mood emoteMood=crab::Mood::Normal;uint32_t moodAt=0;
 uint32_t lastDraw=0;String drawnKey;
 struct Guard{Guard(){xSemaphoreTake(motionLock,portMAX_DELAY);}~Guard(){xSemaphoreGive(motionLock);}};
 #include "network_http.h"
+// Auto mode, from loop(): read the sensors, then let the autopilot steer under
+// the motion lock. Manual commands, STOP and the deadman clear motion.autoMode;
+// the autopilot follows that here so it never fights the owner.
+void serviceAuto(uint32_t now){
+ sonarHw.service(sonar,now);
+ if(!autopilot.active()||now-lastAuto<cfg::FRAME_MS)return;lastAuto=now;
+ const int dir=autopilot.tick(now,sonar);
+ Guard g;
+ if(!autopilot.active()){if(motion.autoMode)motion.stop();return;}
+ if(!motion.autoDrive(dir,now))autopilot.stop(now,crab::automsg::MANUAL);
+}
 void motionTask(void*){
  ActuatorOutput outputs;
  TickType_t wake=xTaskGetTickCount();
@@ -45,7 +57,7 @@ void setup(){
  servos.inhibit();
  pinMode(cfg::BOOT_PIN,INPUT_PULLUP);
  motionLock=xSemaphoreCreateMutex();
- displayOk=screen.begin();light.begin();driverReady=servos.begin();
+ displayOk=screen.begin();light.begin();driverReady=servos.begin();sonarHw.begin();
  wifiStore.begin("cua-wifi",false);trimStore.begin("cua-180-v1",false);emoteStore.begin("cua-emote",false);
  {Guard g;if(trimStore.getBytesLength("offsets")==sizeof(motion.offsets)){trimStore.getBytes("offsets",motion.offsets,sizeof(motion.offsets));for(auto& v:motion.offsets)if(!std::isfinite(v)||std::fabs(v)>cfg::TRIM_LIMIT)v=0;}
   if(!motion.setBalance(trimStore.getInt("balance",0)))motion.balance=0;
@@ -77,6 +89,7 @@ void loop(){
   WiFi.disconnect(false,false);network.erase(now);drawnKey="";
  }
  serviceNetwork(now);
+ serviceAuto(now);
  dns.processNextRequest();server.handleClient();
  // An emotion's lamp colour lasts while the pose runs, then the saved lamp returns.
  if(ledOverride&&now-ledAt>=1500){bool posing;{Guard g;posing=motion.posing;}if(!posing)applyLight();}
@@ -89,10 +102,12 @@ void loop(){
   crab::EyeInput in;int dir;
   {Guard g;in.walking=motion.amplitude>.05f;in.posing=motion.posing;dir=motion.dir;in.idleMs=now-motion.lastCommand;}
   crab::travelLook(in.walking?dir:0,in.sideX,in.sideY);
-  in.mood=(in.posing||now-moodAt<1500)?emoteMood:crab::Mood::Normal;
+  const crab::Mood autoMood=autopilot.mood(now);
+  in.mood=autoMood!=crab::Mood::Normal?autoMood:(in.posing||now-moodAt<1500)?emoteMood:crab::Mood::Normal;
   in.color=crab::eyeColor(lightOn?shownRgb:0);
   const crab::EyeFrame f=eyes.frame(now,in);
-  const String message=driverReady?String(network.message):String(crab::msg::DRIVER);
+  const char* autoLine=autopilot.message(now);
+  const String message=!driverReady?String(crab::msg::DRIVER):autoLine?String(autoLine):String(network.message);
   const String address=!driverReady?String():network.state==crab::NetState::Online?WiFi.localIP().toString():ap+" 192.168.4.1";
   const String line=message+"|"+address;
   if(!faceShown||f!=drawnEyes||line!=drawnKey){if(screen.face(f,message.c_str(),address.c_str())){drawnEyes=f;drawnKey=line;faceShown=true;}}

@@ -58,3 +58,48 @@ class LightDriver {
   rmt_write_items(RMT_CHANNEL_0,bits,24*cfg::LED_COUNT,true);delayMicroseconds(80);
  }
 };
+// Two HC-SR04P at the front (cfg::SONAR_TRIG/ECHO). Each service call reads the
+// previous ping's result and fires the other sensor, so nothing blocks the
+// loop. Echo edges are timestamped in an interrupt: a busy-wait in loop() is
+// preempted by the motion task's I2C frames and would read obstacles as farther.
+class SonarDriver {
+ public:
+ struct Capture {int pin=-1;volatile uint32_t rise=0,width=0;volatile bool rose=false,fell=false;};
+ Capture cap[2];
+ private:
+ bool available=false,pending=false;int next=0,fired=0;uint32_t last=0;
+ // ARDUINO_ISR_ATTR: IRAM only when the core installs IRAM-flagged GPIO ISRs (not in 2.0.14).
+ static void ARDUINO_ISR_ATTR edge(void* arg){
+  Capture& c=*static_cast<Capture*>(arg);const uint32_t t=micros();
+  if(digitalRead(c.pin)==HIGH){if(!c.rose){c.rise=t;c.rose=true;}}
+  else if(c.rose&&!c.fell){c.width=t-c.rise;c.fell=true;}
+ }
+ public:
+ bool begin(){
+  available=cfg::SONAR_TRIG[0]>=0&&cfg::SONAR_TRIG[1]>=0;if(!available)return false;
+  for(int i=0;i<2;i++){
+   cap[i].pin=cfg::SONAR_ECHO[i];
+   digitalWrite(cfg::SONAR_TRIG[i],LOW);pinMode(cfg::SONAR_TRIG[i],OUTPUT);
+   // Pulled down: an unplugged sensor never shows a rising edge, so it reads absent.
+   pinMode(cfg::SONAR_ECHO[i],INPUT_PULLDOWN);attachInterruptArg(cfg::SONAR_ECHO[i],edge,&cap[i],CHANGE);
+  }
+  return true;
+ }
+ bool present()const{return available;}
+ bool service(crab::Sonar& s,uint32_t now){
+  if(!available||now-last<cfg::SONAR_PERIOD_MS)return false;last=now;
+  if(pending){
+   Capture& c=cap[fired];
+   // Echo still high after the period: beyond range (the module's own timeout).
+   s.side[fired].ping(c.rose,c.fell&&c.width<=uint32_t(cfg::SONAR_MAX_CM)*58,c.width,now);
+  }
+  fired=next;next^=1;Capture& c=cap[fired];
+  // Some HC-SR04P clones hold ECHO high for long after a ping that met nothing.
+  // The pull-down keeps an unplugged ECHO low, so high here means a sensor is
+  // there and still waiting: count it as clear instead of silent, ping later.
+  if(digitalRead(c.pin)==HIGH){s.side[fired].ping(true,false,0,now);pending=false;return true;}
+  noInterrupts();c.rose=c.fell=false;c.width=0;interrupts();
+  digitalWrite(cfg::SONAR_TRIG[fired],HIGH);delayMicroseconds(10);digitalWrite(cfg::SONAR_TRIG[fired],LOW);
+  pending=true;return true;
+ }
+};

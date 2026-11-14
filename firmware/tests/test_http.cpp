@@ -7,7 +7,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v21")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v22")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -120,13 +120,33 @@ int main(){
  server.request("/api/move",{{"token","42"},{"seq","21"},{"dir","8"},{"fresh","1"}});assert(server.code==200&&motion.yaw>0&&motion.velocity.x==crab::bodyDirection(2).x);
  server.request("/api/move",{{"token","42"},{"seq","22"},{"dir","9"},{"fresh","1"}});assert(server.code==400);
  server.request("/api/move",{{"token","42"},{"seq","23"},{"dir","1"},{"fresh","1"}});assert(server.code==200&&motion.yaw==0);
+ // Auto mode: refused without both sensors, a wrong token or unarmed servos;
+ // status reports it; a manual move or STOP takes over.
+ server.request("/api/status");assert(server.body.find("\"auto\":false")!=String::npos&&server.body.find("\"sonarOk\":false")!=String::npos&&server.body.find("\"sonar\":[null,null]")!=String::npos&&server.body.find("\"autoNote\":null")!=String::npos);
+ assert(server.body.find(cfg::INTEGRATED_BOARD?"\"autoSupported\":false":"\"autoSupported\":true")!=String::npos);
+ server.request("/api/auto",{{"token","42"},{"active","1"}});assert(server.code==409&&!autopilot.active()&&!motion.autoMode&&server.body.find("cảm biến siêu âm")!=String::npos);
+ for(int i=0;i<3;i++){sonar.side[0].add(120,clockMs);sonar.side[1].add(crab::SONAR_FAR_CM,clockMs);}
+ server.request("/api/auto",{{"token","7"},{"active","1"}});assert(server.code==409&&!autopilot.active());
+ for(const char* bad:{"2","","x"}){server.request("/api/auto",{{"token","42"},{"active",bad}});assert(server.code==400&&!autopilot.active());}
+ server.request("/api/auto",{{"token","42"},{"active","1"}});assert(server.code==200&&autopilot.active()&&motion.autoMode&&motion.velocity.x==0);
+ server.request("/api/status");assert(server.body.find("\"auto\":true")!=String::npos&&server.body.find("\"autoState\":\"cruise\"")!=String::npos&&server.body.find("\"sonar\":[120,400]")!=String::npos&&server.body.find("\"sonarOk\":true")!=String::npos);
+ server.request("/api/move",{{"token","42"},{"seq","24"},{"dir","2"},{"fresh","1"}});assert(server.code==200&&!motion.autoMode&&motion.dir==2);
+ autopilot.stop(clockMs,crab::automsg::MANUAL); // what the loop's serviceAuto does next
+ server.request("/api/status");assert(server.body.find("\"auto\":false")!=String::npos&&server.body.find(crab::automsg::MANUAL)!=String::npos);
+ server.request("/api/auto",{{"token","42"},{"active","1"}});assert(server.code==200&&motion.autoMode);
+ server.request("/api/auto",{{"token","42"},{"active","0"}});assert(server.code==200&&!autopilot.active()&&!motion.autoMode&&!motion.lease);
+ server.request("/api/assembly",{{"token","42"},{"active","1"}});server.request("/api/auto",{{"token","42"},{"active","1"}});assert(server.code==409&&!autopilot.active()&&!motion.autoMode);
+ server.request("/api/assembly",{{"token","42"},{"active","0"}});assert(server.code==200);
+ clockMs+=cfg::SONAR_STALE_MS;server.request("/api/auto",{{"token","42"},{"active","1"}});assert(server.code==409&&!autopilot.active());
+ server.request("/api/status");assert(server.body.find("\"sonar\":[null,null]")!=String::npos);
+ server.request("/api/move",{{"token","42"},{"seq","25"},{"dir","1"},{"fresh","1"}});assert(server.code==200);
  // Loss of STA changes status only; AP command lease survives until the real watchdog expires.
  storedSsid="Saved";network.begin(true,clockMs);WiFi.ssid=storedSsid;WiFi.state=WL_CONNECTED;stationHasIp=true;
  serviceNetwork(clockMs);assert(network.state==crab::NetState::Online);
  stationHasIp=false;WiFi.state=0;serviceNetwork(++clockMs);assert(motion.lease&&motion.velocity.x==crab::bodyDirection(1).x);
  for(int i=0;i<200;i++){serviceNetwork(clockMs+=1000);assert(WiFi.beginCalls==0);}
  // Renew over AP even though saved network is unreachable.
- server.request("/api/move",{{"token","42"},{"seq","24"},{"dir","2"},{"fresh","1"}});assert(server.code==200);
+ server.request("/api/move",{{"token","42"},{"seq","26"},{"dir","2"},{"fresh","1"}});assert(server.code==200);
  WiFi.apClients=0;serviceNetwork(clockMs+=30000);assert(WiFi.beginCalls==1);
  WiFi.apClients=1;serviceNetwork(++clockMs);assert(network.state==crab::NetState::Setup);
  assert(WiFi.disconnectCalls>=2);for(int i=0;i<100;i++)serviceNetwork(clockMs+=1000);assert(WiFi.beginCalls==1);
@@ -143,7 +163,7 @@ int main(){
  assert(network.state==crab::NetState::Setup&&!network.pending&&wifiStore.data.empty());
  assert(candidatePass.empty());server.request("/api/status");assert(server.body.find(crab::msg::WRONG_PASS)!=String::npos);
  assert(server.body.find("wrong-password")==String::npos);
- server.request("/api/move",{{"token","42"},{"seq","25"},{"dir","3"},{"fresh","1"}});assert(server.code==200);
+ server.request("/api/move",{{"token","42"},{"seq","27"},{"dir","3"},{"fresh","1"}});assert(server.code==200);
  server.request("/api/wifi",{{"ssid","Absent"},{"password","private-password"}});assert(server.code==200);
  serviceNetwork(clockMs+=18000);assert(network.state==crab::NetState::Setup&&wifiStore.data.empty());
  server.request("/api/status");assert(server.body.find(crab::msg::FAILED)!=String::npos);
@@ -168,5 +188,5 @@ int main(){
  server.request("/api/actuator",{{"token","42"},{"seq","53"},{"value","positional"},{"confirm","1"}});assert(server.code==200&&motion.assembly);
  server.request("/api/actuator",{{"token","42"},{"seq","54"},{"value","unknown"}});assert(server.code==200&&motion.assembly&&!motion.positional());
  server.request("/api/actuator",{{"token","42"},{"seq","55"},{"value","positional"},{"confirm","1"}});assert(server.code==200&&motion.assembly);
- std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<":180-only HTTP/status/arm/disarm/assembly/centre; removed360 endpoints; sequence release; saved Wi-Fi/AP/QR/scan/errors and credentials preserved; HTTP outside mutex\n";
+ std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<":180-only HTTP/status/arm/disarm/assembly/centre; removed360 endpoints; sequence release; saved Wi-Fi/AP/QR/scan/errors and credentials preserved; HTTP outside mutex; Auto mode sensors/token/arming/status/manual takeover\n";
 }
