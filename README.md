@@ -168,6 +168,7 @@ Building doesn't flash a board, run motors, print or order anything.
 | Looking for | Open |
 |---|---|
 | Printed parts, assembly, body edits | [case/README.md](case/README.md) · [printed parts list](case/PRINTED-INVENTORY.md) |
+| Battery power, sensors, Auto mode (plan) | [firmware/BATTERY-AUTONOMY.md](firmware/BATTERY-AUTONOMY.md) |
 | Integrated ESP32-S3 + PCA9685 board | [docs/INTEGRATED-CONTROLLER.md](docs/INTEGRATED-CONTROLLER.md) · [KiCad sources](design/) |
 | Build-from-source results | [BUILD-VALIDATION.md](BUILD-VALIDATION.md) |
 | 360° servo trials (didn't work out) | [firmware/EXPERIMENT-STATUS.md](firmware/EXPERIMENT-STATUS.md) |

@@ -39,6 +39,8 @@ Use female-to-female Dupont leads. **`U1RXD` / `U1TXD` beside LILYGO 18/17 are a
 
 **PCA `VCC` =3.3 V logic from A. PCA `V+` = 5 V servo/LED power.** Do not bridge them or feed the eight servos through LILYGO's power pins. Read terminal `+`/`−` marks; the apparent left/right positions change when you rotate the board. Clamp bare metal, not insulation, and leave no loose strand between terminals.
 
+**Planned replacement:** a 2S LiPo with separate servo and logic regulators, feeding the LILYGO header `5V` pin. See [Battery power and self-driving parts](BATTERY-AUTONOMY.md). It is not fitted yet.
+
 This is the original closed-USB-supply plan, not a claim that the photographed cell/module setup was rated or verified. A suitable output and cable must handle the servo load. If the bank shuts down or the board resets, disconnect servo power, check free movement and use an adequately rated supply before retrying.
 
 ### 3. Connect the light
