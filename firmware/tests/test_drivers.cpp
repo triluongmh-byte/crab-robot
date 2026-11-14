@@ -28,15 +28,25 @@ static void test_sonar(){
  assert(d.service(s,1000));assert(gpioCalls.back().pin==cfg::SONAR_TRIG[0]&&gpioCalls.back().value==LOW&&gpioCalls[gpioCalls.size()-2].value==HIGH);
  assert(!d.service(s,1000+cfg::SONAR_PERIOD_MS-1));
  // Left echo 80 cm; reading it fires the right sensor.
- echo(L,HIGH,5000);echo(L,LOW,5000+58*80);echo(L,HIGH,9000); // late stray rise ignored
+ echo(L,HIGH,5000);echo(L,LOW,5000+58*80);echo(L,HIGH,9000);echo(L,LOW,9100); // late stray pulse ignored
  assert(d.service(s,1050)&&s.side[0].cm()==80&&s.side[1].count==0&&gpioCalls.back().pin==cfg::SONAR_TRIG[1]);
  // Right rises but never falls within the period: out of range, counts as clear.
- echo(R,HIGH,12000);assert(d.service(s,1100)&&s.side[1].cm()==crab::SONAR_FAR_CM&&s.ok(1100));
+ echo(R,HIGH,12000);assert(d.service(s,1100)&&s.side[1].cm()==crab::SONAR_FAR_CM&&s.ok(1100));echo(R,LOW,60000); // module timeout
  // Left silent (unplugged): nothing added, so it goes stale and Auto ends.
  assert(d.service(s,1150)&&s.side[0].count==1);
  // Right echo longer than SONAR_MAX_CM: clear as well.
  echo(R,HIGH,20000);echo(R,LOW,20000+58*(cfg::SONAR_MAX_CM+10));assert(d.service(s,1200)&&s.side[1].count==2&&s.side[1].raw[1]==crab::SONAR_FAR_CM);
  assert(!s.ok(1050+cfg::SONAR_STALE_MS));
+ // A clone still holding ECHO high when its turn comes: present and clear, not silent.
+ // (Service at 1200 fired left; left's echo stays high through its next turn.)
+ echo(L,HIGH,30000);const size_t writes=gpioCalls.size();
+ assert(d.service(s,1250)&&s.side[0].count==2&&gpioCalls.back().pin==cfg::SONAR_TRIG[1]); // left: rose, no fall -> FAR
+ assert(s.side[0].raw[1]==crab::SONAR_FAR_CM);
+ const size_t before2=gpioCalls.size();assert(d.service(s,1300));                        // right read, left still high
+ assert(s.side[0].count==3&&s.side[0].cm()==crab::SONAR_FAR_CM);
+ for(size_t k=before2;k<gpioCalls.size();k++)assert(gpioCalls[k].pin!=cfg::SONAR_TRIG[0]); // no ping while it rings
+ assert(gpioCalls.size()>writes);
+ echo(L,LOW,40000);assert(d.service(s,1350)&&gpioCalls.back().pin==cfg::SONAR_TRIG[1]&&d.service(s,1400)&&gpioCalls.back().pin==cfg::SONAR_TRIG[0]);
 }
 // Replay actual register writes to count enabled outputs after every service.
 static int activeOutputs(){

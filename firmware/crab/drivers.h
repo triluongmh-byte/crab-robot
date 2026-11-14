@@ -94,6 +94,10 @@ class SonarDriver {
    s.side[fired].ping(c.rose,c.fell&&c.width<=uint32_t(cfg::SONAR_MAX_CM)*58,c.width,now);
   }
   fired=next;next^=1;Capture& c=cap[fired];
+  // Some HC-SR04P clones hold ECHO high for long after a ping that met nothing.
+  // The pull-down keeps an unplugged ECHO low, so high here means a sensor is
+  // there and still waiting: count it as clear instead of silent, ping later.
+  if(digitalRead(c.pin)==HIGH){s.side[fired].ping(true,false,0,now);pending=false;return true;}
   noInterrupts();c.rose=c.fell=false;c.width=0;interrupts();
   digitalWrite(cfg::SONAR_TRIG[fired],HIGH);delayMicroseconds(10);digitalWrite(cfg::SONAR_TRIG[fired],LOW);
   pending=true;return true;
