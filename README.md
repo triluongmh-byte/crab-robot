@@ -73,7 +73,7 @@ Two white eyes on black, drawn from shapes in the style of the Claude pet:
 
 - **Idle:** blinks every 2.5–5.5 s and glances left/right now and then.
 - **Walking or playing an emotion:** happy eyes ^ ^.
-- **Bottom line:** Wi-Fi state and address. PCA9685 wiring errors show here too.
+- **Bottom line:** Wi-Fi state and address on one row. If both don't fit, only the address is shown. PCA9685 wiring errors show here too.
 
 ## Calibration (Ráp)
 
@@ -142,7 +142,7 @@ Add `--dry-run` to preview the requests. The script needs all 8 servos armed, an
 
 ## Firmware
 
-- **Running now:** `positional180-v19`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
+- **Running now:** `positional180-v20`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
 - **Build, flash and version history:** [firmware/README.md](firmware/README.md). See also [gaits](firmware/CRAWL.md), [web controls](firmware/WEB-CONTROL.md) and [emotions](firmware/EMOTIONS.md).
 
 ```sh
@@ -158,7 +158,6 @@ Building doesn't flash a board, run motors, print or order anything.
 
 ## Known issues
 
-- **The bottom screen line gets cut off when it's long.** For example, after a Wi-Fi failure `Sai mật khẩu hoặc mất sóng  CuaRobot-XXXX 192.168.4.1` ("wrong password or no signal") doesn't fit on one line.
 - **Speed, gait and flick hip angle aren't saved on the crab.** A reboot brings back the defaults: 90%, Chéo, 90°.
 - **Walking direction and leg names are set separately** (see the warning under [servo channels](#which-servo-goes-where)). Built-in emotions and the heading trim may feel "back to front" relative to Tiến.
 - **A USB cable dragging behind** can pull the crab off course. A power bank mounted on the body walks straighter.

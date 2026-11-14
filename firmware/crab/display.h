@@ -5,6 +5,7 @@
 #include "qrcodegen.h"
 #include "eyes.h"
 #include <algorithm>
+#include <cstdio>
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_vendor.h>
@@ -99,6 +100,18 @@ class Screen {
  }
  // Face: two pet eyes on black, one small status line at the bottom.
  static constexpr int EYE_W=58,EYE_H=86,EYE_GAP=52,EYE_Y=70,LOOK_PX=24,LINE_Y=150;
+ // The bottom line must fit on one row (the font wraps, and the wrapped row
+ // falls off the 170 px panel). Keep "message  address" when it fits, else the
+ // address alone (the part needed to reach the crab), else the message alone.
+ static constexpr int STATUS_MAX_PX=316;
+ const char* statusLine(const char* message,const char* address,char* out,size_t n){
+  snprintf(out,n,"%s%s%s",message,(*message&&*address)?"  ":"",address);
+  if(width(out)<=STATUS_MAX_PX)return out;
+  return *address?address:message;
+ }
+ bool face(const crab::EyeFrame& f,const char* message,const char* address){
+  char both[192];return face(f,statusLine(message,address,both,sizeof both));
+ }
  bool face(const crab::EyeFrame& f,const char* line){
   if(!panel)return false;
   for(int i=0;i<320*170;i++)pixels[i]=PAPER;

@@ -216,3 +216,7 @@ python3 tools/firmware/restore_settings.py firmware/settings/owner-2026-11-13.js
 ```
 
 Add `--dry-run` to list the requests without sending them. The robot keeps the trims, knee lift, heading trim and lamp colour across reboots. Speed, gait and flick hip are not saved on the robot: they reset to their defaults (90%, trot, 90°) at boot, which happen to equal these values.
+
+## Screen status line fits one row — 2026-11-14
+
+In release `positional180-v20`, the bottom line under the eyes always fits on one row. The owner's photos showed `Sai mật khẩu hoặc mất sóng  CuaRobot-XXXX 192.168…` cut off. The firmware now shows `message  address` when it fits, otherwise only the address (the part needed to reach the crab), otherwise only the message.

@@ -1,3 +1,4 @@
+#include <string>
 #include "../crab/display.h"
 #include <iostream>
 #include <fstream>
@@ -40,6 +41,14 @@ int main(int argc,char** argv){
   crab::EyeFrame shut;shut.open=10;assert(f.face(shut,""));assert(f.at(160-52,70)==0xffff&&f.at(160-52,70-20)==0);
   crab::EyeFrame right;right.look=1;assert(f.face(right,""));assert(f.at(160-52+24,70)==0xffff&&f.at(160-52-28,70)==0);
   crab::EyeFrame happy;happy.happy=true;assert(f.face(happy,""));assert(f.at(160-52,70+16-26)==0xffff&&f.at(160-52,70+16)==0&&f.at(160-52,70+16+10)==0);}
+ // Status line fits one row: long Wi-Fi failure drops the message, keeps the address.
+ {Screen& f=s;char b[192];
+  assert(std::string(f.statusLine("Đã vào Wi-Fi","172.168.20.249",b,sizeof b))=="Đã vào Wi-Fi  172.168.20.249");
+  const char* ap="CuaRobot-6C13 192.168.4.1";
+  assert(std::string(f.statusLine("Sai mật khẩu hoặc mất sóng",ap,b,sizeof b))==ap);
+  assert(std::string(f.statusLine("Lỗi dây PCA9685","",b,sizeof b))=="Lỗi dây PCA9685");
+  crab::EyeFrame open;assert(f.face(open,"Sai mật khẩu hoặc mất sóng",ap));
+  for(int y=150;y<170;y++)for(int x=0;x<10;x++)assert(f.at(x,y)==0);} // centred, so it fit
  // Animation: blinks within 2.5-5.5 s, lasting 160 ms; glances come and go; walking is happy.
  {crab::Eyes e;int blinks=0,glances=0;bool wasShut=false;int8_t last=0;
   for(uint32_t t=0;t<60000;t+=20){auto fr=e.frame(t,false);assert(!fr.happy&&fr.open>=10&&fr.open<=100);
