@@ -31,7 +31,7 @@ main{max-width:1100px;margin:auto;padding:14px;display:grid;gap:14px;grid-templa
 <section class="card span2"><h2>Tạo cảm xúc</h2>
 <p class="dim">Hông: + là đưa bàn chân ra trước. Gối: + là nhấc chân lên, − là đạp xuống (thân cao lên). Mỗi khung có thời gian chuyển và thời gian giữ. Kéo thanh là cua cử động theo ngay.</p>
 <div class="legs" id="legs"></div>
-<div class="row"><label>Màu đèn <input type="color" id="color" value="#ffc400"></label><label>Chuyển (ms) <input type="number" id="ms" min="0" max="3000" step="10" value="300"></label><label>Giữ (ms) <input type="number" id="hold" min="0" max="5000" step="10" value="0"></label></div>
+<div class="row"><label>Màu đèn <input type="color" id="color" value="#ffc400"></label><label>Chuyển (ms) <input type="number" id="ms" min="0" max="3000" step="10" value="300"></label><label>Giữ (ms) <input type="number" id="hold" min="0" max="5000" step="10" value="0"></label><label>Mắt <select id="mood"></select></label></div>
 <div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="mirror" style="width:auto;min-height:0" checked> Đối xứng trái/phải</label><button id="live">Xem trực tiếp: tắt</button><button id="zero">Về đứng</button></div>
 <div class="row"><button id="addFrame">+ Thêm khung</button><button id="updateFrame">Cập nhật khung</button><button id="deleteFrame">Xóa khung</button></div>
 <ul id="frames"></ul>
@@ -57,49 +57,56 @@ const F=(p,c,ms,hold=0)=>[...p,c,ms,hold];
 const P=(h,k)=>[h[0],k[0],h[1],k[1],h[2],k[2],h[3],k[3]];
 const STAND=P([0,0,0,0],[0,0,0,0]);
 const PRESETS=[
- {n:'😄 Vui',f:[F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(STAND,'#ffc400',200)]},
- {n:'😢 Buồn',f:[F(P([-10,-10,0,0],[28,28,15,15]),'#2050ff',1200,1500),F(P([-10,-10,0,0],[22,22,12,12]),'#102890',900,600),F(STAND,'#2050ff',900)]},
- {n:'😡 Giận',f:[F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(P([15,15,0,0],[0,30,0,0]),'#ff0000',120),F(P([15,15,0,0],[0,-25,0,0]),'#600000',100),F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(STAND,'#ff0000',250)]},
- {n:'👋 Chào',f:[F(P([0,25,0,0],[-10,30,-10,-10]),'#00d0ff',300),F(P([0,5,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,25,0,0],[-10,30,-10,-10]),'#80f0ff',200),F(P([0,5,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,25,0,0],[-10,30,-10,-10]),'#80f0ff',200),F(STAND,'#00d0ff',300)]},
- {n:'💃 Nhảy',f:[F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(STAND,'#c040ff',250)]},
- {n:'😴 Ngủ',f:[F(P([0,0,0,0],[30,30,30,30]),'#301060',2000,2500),F(STAND,'#301060',1500)]},
- {n:'😲 Ngạc nhiên',f:[F(P([0,0,0,0],[-30,-30,-30,-30]),'#ffffff',100,700),F(STAND,'#ffffff',400)]}
+ {n:'😄 Vui',e:'happy',f:[F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(STAND,'#ffc400',200)]},
+ {n:'😢 Buồn',e:'sad',f:[F(P([-10,-10,0,0],[28,28,15,15]),'#2050ff',1200,1500),F(P([-10,-10,0,0],[22,22,12,12]),'#102890',900,600),F(STAND,'#2050ff',900)]},
+ {n:'😡 Giận',e:'angry',f:[F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(P([15,15,0,0],[0,30,0,0]),'#ff0000',120),F(P([15,15,0,0],[0,-25,0,0]),'#600000',100),F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(STAND,'#ff0000',250)]},
+ {n:'👋 Chào',e:'wink',f:[F(P([0,25,0,0],[-10,30,-10,-10]),'#00d0ff',300),F(P([0,5,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,25,0,0],[-10,30,-10,-10]),'#80f0ff',200),F(P([0,5,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,25,0,0],[-10,30,-10,-10]),'#80f0ff',200),F(STAND,'#00d0ff',300)]},
+ {n:'💃 Nhảy',e:'love',f:[F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(STAND,'#c040ff',250)]},
+ {n:'😴 Ngủ',e:'asleep',f:[F(P([0,0,0,0],[30,30,30,30]),'#301060',2000,2500),F(STAND,'#301060',1500)]},
+ {n:'😲 Ngạc nhiên',e:'surprised',f:[F(P([0,0,0,0],[-30,-30,-30,-30]),'#ffffff',100,700),F(STAND,'#ffffff',400)]}
 ];
-let token='',seq=0,ready=false,run=0,frames=[],selected=-1,saved=[],liveOn=false,liveBusy=false,lastColor='';
+let token='',seq=0,ready=false,run=0,frames=[],selected=-1,saved=[],liveOn=false,liveBusy=false,lastColor='',lastMood='';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function api(path,data={}){const r=await fetch('/api/'+path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(data),cache:'no-store'});let d={};try{d=await r.json();}catch(e){}if(!r.ok)throw Error(d.error||'Lệnh chưa được nhận.');return d;}
 function setStatus(s){$('status').textContent=s;}
 async function led(c){if(c===lastColor)return;lastColor=c;const {r,g,b}=hexRgb(c);await api('led',{token,r,g,b});}
+// Eye mood on the robot's screen; frames may carry one at index 11.
+const MOODS=['normal','happy','sad','angry','sleepy','surprised','love','asleep','wink'];
+const MOOD_NAMES={normal:'Bình thường',happy:'Vui',sad:'Buồn',angry:'Giận',sleepy:'Buồn ngủ',surprised:'Ngạc nhiên',love:'Thương',asleep:'Ngủ',wink:'Nháy mắt'};
+async function eyes(m){if(!MOODS.includes(m)||m===lastMood)return;lastMood=m;await api('eyes',{token,mood:m});}
 async function pose(p,ms,fresh){await api('pose',{token,seq:++seq,fresh:fresh?'1':'0',ms:String(Math.max(0,Math.min(5000,Math.round(ms)))),a:toCommand(p)});}
 // The page drives the timeline: each frame is re-sent every TICK ms with the
 // remaining transition time, which also renews the firmware's 500 ms lease.
-async function playFrames(list,loop){
+async function playFrames(list,loop,mood){
  const id=++run;liveOff();let fresh=true;
  try{
   do{for(const f of list){
    if(id!==run)return;const p=f.slice(0,8),move=Number(f[9])||0,hold=Number(f[10])||0;
-   await led(f[8]);const start=Date.now();
+   await led(f[8]);await eyes(MOODS.includes(f[11])?f[11]:mood||'normal');const start=Date.now();
    for(;;){if(id!==run)return;const left=start+move-Date.now();await pose(p,Math.max(0,left),fresh);fresh=false;if(Date.now()-start>=move+hold)break;await sleep(TICK);}
   }}while(loop&&id===run);
  }catch(e){setStatus(e.message);}
  if(id===run)halt();
 }
-function halt(){run++;liveOff();if(token&&navigator.sendBeacon)navigator.sendBeacon('/api/move',new URLSearchParams({token,seq:String(++seq),dir:'0',fresh:'0'}));}
-function readEditor(){const p=[];for(let i=0;i<8;i++)p.push(clampDeg($('j'+i).value));return F(p,$('color').value,Math.max(0,Math.min(3000,Number($('ms').value)||0)),Math.max(0,Math.min(5000,Number($('hold').value)||0)));}
-function writeEditor(f){for(let i=0;i<8;i++){$('j'+i).value=f[i];$('v'+i).textContent=f[i]+'°';}$('color').value=f[8];$('ms').value=f[9];$('hold').value=f[10];}
+function halt(){run++;liveOff();lastColor='';lastMood='';if(token&&navigator.sendBeacon)navigator.sendBeacon('/api/move',new URLSearchParams({token,seq:String(++seq),dir:'0',fresh:'0'}));}
+function readEditor(){const p=[];for(let i=0;i<8;i++)p.push(clampDeg($('j'+i).value));const f=F(p,$('color').value,Math.max(0,Math.min(3000,Number($('ms').value)||0)),Math.max(0,Math.min(5000,Number($('hold').value)||0)));if($('mood').value!=='normal')f.push($('mood').value);return f;}
+function writeEditor(f){for(let i=0;i<8;i++){$('j'+i).value=f[i];$('v'+i).textContent=f[i]+'°';}$('color').value=f[8];$('ms').value=f[9];$('hold').value=f[10];$('mood').value=MOODS.includes(f[11])?f[11]:'normal';}
 function mirrorFrom(i){if(!$('mirror').checked)return;const leg=i>>1,joint=i&1,other=leg^1,j=2*other+joint;$('j'+j).value=$('j'+i).value;$('v'+j).textContent=$('j'+j).value+'°';}
 function renderFrames(){const ul=$('frames');ul.replaceChildren();frames.forEach((f,i)=>{const li=document.createElement('li'),b=document.createElement('button');b.textContent=String(i+1);b.style.borderBottom='6px solid '+f[8];if(i===selected)b.className='sel';b.onclick=()=>{selected=i;writeEditor(f);renderFrames();};li.appendChild(b);ul.appendChild(li);});}
 function listJson(list){return JSON.stringify(list);}
 function renderSaved(){const ul=$('saved');ul.replaceChildren();saved.forEach((e,i)=>{const li=document.createElement('li'),name=document.createElement('span'),play=document.createElement('button'),edit=document.createElement('button'),del=document.createElement('button');name.textContent=e.n;play.textContent='▶';edit.textContent='Sửa';del.textContent='Xóa';play.onclick=()=>ready&&playFrames(e.f,$('loopPreset').checked);edit.onclick=()=>{frames=e.f.map(f=>f.slice());selected=0;$('name').value=e.n;if(frames[0])writeEditor(frames[0]);renderFrames();};del.onclick=()=>store(saved.filter((_,k)=>k!==i));li.append(name,play,edit,del);ul.appendChild(li);});$('capacity').textContent='Bộ nhớ cua: '+listJson(saved).length+'/'+MAX_LIST+' ký tự.';}
 async function store(list){const data=listJson(list);if(data.length>MAX_LIST){setStatus('Hết chỗ lưu trên cua. Xóa bớt cảm xúc cũ.');return false;}try{await api('emotions/save',{token,data});saved=list;renderSaved();return true;}catch(e){setStatus(e.message);return false;}}
 async function loadSaved(){try{const r=await fetch('/api/emotions',{cache:'no-store'});const d=await r.json();saved=Array.isArray(d)?d.filter(e=>e&&typeof e.n==='string'&&Array.isArray(e.f)):[];}catch(e){saved=[];}renderSaved();}
-async function liveLoop(){if(liveBusy)return;liveBusy=true;let fresh=true;try{while(liveOn&&ready){const f=readEditor();await led(f[8]);await pose(f.slice(0,8),200,fresh);fresh=false;await sleep(TICK);}}catch(e){setStatus(e.message);liveOff();}liveBusy=false;}
+async function liveLoop(){if(liveBusy)return;liveBusy=true;let fresh=true;try{while(liveOn&&ready){const f=readEditor();await led(f[8]);await eyes(f[11]||'normal');await pose(f.slice(0,8),200,fresh);fresh=false;await sleep(TICK);}}catch(e){setStatus(e.message);liveOff();}
+ // Lost readiness (one missed status poll): turn preview off so the next slider move restarts it.
+ if(liveOn&&!ready)liveOff();liveBusy=false;}
 function liveOff(){if(!liveOn)return;liveOn=false;$('live').textContent='Xem trực tiếp: tắt';}
 async function poll(){try{const r=await fetch('/api/status',{cache:'no-store'});const d=await r.json();ready=!!d.driver&&!!d.positional&&d.enabled===8&&!d.assembly;$('arm').disabled=!!d.positional||!d.driver;setStatus((ready?'Sẵn sàng diễn cảm xúc.':!d.driver?'Kiểm tra dây PCA9685.':d.assembly?'Đang ở trang Ráp: thoát Ráp trước.':d.positional?'Đang bật servo '+d.enabled+'/8…':'Servo đang tắt — bấm Bật servo.')+(run?'':''));}catch(e){ready=false;setStatus('Mất kết nối. Cua tự về đứng.');}}
 function build(){
  const legs=$('legs');LEGS.forEach((n,leg)=>{const box=document.createElement('div');box.className='leg';const h=document.createElement('h3');h.textContent=n;box.appendChild(h);
   ['Hông','Gối'].forEach((jn,joint)=>{const i=2*leg+joint,l=document.createElement('label'),v=document.createElement('span'),r=document.createElement('input');v.className='val';v.id='v'+i;v.textContent='0°';r.type='range';r.min=-LIMIT;r.max=LIMIT;r.step=1;r.value=0;r.id='j'+i;r.oninput=()=>{v.textContent=r.value+'°';mirrorFrom(i);autoLive();};l.append(jn,v,r);box.appendChild(l);});legs.appendChild(box);});
- PRESETS.forEach(e=>{const b=document.createElement('button');b.textContent=e.n;b.onclick=()=>{if(!ready){setStatus('Bật servo trước đã.');return;}playFrames(e.f,$('loopPreset').checked);};$('presets').appendChild(b);});
+ for(const m of MOODS){const o=document.createElement('option');o.value=m;o.textContent=MOOD_NAMES[m];$('mood').appendChild(o);}
+ PRESETS.forEach(e=>{const b=document.createElement('button');b.textContent=e.n;b.onclick=()=>{if(!ready){setStatus('Bật servo trước đã.');return;}playFrames(e.f,$('loopPreset').checked,e.e);};$('presets').appendChild(b);});
 }
 build();
 $('arm').onclick=async()=>{try{halt();await api('actuator',{token,seq:++seq,value:'positional',confirm:'1'});await poll();}catch(e){setStatus(e.message);}};
@@ -116,6 +123,6 @@ $('playOnce').onclick=()=>{if(ready&&frames.length)playFrames(frames,false);};
 $('playLoop').onclick=()=>{if(ready&&frames.length)playFrames(frames,true);};
 $('save').onclick=async()=>{const n=$('name').value.trim().slice(0,24);if(!n||!frames.length){setStatus('Đặt tên và thêm ít nhất một khung.');return;}const list=saved.filter(e=>e.n!==n).concat([{n,f:frames.map(f=>f.slice())}]);if(await store(list))setStatus('Đã lưu “'+n+'” vào cua.');};
 for(const ev of ['blur','pagehide'])window.addEventListener(ev,halt);document.addEventListener('visibilitychange',()=>{if(document.hidden)halt();});
-window.CuaEmote={toCommand,hexRgb,PRESETS,playFrames,halt,autoLive,state:()=>({run,seq,ready,liveOn,frames,saved}),setReady:v=>{ready=v;}};
+window.CuaEmote={MOODS,toCommand,hexRgb,PRESETS,playFrames,halt,autoLive,state:()=>({run,seq,ready,liveOn,frames,saved}),setReady:v=>{ready=v;}};
 api('session').then(d=>{token=d.token;seq=0;poll();loadSaved();setInterval(poll,1000);}).catch(e=>setStatus(e.message));
 </script></body></html>

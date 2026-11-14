@@ -21,6 +21,10 @@ String ap,storedSsid,storedPass,candidateSsid,candidatePass;
 bool lightOn=true,displayOk=false;
 uint32_t lightRgb=0xffffff; // owner-picked lamp colour, saved as "led"
 crab::Eyes eyes;crab::EyeFrame drawnEyes;bool faceShown=false;
+std::atomic<uint8_t> staFail(0); // crab::WifiFail of the current attempt, from the disconnect event
+uint32_t shownRgb=0xffffff;      // colour the lamp shows now (saved lamp or an emotion's)
+bool ledOverride=false;uint32_t ledAt=0; // emotion colour active since ledAt
+crab::Mood emoteMood=crab::Mood::Normal;uint32_t moodAt=0;
 uint32_t lastDraw=0;String drawnKey;
 struct Guard{Guard(){xSemaphoreTake(motionLock,portMAX_DELAY);}~Guard(){xSemaphoreGive(motionLock);}};
 #include "network_http.h"
@@ -50,7 +54,10 @@ void setup(){
   motion.begin(millis());motion.bootArm(driverReady.load(),millis());}
  applyLight();
  xTaskCreatePinnedToCore(motionTask,"cua-motion",4096,nullptr,3,nullptr,1);
- WiFi.onEvent([](WiFiEvent_t event){if(event==ARDUINO_EVENT_WIFI_STA_GOT_IP)stationHasIp=true;else if(event==ARDUINO_EVENT_WIFI_STA_DISCONNECTED)stationHasIp=false;});
+ WiFi.onEvent([](WiFiEvent_t event,WiFiEventInfo_t info){
+  if(event==ARDUINO_EVENT_WIFI_STA_GOT_IP)stationHasIp=true;
+  else if(event==ARDUINO_EVENT_WIFI_STA_DISCONNECTED){stationHasIp=false;const auto f=crab::wifiFailFromReason(info.wifi_sta_disconnected.reason);if(f!=crab::WifiFail::None)staFail=uint8_t(f);}
+ });
  WiFi.persistent(false);WiFi.mode(WIFI_AP_STA);WiFi.setAutoReconnect(false);
  // Modem sleep naps the radio between beacons: owner saw the page hang with
  // 60% ping loss and up to 800 ms latency. Keep the radio awake (USB/bank powered).
@@ -71,12 +78,20 @@ void loop(){
  }
  serviceNetwork(now);
  dns.processNextRequest();server.handleClient();
- // Owner: pet eyes on the screen, Wi-Fi as one small line at the bottom. The
- // QR join screen stays only for first setup (no saved Wi-Fi).
- const bool face=network.saved||network.state!=crab::NetState::Setup;
+ // An emotion's lamp colour lasts while the pose runs, then the saved lamp returns.
+ if(ledOverride&&now-ledAt>=1500){bool posing;{Guard g;posing=motion.posing;}if(!posing)applyLight();}
+ // Owner: pet eyes on the screen in the lamp's colour, Wi-Fi as one small line
+ // at the bottom. Without Wi-Fi and with no phone on the crab's own Wi-Fi the
+ // screen shows the QR join guide instead.
+ const bool apClients=WiFi.softAPgetStationNum()>0;
+ const bool face=!network.wantsQr(apClients);
  if(displayOk&&face&&now-lastDraw>=40){lastDraw=now;
-  bool active;{Guard g;active=motion.amplitude>.05f||motion.posing;}
-  const crab::EyeFrame f=eyes.frame(now,active);
+  crab::EyeInput in;int dir;
+  {Guard g;in.walking=motion.amplitude>.05f;in.posing=motion.posing;dir=motion.dir;in.idleMs=now-motion.lastCommand;}
+  crab::travelLook(in.walking?dir:0,in.sideX,in.sideY);
+  in.mood=(in.posing||now-moodAt<1500)?emoteMood:crab::Mood::Normal;
+  in.color=crab::eyeColor(lightOn?shownRgb:0);
+  const crab::EyeFrame f=eyes.frame(now,in);
   const String message=driverReady?String(network.message):String(crab::msg::DRIVER);
   const String address=!driverReady?String():network.state==crab::NetState::Online?WiFi.localIP().toString():ap+" 192.168.4.1";
   const String line=message+"|"+address;

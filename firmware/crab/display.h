@@ -6,6 +6,7 @@
 #include "eyes.h"
 #include <algorithm>
 #include <cstdio>
+#include <string>
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_vendor.h>
@@ -23,19 +24,58 @@ class Screen {
   BaseType_t wake=pdFALSE;xSemaphoreGiveFromISR(static_cast<Screen*>(arg)->done,&wake);return wake==pdTRUE;
  }
  void pixel(int x,int y,bool black){put(x,y,black?0:0xffff);}
- void put(int x,int y,uint16_t c){if(x>=0&&x<320&&y>=0&&y<170)pixels[y*320+x]=c;}
- // Face colours are 0x0000/0xffff only: byte-order independent on both panels.
+ // RGB565 is sent high byte first; the frame buffer is little-endian memory,
+ // so each pixel is stored byte-swapped (0x0000/0xffff are unaffected).
+ static uint16_t swap16(uint16_t c){return uint16_t((c>>8)|(c<<8));}
+ void put(int x,int y,uint16_t c){if(x>=0&&x<320&&y>=0&&y<170)pixels[y*320+x]=swap16(c);}
  static constexpr uint16_t INK=0xffff,PAPER=0x0000;
- void roundRect(int cx,int cy,int w,int h,int r){
+ void roundRect(int cx,int cy,int w,int h,int r,uint16_t ink=INK){
   r=std::min(r,std::min(w,h)/2);const int hw=w/2-r,hh=h/2-r;
   for(int y=cy-h/2;y<cy+(h+1)/2;y++)for(int x=cx-w/2;x<cx+(w+1)/2;x++){
-   const int dx=std::max(0,std::abs(x-cx)-hw),dy=std::max(0,std::abs(y-cy)-hh);if(dx*dx+dy*dy<=r*r)put(x,y,INK);}
+   const int dx=std::max(0,std::abs(x-cx)-hw),dy=std::max(0,std::abs(y-cy)-hh);if(dx*dx+dy*dy<=r*r)put(x,y,ink);}
  }
- void arch(int cx,int cy,int ro,int ri){for(int y=cy-ro;y<=cy;y++)for(int x=cx-ro;x<=cx+ro;x++){const int d=(x-cx)*(x-cx)+(y-cy)*(y-cy);if(d<=ro*ro&&d>=ri*ri)put(x,y,INK);}}
+ // Ring segment: upper half (happy ^) or lower half (closed, sleeping u).
+ void arch(int cx,int cy,int ro,int ri,uint16_t ink=INK,bool upper=true){
+  for(int y=upper?cy-ro:cy;y<=(upper?cy:cy+ro);y++)for(int x=cx-ro;x<=cx+ro;x++){const int d=(x-cx)*(x-cx)+(y-cy)*(y-cy);if(d<=ro*ro&&d>=ri*ri)put(x,y,ink);}
+ }
+ // Eyelid: erase everything above a slanted line across the eye's box.
+ // dOuter/dInner: how far the lid comes down at the outer/inner corner.
+ void lid(int cx,int cy,int w,int h,int side,int dOuter,int dInner){
+  const int top=cy-h/2,outer=cx+side*w/2,inner=cx-side*w/2;
+  for(int x=std::min(inner,outer);x<=std::max(inner,outer);x++){
+   const float t=float(x-inner)/float(outer-inner);const int line=top+int(dInner+(dOuter-dInner)*t);
+   for(int y=top-1;y<line;y++)put(x,y,PAPER);
+  }
+ }
+ void heart(int cx,int cy,int r,uint16_t ink){
+  const int lobeY=cy-r/2,tip=cy+r*3/2;
+  for(int y=cy-r*3/2;y<=tip;y++)for(int x=cx-2*r;x<=cx+2*r;x++){
+   const int dl=(x-(cx-r))*(x-(cx-r))+(y-lobeY)*(y-lobeY),dr=(x-(cx+r))*(x-(cx+r))+(y-lobeY)*(y-lobeY);
+   const bool tri=y>=lobeY&&std::abs(x-cx)*(tip-lobeY)<=(tip-y)*(2*r);
+   if(dl<=r*r||dr<=r*r||tri)put(x,y,ink);
+  }
+ }
  int width(const char* s){int w=0;while(*s){uint32_t cp=utf8(s);if(const Glyph* g=glyph(cp))w+=g->advance;}return w;}
  const Glyph* glyph(uint32_t cp){for(const auto& g:GLYPHS)if(g.cp==cp)return &g;return nullptr;}
  uint32_t utf8(const char*& s){uint32_t c=(uint8_t)*s++;if(c<128)return c;int n=c<224?1:c<240?2:3;c&=(1<<(6-n))-1;while(n--&&*s)c=(c<<6)|((uint8_t)*s++&63);return c;}
- void text(const char* s,int x,int y,int right=319,uint16_t ink=0){const int left=x;while(*s){uint32_t cp=utf8(s);if(cp=='\n'){x=left;y+=19;continue;}const Glyph* g=glyph(cp);if(!g)continue;if(x+g->advance>right){x=left;y+=19;}if(y+20>170)break;for(int yy=0;yy<20;yy++)for(int xx=0;xx<16;xx++)if(g->rows[yy]&(1<<(15-xx)))put(x+xx,y+yy,ink);x+=g->advance;}}
+ int wordWidth(const char* s){int w=0;while(*s&&*s!=' '&&*s!='\n'){uint32_t cp=utf8(s);if(const Glyph* g=glyph(cp))w+=g->advance;}return w;}
+ // Word-wrapping text; returns the y of the next free row.
+ int text(const char* s,int x,int y,int right=319,uint16_t ink=0){
+  const int left=x;bool wordStart=true;
+  while(*s){
+   if(wordStart&&*s!=' '&&*s!='\n'&&x>left&&x+wordWidth(s)>right){x=left;y+=19;}
+   wordStart=false;
+   uint32_t cp=utf8(s);if(cp=='\n'){x=left;y+=19;wordStart=true;continue;}
+   if(cp==' ')wordStart=true;
+   const Glyph* g=glyph(cp);if(!g)continue;
+   if(cp==' '&&x==left)continue;
+   if(x+g->advance>right){x=left;y+=19;}
+   if(y+20>170)break;
+   for(int yy=0;yy<20;yy++)for(int xx=0;xx<16;xx++)if(g->rows[yy]&(1<<(15-xx)))put(x+xx,y+yy,ink);
+   x+=g->advance;
+  }
+  return y+19;
+ }
  public:
  bool begin(){
   if(cfg::POWER_PIN>=0){digitalWrite(cfg::POWER_PIN,HIGH);pinMode(cfg::POWER_PIN,OUTPUT);}
@@ -98,8 +138,8 @@ class Screen {
 #endif
   digitalWrite(cfg::LCD_BL,HIGH);return true;
  }
- // Face: two pet eyes on black, one small status line at the bottom.
- static constexpr int EYE_W=58,EYE_H=86,EYE_GAP=52,EYE_Y=70,LOOK_PX=24,LINE_Y=150;
+ // Face: two pet eyes on black in the lamp's colour, one small status line at the bottom.
+ static constexpr int EYE_W=58,EYE_H=86,EYE_GAP=52,EYE_Y=70,LINE_Y=150;
  // The bottom line must fit on one row (the font wraps, and the wrapped row
  // falls off the 170 px panel). Keep "message  address" when it fits, else the
  // address alone (the part needed to reach the crab), else the message alone.
@@ -112,19 +152,34 @@ class Screen {
  bool face(const crab::EyeFrame& f,const char* message,const char* address){
   char both[192];return face(f,statusLine(message,address,both,sizeof both));
  }
+ void eye(const crab::EyeFrame& f,int side){
+  using crab::Mood;
+  const int ex=160+side*EYE_GAP+f.lookX,ey=EYE_Y+f.lookY;const uint16_t ink=f.color;
+  const int h=std::max(6,EYE_H*f.open/100);
+  switch(f.mood){
+   case Mood::Happy:arch(ex,ey+16,32,21,ink);break;
+   case Mood::Wink:if(side<0)arch(ex,ey+16,32,21,ink);else roundRect(ex,ey,EYE_W,EYE_H,20,ink);break;
+   case Mood::Love:heart(ex,ey-6,17,ink);break;
+   case Mood::Asleep:arch(ex,ey-4,28,22,ink,false);break;
+   case Mood::Surprised:roundRect(ex,ey,EYE_W+12,std::max(6,(EYE_H+8)*f.open/100),34,ink);break;
+   case Mood::Sleepy:{const int hs=std::max(6,EYE_H*f.open/100);roundRect(ex,ey+(EYE_H-hs)/3,EYE_W,hs,14,ink);break;}
+   case Mood::Sad:roundRect(ex,ey,EYE_W,h,20,ink);lid(ex,ey,EYE_W,h,side,h*45/100,h*5/100);break;
+   case Mood::Angry:roundRect(ex,ey,EYE_W,h,20,ink);lid(ex,ey,EYE_W,h,side,h*5/100,h*50/100);break;
+   default:roundRect(ex,ey,EYE_W,h,20,ink);break;
+  }
+ }
  bool face(const crab::EyeFrame& f,const char* line){
   if(!panel)return false;
   for(int i=0;i<320*170;i++)pixels[i]=PAPER;
-  for(int side:{-1,1}){
-   const int cx=160+side*EYE_GAP+f.look*LOOK_PX;
-   if(f.happy)arch(cx,EYE_Y+16,32,21);
-   else roundRect(cx,EYE_Y,EYE_W,std::max(6,EYE_H*f.open/100),20);
-  }
+  for(int side:{-1,1})eye(f,side);
+  if(f.mood==crab::Mood::Asleep){text("z",236,22,319,f.color);text("Z",250,6,319,f.color);}
   const int w=width(line);text(line,std::max(2,(320-w)/2),LINE_Y,317,INK);
   if(esp_lcd_panel_draw_bitmap(panel,0,0,320,170,pixels)!=ESP_OK)return false;
   return xSemaphoreTake(done,pdMS_TO_TICKS(1000))==pdTRUE;
  }
- uint16_t at(int x,int y)const{return pixels[y*320+x];}
+ uint16_t at(int x,int y)const{return swap16(pixels[y*320+x]);}
+ uint16_t raw(int x,int y)const{return pixels[y*320+x];} // as sent to the panel
+ int textWidth(const char* s){return width(s);}
  bool show(const char* payload,const char* message,const char* address,const char* ap){
   if(!panel)return false;
   memset(pixels,255,320*170*2);
@@ -134,7 +189,13 @@ class Screen {
    int x0=(160-side)/2,y0=(170-side)/2;
    for(int y=0;y<n;y++)for(int x=0;x<n;x++)if(qrcodegen_getModule(qr,x,y))for(int j=0;j<scale;j++)for(int i=0;i<scale;i++)pixel(x0+(x+4)*scale+i,y0+(y+4)*scale+j,true);
   }
-  text(message,164,2);text(address,164,64);text(ap,164,110);text("Giữ BOOT 8 giây\nđể xóa Wi-Fi",164,130);
+  // Guide for someone holding a phone: what happened, then three steps.
+  int y=text(message,164,2,318);y+=4;
+  y=text("1. Quét QR vào Wi-Fi cua",164,y,318);
+  y=text((std::string("2. Mở ")+address).c_str(),164,y,318);
+  y=text("3. Chọn Wi-Fi nhà",164,y,318);
+  text(ap,164,std::max(y+2,128),318);
+  text("Giữ BOOT 8s: xóa Wi-Fi",164,150,318);
   if(esp_lcd_panel_draw_bitmap(panel,0,0,320,170,pixels)!=ESP_OK)return false;
   return xSemaphoreTake(done,pdMS_TO_TICKS(1000))==pdTRUE;
  }

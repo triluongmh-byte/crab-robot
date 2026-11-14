@@ -2,7 +2,7 @@
 
 This release is for the owner's replacement **positional180° SG90-class servos**. On November13 the owner reports movement from the replacement180° motors, but finds it too slow. Their current power state and physical calibration are unconfirmed. The earlier360° experiments failed loaded tests and are [archived as unsuccessful](EXPERIMENT-STATUS.md).
 
-**Current behavior:** servo PWM is off at every boot. Saved Wi-Fi/direct AP and capped-brightness LEDs remain available. Use **Bật servo180°** to enable channels one at a time,300ms apart; approximately3seconds enables all eight. The left driving panel then offers Forward, Backward, Left and Right; settings and logs live in the right panel, hidden behind ☰ on mobile. **Ngắt servo** disables every output. The default gait is the diagonal trot and the default speed is **Bình thường**: about 1.23 seconds per cycle; **Chậm** is 2.0 seconds and **Nhanh** is 0.8 second. Releasing a direction or missing its heartbeat500ms stops walking and settles gently towards standing; it does not disconnect the servo supply.
+**Current behavior:** since `positional180-v13` the servos arm automatically at boot (`cfg::AUTO_ARM`), eight channels 300 ms apart; keep hands clear when plugging in. (Older text below describing PWM off at boot is history.) Saved Wi-Fi/direct AP and capped-brightness LEDs remain available. Use **Bật servo180°** to enable channels one at a time,300ms apart; approximately3seconds enables all eight. The left driving panel then offers Forward, Backward, Left and Right; settings and logs live in the right panel, hidden behind ☰ on mobile. **Ngắt servo** disables every output. The default gait is the diagonal trot and the default speed is **Bình thường**: about 1.23 seconds per cycle; **Chậm** is 2.0 seconds and **Nhanh** is 0.8 second. Releasing a direction or missing its heartbeat500ms stops walking and settles gently towards standing; it does not disconnect the servo supply.
 
 The360°/single-servo speed-test pages and HTTP routes are removed from this release. The unknown actuator value is retained only as the explicit PWM-off state and cannot start the old hips-only/timed gait. Historical helper sources remain in the repository, but the final actuator output boundary emits only positional pulses.
 
@@ -220,3 +220,26 @@ Add `--dry-run` to list the requests without sending them. The robot keeps the t
 ## Screen status line fits one row — 2026-11-14
 
 In release `positional180-v20`, the bottom line under the eyes always fits on one row. The owner's photos showed `Sai mật khẩu hoặc mất sóng  CuaRobot-XXXX 192.168…` cut off. The firmware now shows `message  address` when it fits, otherwise only the address (the part needed to reach the crab), otherwise only the message.
+
+## Coloured eyes, moods, Wi-Fi join fix, QR guide, turning arcs — 2026-11-14
+
+Release `positional180-v21`, for the owner's list of small issues:
+
+- **Eye colour matches the lamp.** The eyes are drawn in the lamp's colour at full brightness: the saved lamp colour, or an emotion's colour while it plays. With the lamp off they are white. After an emotion ends, the lamp and the eyes go back to the saved colour about 1.5 s later.
+- **Livelier eyes.** Nine moods: normal, happy, sad, angry, sleepy, surprised, love, asleep and wink.
+  - Idle: blinks, sometimes double. Glances left, right, up and down move smoothly. Every 15–30 s there is a short smile, a wide-eyed look, a wink or a heart.
+  - After 1 minute without a command the eyes get sleepy; after 3 minutes the crab sleeps ("z Z"). The next command wakes it with a short surprised look.
+  - Walking: happy bouncing eyes that look towards the travel side.
+  - Each built-in emotion on `/emo` has its own mood. Custom frames can pick one under **Mắt**.
+- **Home Wi-Fi join fix (bug).** At home, the office Wi-Fi (saved) was not found, and `WiFi.status()` kept reporting `NO_SSID_AVAIL` from that attempt; Arduino-ESP32 2.0.14 does not reset it in `WiFi.begin()`. Pressing **Kết nối** then failed the new attempt on that stale value 0.5 s later and called `WiFi.disconnect()` on it.
+  - Failures now come only from the current attempt's disconnect event: 201 means not found; 202, 15 and 204 mean a wrong password.
+  - A router that a scan misses is scanned again for the whole 18 s attempt.
+  - A wrong password is reported after one retry as **Sai mật khẩu Wi-Fi**. A network that never appears is reported as **Không thấy Wi-Fi này**.
+- **Wi-Fi form.** The password is shown as plain text so typos are visible. After **Tìm Wi-Fi** the first network fills the name field. Both fields have phone autocapitalise and autocorrect turned off.
+- **QR guide without Wi-Fi.** Whenever the crab is not on a Wi-Fi network and no phone is connected to its own Wi-Fi, the screen shows the join QR with three steps: scan the QR, open 192.168.4.1, choose the home Wi-Fi. The first connection attempt after boot still shows the eyes. Once a phone joins the crab's Wi-Fi, the eyes come back with the address on the bottom line.
+- **Eight moves.** Four corner buttons turn the body while walking, like a car: ↖ forward-left, ↗ forward-right, ↙ back-left (the tail swings left) and ↘ back-right (`/api/move` `dir` 5–8).
+  - Half of each hip stroke (`cfg::ARC_YAW`) turns the body.
+  - In flick mode the arcs use the trot.
+  - Changing between the 90° flick stance and the trot now ramps down first instead of whipping the hips across.
+
+Host tests cover all of this: the stale-status regression, rescans, the wrong-password retry, the turn direction and travel of all four arcs in the equal-reach model, arc tracking at Fast, the flick-to-trot ramp, mood drawings, eye colour byte order, eye timing (wrap-safe), the QR guide text widths, the 8-button UI, the Wi-Fi form and emotion moods. The eye look direction assumes the screen faces outwards like a face (`cfg::EYE_LOOK_SIGN`). The colours on the real panel, the turn radius on the floor and the home Wi-Fi join still need the owner's eyes.

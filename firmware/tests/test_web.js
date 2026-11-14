@@ -32,7 +32,7 @@ const ctx=vm.createContext({document,window:{matchMedia:()=>({matches:mobile}),a
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 (async()=>{
  await flush();const poll=async()=>{await timers.find(t=>t.ms===1000).f();await flush();};const hold=()=>timers.find(t=>t.ms===150).f();
- assert(dirs.length===4&&dirs.every(b=>b.disabled));assert.equal(el('speed').value,'65');assert.equal(el('speedValue').textContent,'65%');assert.equal(vm.runInContext('page',ctx),'control');
+ assert(dirs.length===8&&dirs.every(b=>b.disabled));assert.equal(el('speed').value,'65');assert.equal(el('speedValue').textContent,'65%');assert.equal(vm.runInContext('page',ctx),'control');
  const before=calls.length;dirs[0].fire('pointerdown');await flush();assert.equal(calls.length,before);await el('light').onclick();assert(calls.some(c=>c.path==='/api/light'));
  await el('arm').onclick();await flush();assert(state.positional&&dirs.every(b=>b.disabled));assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
  state.enabled=8;await poll();assert(dirs.every(b=>!b.disabled));state.speed=1;el('speed').value='40';await poll();assert.equal(el('speed').value,'100');state.speed=0.4;await poll();assert.equal(el('speed').value,'40');
@@ -71,7 +71,7 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  first.fire('pointerdown');await flush();state.assembly=true;await poll();assert.equal(vm.runInContext('held',ctx),0);state.assembly=false;await poll();
  first.fire('pointerdown',{pointerType:'mouse',button:2});assert.equal(vm.runInContext('held',ctx),0);
  assert(html.includes('grid-template-columns:minmax(300px,1fr) minmax(340px,430px)')&&html.includes('position:fixed')&&html.includes('overscroll-behavior:none')&&html.includes('-webkit-touch-callout:none'));
- assert.deepEqual(dirs.map(x=>Number(x.dataset.dir)).sort(),[1,2,3,4]);
+ assert.deepEqual(dirs.map(x=>Number(x.dataset.dir)).sort(),[1,2,3,4,5,6,7,8]);
 
  // The mobile settings drawer owns its own scroll; opening it cancels hold.
  mobile=true;const telemetry=()=>timers.find(t=>t.ms===500).f();
@@ -95,8 +95,11 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  state.enabled=8;await poll();let release;deferred=new Promise(r=>release=r);dirs[0].fire('pointerdown');await flush();dirs[0].fire('pointerup');release();deferred=null;await flush();assert.equal(vm.runInContext('held',ctx),0);
  await el('showSetup').onclick();state.online=false;for(let i=0;i<40;i++)await poll();assert.equal(vm.runInContext('page',ctx),'setup');
  await el('scan').onclick();assert.equal(el('networks').children[1].textContent,'<script>bad</script>');
- el('ssid').value='Home';el('password').value='example-password';await el('connect').onclick();assert.equal(el('password').value,'');assert(calls.some(c=>c.path==='/api/wifi'&&c.data.ssid==='Home'));
+ // Scan fills the SSID with the first network; the password is visible text (owner mistyped hidden ones).
+ assert.equal(el('ssid').value,'Nhà tôi');assert(/id="password" type="text"/.test(html)&&/id="ssid"[^>]*autocapitalize="none"/.test(html)&&/id="password"[^>]*autocapitalize="none"/.test(html));
+ el('ssid').value=' Home ';el('password').value='example-password';await el('connect').onclick();assert.equal(el('password').value,'example-password');assert(calls.some(c=>c.path==='/api/wifi'&&c.data.ssid==='Home'&&c.data.password==='example-password'));
+ const wifiCalls=calls.filter(c=>c.path==='/api/wifi').length;el('ssid').value='';await el('connect').onclick();assert.equal(calls.filter(c=>c.path==='/api/wifi').length,wifiCalls);
  failStatus=true;await poll();assert(dirs.every(b=>b.disabled));assert.equal(vm.runInContext('held',ctx),0);
  assert(!calls.some(c=>c.path.includes('/360')||c.path.includes('/test')));assert(!html.includes('id="show360"'));
- console.log('PASS: actual180-only UI, default off/explicit arm, enable8 readiness,4-direction split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
+ console.log('PASS: actual180-only UI, auto-arm/explicit arm, enable8 readiness, 8-direction (4 straight + 4 turning arcs) split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

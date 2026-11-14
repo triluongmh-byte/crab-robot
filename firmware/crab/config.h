@@ -66,4 +66,13 @@ constexpr GaitPattern PAIRS={{0,0,.5f,.5f},.5f,.125f,.25f,.25f,false};
 // Fast lift: smoothstep peak 1.5*30 deg/(.2*.5 s) = 450 deg/s < SLEW_DPS.
 // Left/Right keep the trot.
 constexpr float FLICK_HIP_MIN=30, FLICK_HIP=90, FLICK_STROKE=.2f, FLICK_PERIOD_S=.5f;
+// Owner, 2026-11-14: four slanted moves that turn the body while walking
+// (dir 5 forward-left, 6 forward-right, 7 back-left, 8 back-right), like a car
+// with the wheel turned. ARC_YAW is the share of each hip stroke spent turning.
+constexpr float ARC_YAW=.5f;
+// Eyes look towards the robot's own left when it walks left. +1 assumes the
+// screen faces outwards like a face (robot left = viewer's right).
+constexpr int EYE_LOOK_SIGN=1;
+// Idle face: sleepy after this long without a drive/pose command, asleep later.
+constexpr uint32_t SLEEPY_MS=60000, ASLEEP_MS=180000;
 }
