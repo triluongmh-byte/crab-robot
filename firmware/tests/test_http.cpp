@@ -7,7 +7,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v20")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v21")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -103,17 +103,30 @@ int main(){
  for(const char* bad:{"","fff","gg0000","#ff0000","ff00001"}){server.request("/api/lightcolor",{{"token","42"},{"value",bad}});assert(server.code==400&&trimStore.getInt("led",0)==0xff8000);}
  server.request("/api/lightcolor",{{"token","7"},{"value","00ff00"}});assert(server.code==409&&light.g==128);
  server.request("/api/lightcolor",{{"token","42"},{"value","FFFFFF"}});assert(server.code==200&&light.b==255);
+ // Eyes follow the lamp: the saved colour, or an emotion's colour while it runs.
+ assert(shownRgb==0xffffff&&!ledOverride);
+ server.request("/api/led",{{"token","42"},{"r","32"},{"g","80"},{"b","255"}});assert(server.code==200&&shownRgb==0x2050ff&&ledOverride);
+ applyLight();assert(shownRgb==0xffffff&&!ledOverride&&light.r==255);
+ server.request("/api/eyes",{{"token","42"},{"mood","sad"}});assert(server.code==200&&emoteMood==crab::Mood::Sad);
+ for(const char* bad:{"","SAD","sadd","happy1","normalnormalx"}){server.request("/api/eyes",{{"token","42"},{"mood",bad}});assert(server.code==400&&emoteMood==crab::Mood::Sad);}
+ server.request("/api/eyes",{{"token","7"},{"mood","happy"}});assert(server.code==409&&emoteMood==crab::Mood::Sad);
+ server.request("/api/eyes",{{"token","42"},{"mood","normal"}});assert(server.code==200&&emoteMood==crab::Mood::Normal);
  server.request("/api/assembly",{{"token","42"},{"active","1"}});assert(server.code==200&&motion.assembly);
  server.request("/api/centre",{{"token","42"}});assert(server.code==200&&motion.raw);
  server.request("/api/assembly",{{"token","42"},{"active","0"}});assert(server.code==200&&!motion.assembly);
  server.request("/api/move",{{"token","42"},{"seq","2"},{"dir","1"},{"fresh","1"}});assert(server.code==200);
+ // Slanted buttons 5..8 walk forward/back while turning.
+ server.request("/api/move",{{"token","42"},{"seq","20"},{"dir","5"},{"fresh","1"}});assert(server.code==200&&motion.yaw>0&&motion.velocity.x==crab::bodyDirection(1).x&&motion.dir==5);
+ server.request("/api/move",{{"token","42"},{"seq","21"},{"dir","8"},{"fresh","1"}});assert(server.code==200&&motion.yaw>0&&motion.velocity.x==crab::bodyDirection(2).x);
+ server.request("/api/move",{{"token","42"},{"seq","22"},{"dir","9"},{"fresh","1"}});assert(server.code==400);
+ server.request("/api/move",{{"token","42"},{"seq","23"},{"dir","1"},{"fresh","1"}});assert(server.code==200&&motion.yaw==0);
  // Loss of STA changes status only; AP command lease survives until the real watchdog expires.
  storedSsid="Saved";network.begin(true,clockMs);WiFi.ssid=storedSsid;WiFi.state=WL_CONNECTED;stationHasIp=true;
  serviceNetwork(clockMs);assert(network.state==crab::NetState::Online);
  stationHasIp=false;WiFi.state=0;serviceNetwork(++clockMs);assert(motion.lease&&motion.velocity.x==crab::bodyDirection(1).x);
  for(int i=0;i<200;i++){serviceNetwork(clockMs+=1000);assert(WiFi.beginCalls==0);}
  // Renew over AP even though saved network is unreachable.
- server.request("/api/move",{{"token","42"},{"seq","3"},{"dir","2"},{"fresh","1"}});assert(server.code==200);
+ server.request("/api/move",{{"token","42"},{"seq","24"},{"dir","2"},{"fresh","1"}});assert(server.code==200);
  WiFi.apClients=0;serviceNetwork(clockMs+=30000);assert(WiFi.beginCalls==1);
  WiFi.apClients=1;serviceNetwork(++clockMs);assert(network.state==crab::NetState::Setup);
  assert(WiFi.disconnectCalls>=2);for(int i=0;i<100;i++)serviceNetwork(clockMs+=1000);assert(WiFi.beginCalls==1);
@@ -124,15 +137,25 @@ int main(){
  network.connect(false,clockMs);
  server.request("/api/wifi",{{"ssid","New"},{"password","wrong-password"}});assert(server.code==200&&network.pending);
  server.request("/api/wifi",{{"ssid","Newer"},{"password","wrong-password"}});assert(server.code==200);
- WiFi.state=WL_CONNECT_FAILED;serviceNetwork(clockMs+=1000);
+ // A wrong password reports two auth failures (one retry), then fails.
+ {const int begins=WiFi.beginCalls;staFail=uint8_t(crab::WifiFail::Auth);serviceNetwork(clockMs+=1000);assert(network.state==crab::NetState::Connecting&&WiFi.beginCalls==begins+1&&WiFi.ssid=="Newer");}
+ staFail=uint8_t(crab::WifiFail::Auth);serviceNetwork(clockMs+=1000);
  assert(network.state==crab::NetState::Setup&&!network.pending&&wifiStore.data.empty());
- assert(candidatePass.empty());server.request("/api/status");assert(server.body.find(crab::msg::FAILED)!=String::npos);
+ assert(candidatePass.empty());server.request("/api/status");assert(server.body.find(crab::msg::WRONG_PASS)!=String::npos);
  assert(server.body.find("wrong-password")==String::npos);
- server.request("/api/move",{{"token","42"},{"seq","4"},{"dir","3"},{"fresh","1"}});assert(server.code==200);
+ server.request("/api/move",{{"token","42"},{"seq","25"},{"dir","3"},{"fresh","1"}});assert(server.code==200);
  server.request("/api/wifi",{{"ssid","Absent"},{"password","private-password"}});assert(server.code==200);
  serviceNetwork(clockMs+=18000);assert(network.state==crab::NetState::Setup&&wifiStore.data.empty());
  server.request("/api/status");assert(server.body.find(crab::msg::FAILED)!=String::npos);
+ // Owner, 2026-11-14: at home after the office Wi-Fi was not found, WiFi.status()
+ // still read NO_SSID_AVAIL from that old attempt. Kết nối must not fail (and
+ // disconnect) the new join on that stale value 0.5 s later.
  server.request("/api/wifi",{{"ssid","Good"},{"password","private-password"}});assert(server.code==200);
+ {const int drops=WiFi.disconnectCalls;WiFi.state=WL_NO_SSID_AVAIL;
+  for(int i=0;i<5;i++){serviceNetwork(clockMs+=600);assert(network.state==crab::NetState::Connecting&&network.pending&&WiFi.disconnectCalls==drops);}
+  // A real "not found" from this attempt scans again instead of giving up.
+  const int begins=WiFi.beginCalls;staFail=uint8_t(crab::WifiFail::NotFound);serviceNetwork(clockMs+=600);
+  assert(network.state==crab::NetState::Connecting&&WiFi.beginCalls==begins+1&&WiFi.ssid=="Good"&&staFail==0);}
  WiFi.state=WL_CONNECTED;stationHasIp=true;serviceNetwork(++clockMs);
  assert(network.state==crab::NetState::Online&&wifiStore.data["ssid"]=="Good"&&wifiStore.data["pass"]=="private-password");
  server.request("/api/status");assert(server.body.find("private-password")==String::npos);

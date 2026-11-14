@@ -9,29 +9,41 @@
 using namespace crab;
 static void ready(Motion& m,uint32_t now=0){m.selectActuator(true,now);for(int ch=0;ch<8;ch++){int seen=m.tick(now+20+ch*cfg::ENABLE_GAP_MS);assert(seen==ch);}assert(m.enabled==8);}
 static void test_network(){
- Network n;n.begin(false,0);assert(n.state==NetState::Setup&&!n.saved);
- n.connect(true,100);n.tick(18100,false);assert(n.state==NetState::Setup&&!n.saved&&!n.saveRequested);assert(std::string(n.message)==msg::FAILED);
- n.connect(true,20000);n.tick(21000,true);assert(n.state==NetState::Online&&n.saved&&n.saveRequested);n.saveRequested=false;
- n.tick(22000,false);assert(n.state==NetState::Setup);n.tick(51999,false);assert(!n.retryRequested);n.tick(52000,false);assert(n.retryRequested&&n.state==NetState::Connecting);
- n.tick(53000,true);assert(n.state==NetState::Online&&!n.saveRequested);
+ Network n;n.begin(false,0);assert(n.state==NetState::Setup&&!n.saved&&n.wantsQr(false)&&!n.wantsQr(true));
+ n.connect(true,100);assert(!n.wantsQr(false)); // first attempt: eyes with "Đang vào Wi-Fi"
+ n.tick(18100,false);assert(n.state==NetState::Setup&&!n.saved&&!n.saveRequested);assert(std::string(n.message)==msg::FAILED&&n.wantsQr(false));
+ n.connect(true,20000);n.tick(21000,true);assert(n.state==NetState::Online&&n.saved&&n.saveRequested&&!n.wantsQr(false));n.saveRequested=false;
+ n.tick(22000,false);assert(n.state==NetState::Setup&&std::string(n.message)==msg::LOST);n.tick(51999,false);assert(!n.retryRequested);n.tick(52000,false);assert(n.retryRequested&&n.state==NetState::Connecting);
+ assert(n.wantsQr(false)); // lost Wi-Fi: QR guide stays up during background retries
+ n.tick(53000,true);assert(n.state==NetState::Online&&!n.saveRequested&&!n.wantsQr(false));
  n.erase(54000);assert(!n.saved&&!n.pending&&n.state==NetState::Setup);n.tick(90000,false);assert(!n.retryRequested);
  n.begin(true,0xfffffff0);n.tick(0x00005000,false);assert(n.state==NetState::Setup); // timer wrap
- // Boot attempt hard-fails early but the link comes up anyway: adopt it, never
- // retry (retry = WiFi.disconnect of a working link every 30 s).
- {Network late;late.begin(true,0);late.tick(600,false,true);assert(late.state==NetState::Setup&&std::string(late.message)==msg::FAILED);
+ // Owner, 2026-11-14 (home Wi-Fi never joined): a router not found in one scan
+ // is scanned again for the whole attempt instead of failing at once.
+ {Network h;h.connect(true,0);
+  for(uint32_t t=500;t<17000;t+=3000){h.tick(t,false,WifiFail::NotFound);assert(h.state==NetState::Connecting&&h.pending&&h.rescanRequested);h.rescanRequested=false;}
+  h.tick(17500,true);assert(h.state==NetState::Online&&h.saveRequested);
+  Network gone;gone.connect(true,0);gone.tick(3000,false,WifiFail::NotFound);gone.tick(18000,false);
+  assert(gone.state==NetState::Setup&&std::string(gone.message)==msg::NOT_FOUND&&!gone.pending);}
+ // Wrong password: one auth failure retries, the second reports it.
+ {Network w;w.connect(true,0);w.tick(2000,false,WifiFail::Auth);assert(w.state==NetState::Connecting&&w.rescanRequested);
+  w.tick(4000,false,WifiFail::Auth);assert(w.state==NetState::Setup&&std::string(w.message)==msg::WRONG_PASS&&!w.pending);}
+ assert(wifiFailFromReason(201)==WifiFail::NotFound&&wifiFailFromReason(202)==WifiFail::Auth&&wifiFailFromReason(15)==WifiFail::Auth&&wifiFailFromReason(204)==WifiFail::Auth&&wifiFailFromReason(8)==WifiFail::None&&wifiFailFromReason(0)==WifiFail::None&&wifiFailFromReason(2)==WifiFail::NotFound);
+ // Boot attempt fails but the link comes up anyway: adopt it, never retry
+ // (a retry is a WiFi.disconnect of a working link every 30 s).
+ {Network late;late.begin(true,0);late.tick(600,false,WifiFail::Auth);late.tick(1200,false,WifiFail::Auth);assert(late.state==NetState::Setup&&std::string(late.message)==msg::WRONG_PASS);
   late.tick(5000,true);assert(late.state==NetState::Online&&std::string(late.message)==msg::ONLINE);
   for(uint32_t t=6000;t<200000;t+=1000){late.tick(t,true);assert(late.state==NetState::Online&&!late.retryRequested);}
   Network fresh;fresh.begin(false,0);fresh.tick(100,true);assert(fresh.state==NetState::Setup);} // no saved network: unchanged
- Network ap;ap.begin(true,0);ap.tick(100,false,false,true);
+ Network ap;ap.begin(true,0);ap.tick(100,false,WifiFail::None,true);
  assert(ap.state==NetState::Setup&&ap.pauseRequested&&!ap.retryRequested);
  ap.pauseRequested=false;
- for(uint32_t t=1000;t<180000;t+=1000){ap.tick(t,false,false,true);assert(ap.state==NetState::Setup&&!ap.retryRequested);}
- ap.tick(180000,false,false,false);assert(ap.retryRequested&&ap.state==NetState::Connecting);
- ap.retryRequested=false;ap.tick(180100,false,false,true);assert(ap.pauseRequested&&ap.state==NetState::Setup);
- ap.connect(true,181000);ap.tick(182000,false,false,true);assert(ap.pending&&ap.state==NetState::Connecting); // manual join still allowed
- ap.tick(182100,false,true,true);assert(ap.state==NetState::Setup&&!ap.pending&&std::string(ap.message)==msg::FAILED);
- ap.tick(220000,false,false,true);assert(!ap.retryRequested); // error remains visible on AP
-
+ for(uint32_t t=1000;t<180000;t+=1000){ap.tick(t,false,WifiFail::None,true);assert(ap.state==NetState::Setup&&!ap.retryRequested);}
+ ap.tick(180000,false,WifiFail::None,false);assert(ap.retryRequested&&ap.state==NetState::Connecting);
+ ap.retryRequested=false;ap.tick(180100,false,WifiFail::None,true);assert(ap.pauseRequested&&ap.state==NetState::Setup);
+ ap.connect(true,181000);ap.tick(182000,false,WifiFail::None,true);assert(ap.pending&&ap.state==NetState::Connecting); // manual join still allowed
+ ap.tick(182100,false,WifiFail::Auth,true);ap.tick(182200,false,WifiFail::Auth,true);assert(ap.state==NetState::Setup&&!ap.pending&&std::string(ap.message)==msg::WRONG_PASS);
+ ap.tick(220000,false,WifiFail::None,true);assert(!ap.retryRequested); // error remains visible on AP
 }
 static void test_button(){HoldButton b;assert(!b.tick(false,0));assert(!b.tick(true,100));assert(!b.tick(true,8099));assert(b.tick(true,8100));assert(!b.tick(true,8200));assert(!b.tick(false,8300));assert(!b.tick(true,9000));assert(b.tick(true,17000));}
 static void test_case_knee_lift(){
@@ -164,12 +176,12 @@ static void test_trot_sequence(){
 static void test_tracking(){
  // At Fast the slew limit must not make joints lag their targets; a lagging
  // hip would still be returning when the knee lowers (foot lands mid-swing).
- for(Pattern which:{Pattern::Trot,Pattern::Pairs,Pattern::Flick})for(int dir=1;dir<=4;dir++){
+ for(Pattern which:{Pattern::Trot,Pattern::Pairs,Pattern::Flick})for(int dir=1;dir<=8;dir++){
   Motion m;ready(m);m.newSession(5);m.speed=1;m.gaitPattern=which;uint32_t seq=0;double worst=0;
   for(uint32_t t=2200;t<12200;t+=10){
    if(t%150==100)assert(m.command(5,++seq,dir,t,!m.lease));
    if(m.tick(t)!=0||t<6200)continue;
-   float target[8];gait(m.phase,bodyDirection(dir),m.amplitude,target,which);
+   float target[8];gait(m.phase,bodyDirection(dir),m.amplitude,target,which,cfg::FLICK_HIP,cfg::KNEE_LIFT,bodyYaw(dir));
    for(int ch=0;ch<8;ch++)worst=std::max(worst,double(std::fabs(target[ch]-m.position[ch])));
   }
   if(worst>=2.5)std::cerr<<"Tracking lag: pattern="<<int(which)<<" dir="<<dir<<" worstDeg="<<worst<<"\n";
@@ -239,6 +251,46 @@ static void test_flick(){
  float f[8],b[8];bool differ=false;
  for(int k=0;k<100;k++){gait(k*.0628f,bodyDirection(1),1,f,Pattern::Flick);gait(k*.0628f,bodyDirection(2),1,b,Pattern::Flick);for(int i=1;i<8;i+=2)differ=differ||std::fabs(f[i]-b[i])>1;}
  assert(differ);
+}
+
+// Owner, 2026-11-14: four slanted moves that walk and turn the body.
+static void test_arcs(){
+ // Equal-reach model as in the simulation: a grounded foot (knee at 0) that
+ // sweeps by dq moves the body by -dq along its hip tangent and turns it by -dq.
+ auto travel=[](int dir,Pattern which,double& along,double& turn){
+  along=turn=0;const Vec fwd=bodyDirection(1);const int n=720;
+  for(int k=0;k<n;k++){const float ph=k*6.2831853072f/n;float a[8],b[8];
+   gait(ph,bodyDirection(dir),1,a,which,cfg::FLICK_HIP,cfg::KNEE_LIFT,bodyYaw(dir));gait(ph+6.2831853072f/n,bodyDirection(dir),1,b,which,cfg::FLICK_HIP,cfg::KNEE_LIFT,bodyYaw(dir));
+   for(int leg=0;leg<4;leg++){if(std::fabs(a[2*leg+1])>1e-4f||std::fabs(b[2*leg+1])>1e-4f)continue;const double dq=b[2*leg]-a[2*leg];
+    turn-=dq;along-=dq*(-std::sin(cfg::RADIAL[leg])*fwd.x+std::cos(cfg::RADIAL[leg])*fwd.y);}}
+ };
+ assert(bodyDirection(5).x==bodyDirection(1).x&&bodyDirection(6).x==bodyDirection(1).x&&bodyDirection(7).x==bodyDirection(2).x&&bodyDirection(8).x==bodyDirection(2).x);
+ assert(bodyYaw(1)==0&&bodyYaw(4)==0&&bodyYaw(5)>0&&bodyYaw(6)<0&&bodyYaw(7)<0&&bodyYaw(8)>0);
+ for(Pattern which:{Pattern::Trot,Pattern::Pairs}){
+  double a1,t1;travel(1,which,a1,t1);assert(a1>0&&std::fabs(t1)<.01);
+  double a,t;
+  travel(5,which,a,t);assert(a>.2*a1&&t>.2*a1);   // forward, turning left (counter-clockwise)
+  travel(6,which,a,t);assert(a>.2*a1&&t<-.2*a1);  // forward, turning right
+  travel(7,which,a,t);assert(a<-.2*a1&&t<-.2*a1); // backward, tail swings left (clockwise)
+  travel(8,which,a,t);assert(a<-.2*a1&&t>.2*a1);  // backward, tail swings right
+ }
+ // In flick mode the arcs use the trot (no 90-degree stance while turning).
+ assert(!flickActive(Pattern::Flick,bodyDirection(5),bodyYaw(5))&&cyclePeriod(Pattern::Flick,bodyDirection(5),bodyYaw(5))==cfg::PERIOD_S);
+ // Stop clears the turn; the last drive command is kept for the eyes.
+ {Motion m;ready(m);m.newSession(5);assert(m.command(5,1,6,2200,true)&&m.yaw<0&&m.dir==6);m.stop();assert(m.yaw==0&&m.dir==0);}
+ // Flick Forward then a turn: the 90-degree stance ramps down before the trot
+ // takes over, so no hip whips across (was up to 115 deg at full slew).
+ {Motion m;ready(m);m.newSession(5);m.speed=1;m.gaitPattern=Pattern::Flick;uint32_t seq=0,t=2200;
+  for(;t<5200;t+=10){if(t%150==100)assert(m.command(5,++seq,1,t,!m.lease));m.tick(t);}
+  assert(m.amplitude>.99f&&std::fabs(m.position[0])>80);
+  float last[8];for(int ch=0;ch<8;ch++)last[ch]=m.position[ch];double worst=0;
+  const uint32_t turn=t;
+  for(;t<7200;t+=10){if(t%150==100)assert(m.command(5,++seq,5,t,false));if(m.tick(t)!=0)continue;
+   // First 0.25 s: hips only shrink with the amplitude decay (4/s -> 7.2 deg
+   // per 20 ms frame at 90 deg), never past neutral towards the trot pose.
+   if(t-turn<250)for(int ch=0;ch<8;ch+=2){worst=std::max(worst,double(std::fabs(m.position[ch]-last[ch])));assert(std::fabs(m.position[ch])<=std::fabs(last[ch])+1e-3f);last[ch]=m.position[ch];}}
+  assert(worst<=4*90*.02f+.01&&m.amplitude>.9f); // decay-limited, then walking the arc
+ }
 }
 static void test_pose(){
  Motion m;const float a[8]={20,-30,-20,-30,10,0,-10,0};
@@ -349,4 +401,4 @@ static void simulation(const std::string& dir){
  simulatePattern(Pattern::Pairs,out,report);
  report<<"],\"sidewaysSupportedByModel\":true,\"hardwareTested\":false}\n";
 }
-int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_pair_sequence();test_trot_sequence();test_flick();test_pose();test_tracking();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, diagonal trot default/owner knee flick forward-back with held hip pose/emotion pose timing/clamp/lease/deadman relax/walk cancel/assembly block/four-foot overlap/zero yaw all 8 directions/Fast slew tracking, owner front-rear pairs option push/lift/return/lower/full hip stroke/forward-back reversal, pulse bounds, QR encoding\n";}
+int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_pair_sequence();test_trot_sequence();test_flick();test_arcs();test_pose();test_tracking();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, diagonal trot default/owner knee flick forward-back with held hip pose/emotion pose timing/clamp/lease/deadman relax/walk cancel/assembly block/four-foot overlap/zero yaw all 8 directions/Fast slew tracking, owner front-rear pairs option push/lift/return/lower/full hip stroke/forward-back reversal, pulse bounds, QR encoding\n";}

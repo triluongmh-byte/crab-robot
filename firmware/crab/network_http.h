@@ -42,13 +42,14 @@ void offForChangeLocked(){
  motion.stop();motion.outputEpoch++;motion.test.generation++;motion.continuous.generation++;
  if(driverReady.load()&&!servos.disableOutputs()){driverReady=false;motion.inhibit=true;}
 }
-void connectStation(const String& ssid,const String& pass){WiFi.disconnect(false,false);stationHasIp=false;WiFi.begin(ssid.c_str(),pass.c_str());}
+// Clears the failure latch: only this attempt's disconnect events count.
+void connectStation(const String& ssid,const String& pass){WiFi.disconnect(false,false);stationHasIp=false;staFail=0;WiFi.begin(ssid.c_str(),pass.c_str());}
 void pauseSavedRetry(){
  network.pauseRetry(millis());
  if(network.pauseRequested){WiFi.disconnect(false,false);stationHasIp=false;network.pauseRequested=false;}
 }
 // Lamp: saved colour when on, dark when off. Emotion /api/led stays transient.
-void applyLight(){if(lightOn)light.color(uint8_t(lightRgb>>16),uint8_t(lightRgb>>8),uint8_t(lightRgb));else light.color(0,0,0);}
+void applyLight(){ledOverride=false;shownRgb=lightRgb;if(lightOn)light.color(uint8_t(lightRgb>>16),uint8_t(lightRgb>>8),uint8_t(lightRgb));else light.color(0,0,0);}
 // "rrggbb" hex, as an <input type=color> value without the '#'.
 String lightHex(){char s[8];snprintf(s,sizeof(s),"#%06x",unsigned(lightRgb&0xffffff));return s;}
 bool hexColorArg(uint32_t& out){
@@ -60,7 +61,7 @@ void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° t
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v20\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+"}");});
+  json(200,String("{\"firmware\":\"positional180-v21\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"gait\":"+jsonString(crab::patternName(state.gaitPattern))+",\"flickHip\":"+String(state.flickHip,0)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -98,7 +99,10 @@ void configureHttp(){
   if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("ms",ms)||!uintArg("fresh",fresh)||fresh>1||ms>5000||!poseArg(angles)){error();return;}
   bool accepted,blocked;{Guard g;blocked=!motion.positional()||motion.enabled<8||motion.assembly;accepted=!blocked&&motion.poseCommand(token,seq,angles,ms,millis(),fresh==1);}
   if(blocked){actuatorError();return;}if(accepted)ok();else error(409);});
- server.on("/api/led",HTTP_POST,[]{uint32_t r,g,b;if(!owns()){error(409);return;}if(!uintArg("r",r)||!uintArg("g",g)||!uintArg("b",b)||r>255||g>255||b>255){error();return;}lightOn=r||g||b;light.color(r,g,b);ok();});
+ server.on("/api/led",HTTP_POST,[]{uint32_t r,g,b;if(!owns()){error(409);return;}if(!uintArg("r",r)||!uintArg("g",g)||!uintArg("b",b)||r>255||g>255||b>255){error();return;}lightOn=r||g||b;light.color(r,g,b);shownRgb=(r<<16)|(g<<8)|b;ledOverride=true;ledAt=millis();ok();});
+ // Emotion page: eye mood for the running emotion (normal, happy, sad, angry,
+ // sleepy, surprised, love, asleep, wink). Lasts while the pose runs.
+ server.on("/api/eyes",HTTP_POST,[]{if(!owns()){error(409);return;}crab::Mood m;String s=server.arg("mood");if(s.length()>12||!crab::moodFromName(s.c_str(),m)){error();return;}emoteMood=m;moodAt=millis();ok();});
  server.on("/api/emotions",HTTP_GET,[]{String list=emoteStore.getString("list","[]");json(200,list.length()?list:String("[]"));});
  server.on("/api/emotions/save",HTTP_POST,[]{if(!owns()){error(409);return;}String data=server.arg("data");if(!emotionListValid(data)){error();return;}if(emoteStore.putString("list",data)!=data.length()){error(500);return;}ok();});
  server.on("/emo",HTTP_GET,[]{server.sendHeader("Cache-Control","no-store");server.send_P(200,"text/html; charset=utf-8",EMOTE_UI);});
@@ -134,7 +138,11 @@ void configureHttp(){
 void serviceNetwork(uint32_t now){
  bool connected=stationHasIp.load()&&WiFi.status()==WL_CONNECTED&&WiFi.SSID()==(network.pending?candidateSsid:storedSsid);
  bool candidateWas=network.pending;
- network.tick(now,connected,crab::elapsed(now,network.since)>500&&(WiFi.status()==WL_CONNECT_FAILED||WiFi.status()==WL_NO_SSID_AVAIL),WiFi.softAPgetStationNum()>0);
+ // The failure comes from this attempt's disconnect event, never the cached
+ // WiFi.status(): that kept the previous network's NO_SSID_AVAIL and made a new
+ // home Wi-Fi join fail (and get disconnected) 0.5 s after Kết nối.
+ network.tick(now,connected,crab::WifiFail(staFail.exchange(0)),WiFi.softAPgetStationNum()>0);
+ if(network.rescanRequested){network.rescanRequested=false;if(network.pending)connectStation(candidateSsid,candidatePass);else connectStation(storedSsid,storedPass);}
  if(network.pauseRequested){WiFi.disconnect(false,false);stationHasIp=false;network.pauseRequested=false;}
  if(network.saveRequested){
   storedSsid=candidateSsid;storedPass=candidatePass;wifiStore.putString("ssid",storedSsid);wifiStore.putString("pass",storedPass);

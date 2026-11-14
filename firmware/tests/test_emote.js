@@ -55,5 +55,19 @@ async function advance(ms){const end=now+ms;for(;;){await flush();timers.sort((a
  const live=calls.filter(c=>c.path==='/api/pose');assert(live.length>=2&&live[0].data.fresh==='1');assert.equal(live[0].data.a.split(',')[0],'-12'); // front-left hip = CH0
  assert.equal(elements.j2.value,'12'); // mirrored to front-right
  E.halt();await advance(500);assert(!E.state().liveOn);
- console.log('PASS: emotion page unit mapping/preset bounds/saved-list filter/timeline renewals with fresh-first lease/colour changes/stop at end and on halt');
+ // Eye moods: every preset names one; playback sends it once, frames may override.
+ const moods=['normal','happy','sad','angry','sleepy','surprised','love','asleep','wink'];assert.deepEqual([...E.MOODS],moods);
+ for(const p of E.PRESETS)assert(moods.includes(p.e)&&p.e!=='normal',p.n);
+ calls.length=0;const sad=E.PRESETS.find(p=>p.e==='sad');let run=E.playFrames(sad.f,false,sad.e);await advance(8000);await run;
+ const eyeCalls=calls.filter(c=>c.path==='/api/eyes');assert.equal(eyeCalls.length,1);assert.equal(eyeCalls[0].data.mood,'sad');assert.equal(eyeCalls[0].data.token,'42');
+ calls.length=0;run=E.playFrames([[0,0,0,0,0,0,0,0,'#ff0000',0,0,'love'],[0,0,0,0,0,0,0,0,'#ff0000',0,0]],false,'happy');await advance(1000);await run;
+ assert.deepEqual(calls.filter(c=>c.path==='/api/eyes').map(c=>c.data.mood),['love','happy']);
+ // After a stop the same colour/mood is sent again on the next play (lamp/eyes were restored).
+ calls.length=0;run=E.playFrames([[0,0,0,0,0,0,0,0,'#ff0000',0,0]],false,'happy');await advance(500);await run;
+ assert.equal(calls.filter(c=>c.path==='/api/led').length,1);assert.equal(calls.filter(c=>c.path==='/api/eyes').length,1);
+ // Live preview that loses readiness turns itself off, so the next slider move restarts it.
+ E.setReady(true);elements.j0.value='5';elements.j0.oninput();await advance(300);assert(E.state().liveOn);
+ E.setReady(false);await advance(400);assert(!E.state().liveOn);
+ E.setReady(true);calls.length=0;elements.j0.value='6';elements.j0.oninput();await advance(300);assert(E.state().liveOn&&calls.some(c=>c.path==='/api/pose'));E.halt();await advance(300);
+ console.log('PASS: emotion page unit mapping/preset bounds/saved-list filter/timeline renewals with fresh-first lease/colour changes/stop at end and on halt/eye moods per preset and frame/live preview recovers after lost readiness');
 })().catch(e=>{console.error(e);process.exit(1);});

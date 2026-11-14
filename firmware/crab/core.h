@@ -3,6 +3,7 @@
 #pragma once
 #include "continuous360.h"
 #include "config.h"
+#include "eyes.h"
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
@@ -19,8 +20,14 @@ inline Vec direction(int n){
  {.70710678f,-.70710678f},{-.70710678f,.70710678f},{-.70710678f,-.70710678f}};
  return n>=0&&n<=8?d[n]:Vec{};
 }
-// Owner drive command (1 Forward,2 Backward,3 Left,4 Right,...) in the CAD frame.
-inline Vec bodyDirection(int n){Vec d=direction(n);return cfg::FRONT_IS_CH46?Vec{-d.x,-d.y}:d;}
+// Owner drive command in the CAD frame: 1 Forward, 2 Backward, 3 Left, 4 Right;
+// 5..8 are arcs (forward-left, forward-right, back-left, back-right) that walk
+// forward/back while turning the body; see bodyYaw.
+inline Vec bodyDirection(int n){Vec d=direction(n>=5&&n<=8?(n<=6?1:2):n);return cfg::FRONT_IS_CH46?Vec{-d.x,-d.y}:d;}
+// Body turn rate share, + = counter-clockwise seen from above (turn left). A
+// 180-degree frame rotation keeps the turn sense. Reversing with "left" swings
+// the tail left, which turns the body clockwise (car convention).
+inline float bodyYaw(int n){return n==5||n==8?cfg::ARC_YAW:n==6||n==7?-cfg::ARC_YAW:0.f;}
 // Project body translation onto each hip tangent in the nominal CAD frame.
 inline float hipProjection(int leg,Vec v){return -std::sin(cfg::RADIAL[leg])*v.x+std::cos(cfg::RADIAL[leg])*v.y;}
 // Physical right side (y<0 in the owner's frame); see cfg::FRONT_IS_CH46.
@@ -34,8 +41,8 @@ enum class Pattern:uint8_t {Trot,Pairs,Flick};
 inline const cfg::GaitPattern& pattern(Pattern p){return p==Pattern::Pairs?cfg::PAIRS:cfg::TROT;}
 inline const char* patternName(Pattern p){return p==Pattern::Pairs?"pairs":p==Pattern::Flick?"flick":"trot";}
 // Flick only replaces axial Forward/Backward; sideways and diagonals trot.
-inline bool flickActive(Pattern p,Vec v){return p==Pattern::Flick&&std::fabs(v.x)>std::fabs(v.y)+.01f;}
-inline float cyclePeriod(Pattern p,Vec v){return flickActive(p,v)?cfg::FLICK_PERIOD_S:cfg::PERIOD_S;}
+inline bool flickActive(Pattern p,Vec v,float yaw=0){return p==Pattern::Flick&&std::fabs(yaw)<.01f&&std::fabs(v.x)>std::fabs(v.y)+.01f;}
+inline float cyclePeriod(Pattern p,Vec v,float yaw=0){return flickActive(p,v,yaw)?cfg::FLICK_PERIOD_S:cfg::PERIOD_S;}
 // The stance is 180-deg symmetric, so identical knee timing on every leg
 // cannot pick a direction (owner video IMG_2637: it only bounced). Timing is
 // set by geometry instead: a trailing leg (foot pointing away from travel)
@@ -55,8 +62,9 @@ inline void flick(float phase,Vec v,float amplitude,float out[8],float hip=cfg::
   out[2*leg+1]=-clamp(knee,0,cfg::KNEE_LIFT_MAX)*k*amplitude;
  }
 }
-inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pattern::Trot,float flickHip=cfg::FLICK_HIP,float knee=cfg::KNEE_LIFT){
- if(flickActive(which,v)){flick(phase,v,amplitude,out,flickHip,knee);return;}
+inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pattern::Trot,float flickHip=cfg::FLICK_HIP,float knee=cfg::KNEE_LIFT,float yaw=0){
+ if(flickActive(which,v,yaw)){flick(phase,v,amplitude,out,flickHip,knee);return;}
+ yaw=clamp(yaw,-1,1);
  knee=clamp(knee,0,cfg::KNEE_LIFT_MAX);
  const cfg::GaitPattern& g=pattern(which);
  // Begin at mid stance: hips start from neutral, not an opposite kick.
@@ -70,7 +78,9 @@ inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pa
   else if(local<swingEnd){hip=-1+2*smooth((local-g.stance-g.lift)/g.swing);lift=1;}
   else{hip=1;lift=(1-local)/lower;}
   // Use the available full hip stroke for axial Forward/Backward commands.
-  const float push=clamp(hipProjection(leg,v)*1.4142135624f,-1,1);
+  // Turning: the same push on every hip turns the body (grounded feet sweep
+  // clockwise relative to the body for a counter-clockwise turn).
+  const float push=clamp(clamp(hipProjection(leg,v)*1.4142135624f,-1,1)*(1-std::fabs(yaw))+yaw,-1,1);
   out[2*leg]=cfg::HIP_AMPLITUDE*push*hip*amplitude;
   out[2*leg+1]=-knee*lift*amplitude;
  }
@@ -91,37 +101,58 @@ namespace msg {
 constexpr const char* SETUP="Quét QR để nối cua";
 constexpr const char* JOINING="Đang vào Wi-Fi...";
 constexpr const char* ONLINE="Đã vào Wi-Fi";
-constexpr const char* FAILED="Sai mật khẩu hoặc mất sóng";
+constexpr const char* FAILED="Không vào được Wi-Fi";
+constexpr const char* WRONG_PASS="Sai mật khẩu Wi-Fi";
+constexpr const char* NOT_FOUND="Không thấy Wi-Fi này";
 constexpr const char* LOST="Mất Wi-Fi. Vẫn dùng cua";
 constexpr const char* ERASED="Đã xóa Wi-Fi";
 constexpr const char* DRIVER="Kiểm tra dây PCA9685";
 }
 enum class NetState {Setup,Connecting,Online};
+// Failure reported by the radio for the current attempt only (from the
+// disconnect event, never the cached WiFi.status(), which keeps an older
+// attempt's NO_SSID_AVAIL and used to cancel a new home Wi-Fi join at 0.5 s).
+enum class WifiFail:uint8_t {None,NotFound,Auth};
+// ESP-IDF disconnect reasons: 201 NO_AP_FOUND, 202 AUTH_FAIL, 15 4-way
+// handshake timeout and 204 handshake timeout (wrong WPA2 password), 8 our own
+// ASSOC_LEAVE (ignored). Anything else: scan again while the attempt lasts.
+inline WifiFail wifiFailFromReason(int r){if(r==0||r==8)return WifiFail::None;if(r==202||r==15||r==204)return WifiFail::Auth;return WifiFail::NotFound;}
 struct Network {
+ static constexpr uint32_t ATTEMPT_MS=18000,RETRY_MS=30000;
  NetState state=NetState::Setup;
- bool pending=false, saved=false, saveRequested=false, retryRequested=false, pauseRequested=false;
+ bool pending=false, saved=false, saveRequested=false, retryRequested=false, pauseRequested=false, rescanRequested=false;
+ bool failedOnce=false; // an attempt failed since the last time online
+ uint8_t authFails=0;bool sawNotFound=false;
  uint32_t since=0,retryAt=0;
  const char* message=msg::SETUP;
  void begin(bool hasSaved,uint32_t now){saved=hasSaved;if(saved)connect(false,now);}
- void connect(bool candidate,uint32_t now){state=NetState::Connecting;pending=candidate;since=now;message=msg::JOINING;}
+ void connect(bool candidate,uint32_t now){state=NetState::Connecting;pending=candidate;since=now;message=msg::JOINING;authFails=0;sawNotFound=false;rescanRequested=false;}
  // Single-radio policy: do not start/restart saved-network association while
  // AP clients are attached. Cancel an in-flight background attempt on AP join.
  void pauseRetry(uint32_t now){
-  if(state==NetState::Connecting&&!pending){state=NetState::Setup;message=msg::SETUP;retryAt=now;retryRequested=false;pauseRequested=true;}
+  if(state==NetState::Connecting&&!pending){state=NetState::Setup;message=msg::SETUP;retryAt=now;retryRequested=false;rescanRequested=false;pauseRequested=true;}
  }
- void tick(uint32_t now,bool connected,bool hardFail=false,bool apClients=false){
+ void fail(uint32_t now,const char* why){state=NetState::Setup;message=why;pending=false;retryAt=now;failedOnce=true;rescanRequested=false;}
+ void tick(uint32_t now,bool connected,WifiFail failure=WifiFail::None,bool apClients=false){
   if(apClients&&!connected)pauseRetry(now);
   if(state==NetState::Connecting){
-   if(connected){state=NetState::Online;message=msg::ONLINE;saveRequested=pending; saved=saved||pending;pending=false;}
-   else if(hardFail||elapsed(now,since)>=18000){state=NetState::Setup;message=msg::FAILED;pending=false;retryAt=now;}
-  }else if(state==NetState::Online&&!connected){state=NetState::Setup;message=msg::LOST;retryAt=now;}
-  // A saved-network attempt marked failed (e.g. NO_SSID_AVAIL in the first
-  // scan) can still associate. Adopt it; retrying would WiFi.disconnect() a
-  // working link every 30 s (owner: page "load hoài", 60% ping loss).
-  else if(state==NetState::Setup&&saved&&connected){state=NetState::Online;message=msg::ONLINE;}
-  else if(state==NetState::Setup&&saved&&!apClients&&elapsed(now,retryAt)>=30000){retryRequested=true;connect(false,now);}
+   if(connected){state=NetState::Online;message=msg::ONLINE;saveRequested=pending; saved=saved||pending;pending=false;failedOnce=false;rescanRequested=false;}
+   // Wrong password shows as AUTH_FAIL / handshake timeout. One can be a
+   // fluke on a weak link, so retry once before reporting it.
+   else if(failure==WifiFail::Auth&&++authFails>=2)fail(now,msg::WRONG_PASS);
+   else if(elapsed(now,since)>=ATTEMPT_MS)fail(now,sawNotFound?msg::NOT_FOUND:msg::FAILED);
+   // A scan can miss the router; scan again until the attempt times out.
+   else if(failure!=WifiFail::None){sawNotFound=sawNotFound||failure==WifiFail::NotFound;rescanRequested=true;}
+  }else if(state==NetState::Online&&!connected){state=NetState::Setup;message=msg::LOST;retryAt=now;failedOnce=true;}
+  // A saved network that associated after its attempt ended: adopt it rather
+  // than WiFi.disconnect() a working link every 30 s (owner: page "load hoài").
+  else if(state==NetState::Setup&&saved&&connected){state=NetState::Online;message=msg::ONLINE;failedOnce=false;}
+  else if(state==NetState::Setup&&saved&&!apClients&&elapsed(now,retryAt)>=RETRY_MS){retryRequested=true;connect(false,now);}
  }
  void erase(uint32_t now){*this=Network{};retryAt=now;message=msg::ERASED;}
+ // Screen: QR join guide whenever the crab is not online and no phone is on
+ // its own Wi-Fi, except while the first attempt after boot/a new join runs.
+ bool wantsQr(bool apClients)const{return state!=NetState::Online&&!apClients&&(state==NetState::Setup||failedOnce);}
 };
 struct HoldButton {
  bool down=false,fired=false;uint32_t since=0;
@@ -185,6 +216,8 @@ struct Motion {
  }
  float offsets[8]={},position[8]={};
  Vec velocity{};
+ float yaw=0; // body turn share for arcs, see bodyYaw
+ int dir=0;   // last accepted drive command, for the eyes
  float amplitude=0,phase=0,speed=cfg::SPEED_DEFAULT,flickHip=cfg::FLICK_HIP;
  int balance=0; // percent, see applyBalance
  float kneeLift=cfg::KNEE_LIFT;
@@ -202,7 +235,7 @@ struct Motion {
  // negative lifts). Same lease/deadman as walking; release relaxes slowly.
  float pose[8]={},poseRate[8]={};
  bool posing=false,relaxing=false;
- void stop(){if(posing)relaxing=true;posing=false;velocity={};lease=false;test.stop();continuous.stop();drive.stop();}
+ void stop(){if(posing)relaxing=true;posing=false;velocity={};yaw=0;dir=0;lease=false;test.stop();continuous.stop();drive.stop();}
  bool poseCommand(uint32_t id,uint32_t seq,const float angles[8],uint32_t ms,uint32_t now,bool fresh){
   if(!sequence(id,seq)||inhibit||assembly||test.opened||continuous.opened||!positional()||enabled<8)return false;
   if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
@@ -222,7 +255,7 @@ struct Motion {
   if(actuator==Actuator::Unknown)return false; //180-only release: no timed360 fallback
   if(!positional()||enabled<8)return false;
   if(!fresh&&(!lease||elapsed(now,lastCommand)>=cfg::DEADMAN_MS)){stop();return false;}
-  velocity=bodyDirection(dir);posing=false;relaxing=false;lastCommand=now;lease=true;return true;
+  velocity=bodyDirection(dir);yaw=bodyYaw(dir);this->dir=dir;posing=false;relaxing=false;lastCommand=now;lease=true;return true;
  }
  void newSession(uint32_t id){stop();test.opened=false;continuous.opened=false;session=id;lastSeq=0;}
  bool setAssembly(bool active){if(active&&(test.opened||continuous.opened))return false;stop();assembly=active;raw=false;return true;}
@@ -239,18 +272,21 @@ struct Motion {
   if(elapsed(now,lastTick)<cfg::FRAME_MS)return -1;
   const float dt=std::min(elapsed(now,lastTick)*.001f,.05f);lastTick=now;
   if(enabled<8){if(elapsed(now,start)<uint32_t(enabled)*cfg::ENABLE_GAP_MS)return -1;return enabled++;}
-  const bool moving=std::fabs(velocity.x)+std::fabs(velocity.y)>.01f;
+  bool moving=std::fabs(velocity.x)+std::fabs(velocity.y)+std::fabs(yaw)>.01f;
+  // Flick holds the hips at up to 90 deg; trot keeps them near neutral. Do not
+  // jump between the two stances mid-stride: ramp down first, then switch.
+  if(moving&&amplitude>.02f&&flickActive(gaitPattern,velocity,yaw)!=flickActive(gaitPattern,heading,headingYaw))moving=false;
   // Keep last heading through amplitude decay to avoid snapping the hip target.
   amplitude=clamp(amplitude+(moving?dt*1.5f:-dt*4.0f),0,1);
-  if(moving)heading=velocity;
-  if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cyclePeriod(gaitPattern,heading),6.2831853072f);
+  if(moving){heading=velocity;headingYaw=yaw;}
+  if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cyclePeriod(gaitPattern,heading,headingYaw),6.2831853072f);
   if(posing){for(int ch=0;ch<8;ch++)position[ch]+=clamp(pose[ch]-position[ch],-poseRate[ch]*dt,poseRate[ch]*dt);return 0;}
-  float target[8]={};if(!assembly){gait(phase,heading,amplitude,target,gaitPattern,flickHip,kneeLift);applyBalance(target,balance);}
+  float target[8]={};if(!assembly){gait(phase,heading,amplitude,target,gaitPattern,flickHip,kneeLift,headingYaw);applyBalance(target,balance);}
   const float rate=relaxing&&!moving?cfg::RELAX_DPS:cfg::SLEW_DPS;bool settled=true;
   for(int ch=0;ch<8;ch++){position[ch]+=clamp(target[ch]-position[ch],-rate*dt,rate*dt);settled=settled&&std::fabs(target[ch]-position[ch])<.01f;}
   if(settled||moving)relaxing=false;
   return 0;
  }
- private:Vec heading{};
+ private:Vec heading{};float headingYaw=0;
 };
 }

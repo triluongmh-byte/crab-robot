@@ -9,7 +9,7 @@ Open **🎭 Cảm xúc** in the control page top bar, or go to `http://<robot>/e
   - Hip: + swings the foot forwards.
   - Knee: + lifts the foot, − presses down and raises the body.
   - **Đối xứng trái/phải** mirrors each change to the opposite side.
-  - Each frame also has an LED colour, a move time and a hold time.
+  - Each frame also has an LED colour, a move time, a hold time and an optional eye mood (**Mắt**). Built-in emotions have their own moods: Vui happy, Buồn sad, Giận angry, Chào wink, Nhảy love, Ngủ asleep, Ngạc nhiên surprised.
 - **Xem trực tiếp** streams the current sliders to the robot.
 - **Thêm/Cập nhật/Xóa khung** edits the frame list. **Chạy** and **Lặp** play the list.
 - **Lưu vào cua** stores named emotions in the robot's NVS (`cua-emote`, at most 3800 characters).
@@ -27,6 +27,7 @@ Open **🎭 Cảm xúc** in the control page top bar, or go to `http://<robot>/e
 | Route | Arguments | Purpose |
 |---|---|---|
 | `POST /api/pose` | `token`, `seq`, `fresh` (0/1), `ms` (0–5000), `a` (8 comma-separated degrees within ±90, clamped to ±30) | Move to a pose over `ms` |
-| `POST /api/led` | `token`, `r`, `g`, `b` (0–255) | Set the LED colour |
+| `POST /api/led` | `token`, `r`, `g`, `b` (0–255) | Set the LED colour (the eyes follow it) |
+| `POST /api/eyes` | `token`, `mood` (normal, happy, sad, angry, sleepy, surprised, love, asleep, wink) | Eye mood while the pose runs |
 | `GET /api/emotions` | — | Read the saved list |
 | `POST /api/emotions/save` | `token`, `data` | Replace the saved list (JSON array) |
