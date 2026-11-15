@@ -1,0 +1,25 @@
+{
+  "stem": "sonar_bracket",
+  "is_solid": true,
+  "volume_mm3": 7651.138,
+  "bbox": {
+    "min": [
+      -13.8761,
+      -46.3858,
+      0.0
+    ],
+    "max": [
+      13.8761,
+      46.3858,
+      74.911
+    ]
+  },
+  "mesh_tolerance": 0.03,
+  "mesh_angular_tolerance": 0.03490658503988659,
+  "validation": {
+    "warnings": [],
+    "is_solid": true,
+    "volume_mm3": 7651.138
+  },
+  "parts": []
+}
