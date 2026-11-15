@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Restore owner-tuned settings (trims, knee lift, heading trim, speed, flick hip,
-gait, lamp colour) to a running crab over its HTTP API.
+"""Restore owner-tuned settings (trims, knee lift, heading trim, speed, lamp
+colour) to a running crab over its HTTP API. Older files may still carry
+"flickHip" and "gait"; since v23 only the trot exists, so those are ignored.
 
 Usage:
   python3 tools/firmware/restore_settings.py firmware/settings/owner-2026-11-13.json --host 172.168.20.249 [--dry-run]
@@ -36,8 +37,6 @@ def plan(settings, status):
     reqs += [('knee', {'value': str(int(settings['kneeLift']))}),
              ('balance', {'value': str(int(settings['balance']))}),
              ('speed', {'value': '%.2f' % settings['speed']}),
-             ('flickhip', {'value': str(int(settings['flickHip']))}),
-             ('gait', {'value': settings['gait']}),
              ('lightcolor', {'value': settings['lightColor'].lstrip('#').lower()})]
     return reqs
 

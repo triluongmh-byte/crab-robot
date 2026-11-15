@@ -25,5 +25,6 @@ for ch in range(8):
     total = sum(int(q['delta']) for p, q in reqs if p == 'trim' and q['ch'] == str(ch))
     assert total == settings['offsets'][ch]
 tail = dict((p, q['value']) for p, q in reqs if 'value' in q)
+assert 'gait' not in paths and 'flickhip' not in paths  # trot only since v23
 assert tail['speed'] == '0.90' and tail['knee'] == '35' and tail['balance'] == '4' and tail['lightcolor'] == 'ff0f0f'
 print('PASS: restore_settings step planner and request order')

@@ -2,7 +2,7 @@
 
 **An 8-servo crab whose face is a screen with two eyes. Drive it from your phone, or let it walk by itself and dodge obstacles. Play emotions, change the lamp colour.**
 
-[Drive](#open-the-controls) · [Tự đi (Auto)](#tự-đi-auto-mode) · [Gaits](#gaits-and-sliders) · [Emotions](#emotions) · [Calibration](#calibration-ráp) · [Servo channels](#which-servo-goes-where) · [Wiring](#wiring) · [Firmware](#firmware)
+[Drive](#open-the-controls) · [Tự đi (Auto)](#tự-đi-auto-mode) · [Gait](#gait-and-sliders) · [Emotions](#emotions) · [Calibration](#calibration-ráp) · [Servo channels](#which-servo-goes-where) · [Wiring](#wiring) · [Firmware](#firmware)
 
 <p align="center">
   <img src="docs/images/crab-walk-2026-11-14.gif" width="480" alt="The crab crawling on the floor with happy eyes while it walks">
@@ -37,7 +37,7 @@ The web controls are in Vietnamese. Button names below are quoted as they appear
 3. Hold a button to walk, release to stop: **↑ Tiến** (forward) · **← Trái** (left) · **Phải →** (right) · **↓ Lùi** (back). If the link drops, the crab stops within 0.5 s.
 4. To forget the saved Wi-Fi, hold **BOOT** for about 8 seconds.
 
-On the phone, tap **☰** for settings. The **Trạng thái** (status) tab lists firmware, PCA9685, servos, gait, speed, lamp and Wi-Fi.
+On the phone, tap **☰** for settings. The **Trạng thái** (status) tab lists firmware, PCA9685, servos, boot (brownout), speed, lamp and Wi-Fi.
 
 ## Tự đi (Auto mode)
 
@@ -52,13 +52,9 @@ Needs the two front ultrasonic sensors (round 1 in [firmware/BATTERY-AUTONOMY.md
 
 It never starts by itself, even after a reset. If it gets stuck 5 times in a row it stops and shows **Kẹt rồi, nhờ giúp** with sad eyes. Locking the phone doesn't stop it; only DỪNG does.
 
-## Gaits and sliders
+## Gait and sliders
 
-| Gait | How it moves | When to use it |
-|---|---|---|
-| **Chéo** (diagonal, default) | Diagonal leg pairs push in turn, with moments where all 4 feet are down | Steady, doesn't spin. The owner's favourite |
-| **Cặp trước/sau** (front/rear pairs) | Front pair pushes, then the rear pair | Old gait, kept for comparison. Sideways walking rotates the body |
-| **Búng gối** (knee flick, experimental) | Forward/back: hips swing out (front legs forward, rear legs back), then all 4 knees flick. Left/right still uses the diagonal gait | Experiments |
+The crab has one gait, **Chéo** (diagonal trot): diagonal leg pairs push in turn, with moments where all 4 feet are down. It is steady and doesn't spin. The front/rear pairs and knee-flick gaits never walked properly, so they were removed in `positional180-v23`.
 
 Sliders in the settings panel:
 
@@ -67,7 +63,6 @@ Sliders in the settings panel:
 | **Tốc độ** (speed) | 20–100%, default 90% | No (back to 90% at boot) | You want to walk slowly to watch |
 | **Độ nhấc gối** (knee lift) | 20–60°, default 45° | Yes | Feet drag on the table while the hips swing back: raise it |
 | **Bù lệch trái ↔ phải** (heading trim) | −30 … +30% | Yes | Drifts right walking forward: move towards **+**; drifts left: towards **−** |
-| **Góc hông búng** (flick hip angle) | 30–90°, only shown for Búng gối | No | Legs touch each other: lower it |
 | **Lamp colour** | Colour picker next to **Bật / tắt đèn** (lamp on/off) | Yes | Changes the LED strip colour |
 
 Angles on the page are **nominal command angles**, not measured ones. On the usual SG90 scale, 1° nominal is about ½° real.
@@ -144,7 +139,7 @@ At each socket: **orange → `PWM`/`S`**, **red (middle) → `V+`**, **brown →
 
 ## Saving and restoring settings
 
-The owner's tuned settings are in [`firmware/settings/owner-2026-11-13.json`](firmware/settings/owner-2026-11-13.json): trims for all 8 channels, speed, knee lift, heading trim, flick hip angle, gait and lamp colour.
+The owner's tuned settings are in [`firmware/settings/owner-2026-11-13.json`](firmware/settings/owner-2026-11-13.json): trims for all 8 channels, speed, knee lift, heading trim and lamp colour. Its old `flickHip` and `gait` keys are ignored.
 
 After wiping the flash or swapping the board, restore them with:
 
@@ -156,7 +151,7 @@ Add `--dry-run` to preview the requests. The script needs all 8 servos armed, an
 
 ## Firmware
 
-- **Running now:** `positional180-v22`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
+- **Running now:** `positional180-v23`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
 - **Build, flash and version history:** [firmware/README.md](firmware/README.md). See also [gaits](firmware/CRAWL.md), [web controls](firmware/WEB-CONTROL.md) and [emotions](firmware/EMOTIONS.md).
 
 ```sh
@@ -172,10 +167,10 @@ Building doesn't flash a board, run motors, print or order anything.
 
 ## Known issues
 
-- **Speed, gait and flick hip angle aren't saved on the crab.** A reboot brings back the defaults: 90%, Chéo, 90°.
+- **Speed isn't saved on the crab.** A reboot brings back 90%.
+- **After a brownout reset the servos stay off.** The screen and page show **Sụt áp: bấm Bật servo**. Check the power (cable, power bank), then tap **Bật servo**. Before v23 the crab re-armed straight away, sagged again and kept resetting.
 - **Walking direction and leg names are set separately** (see the warning under [servo channels](#which-servo-goes-where)). Built-in emotions and the heading trim may feel "back to front" relative to Tiến.
 - **A USB cable dragging behind** can pull the crab off course. A power bank mounted on the body walks straighter.
-- **Knee flick at 90° goes past the body's old clearance** (30/60°). On the first run, watch for legs hitting each other.
 
 ## More docs
 

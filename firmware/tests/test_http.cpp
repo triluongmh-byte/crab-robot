@@ -7,7 +7,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v22")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"gait\":\"trot\"")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v23")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -29,12 +29,10 @@ int main(){
   server.request("/api/trim",{{"token","42"},{"ch","1"},{"delta","-2"}});assert(server.code==409);
   server.request("/api/trim",{{"token","42"},{"ch","1"},{"delta","-1"}});server.request("/api/trim",{{"token","42"},{"ch","1"},{"delta","-1"}});assert(motion.offsets[1]==before);}
  server.request("/api/assembly",{{"token","42"},{"active","0"}});assert(server.code==200);
- server.request("/api/gait",{{"token","42"},{"value","walk"}});assert(server.code==400&&motion.gaitPattern==crab::Pattern::Trot);
- server.request("/api/gait",{{"token","7"},{"value","pairs"}});assert(server.code==409&&motion.gaitPattern==crab::Pattern::Trot);
- server.request("/api/gait",{{"token","42"},{"value","pairs"}});assert(server.code==200&&motion.gaitPattern==crab::Pattern::Pairs&&!motion.lease&&motion.positional()); // stays armed
- server.request("/api/status");assert(server.body.find("\"gait\":\"pairs\"")!=String::npos);
- server.request("/api/gait",{{"token","42"},{"value","flick"}});assert(server.code==200&&motion.gaitPattern==crab::Pattern::Flick);server.request("/api/status");assert(server.body.find("\"gait\":\"flick\"")!=String::npos);
- server.request("/api/gait",{{"token","42"},{"value","trot"}});assert(server.code==200&&motion.gaitPattern==crab::Pattern::Trot);
+ // Only the trot is left (v23): the gait and flick-hip endpoints are gone.
+ server.request("/api/gait",{{"token","42"},{"value","pairs"}});assert(server.code==404&&motion.positional());
+ server.request("/api/flickhip",{{"token","42"},{"value","55"}});assert(server.code==404);
+ server.request("/api/status");assert(server.body.find("\"gait\"")==String::npos&&server.body.find("\"flickHip\"")==String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
  // Speed slider: decimal fraction .2-1, default .9; malformed or out-of-range refused.
  assert(std::fabs(crab::Motion{}.speed-.9f)<1e-6f);
  server.request("/api/speed",{{"token","42"},{"value","0.55"}});assert(server.code==200&&std::fabs(motion.speed-.55f)<1e-4f);
@@ -42,13 +40,6 @@ int main(){
  server.request("/api/speed",{{"token","42"},{"value",".2"}});assert(server.code==200&&std::fabs(motion.speed-.2f)<1e-4f);
  for(const char* bad:{"0.1","1.5","","abc","0.5.5","-0.5","0.900001","nan"}){server.request("/api/speed",{{"token","42"},{"value",bad}});assert(server.code==400&&std::fabs(motion.speed-.2f)<1e-4f);}
  server.request("/api/speed",{{"token","7"},{"value","0.9"}});assert(server.code==409);
- // Flick hip slider: whole degrees 30-90, reported in status.
- assert(motion.flickHip==cfg::FLICK_HIP);
- server.request("/api/flickhip",{{"token","42"},{"value","55"}});assert(server.code==200&&motion.flickHip==55);
- for(const char* bad:{"29","91","","4.5","-60"}){server.request("/api/flickhip",{{"token","42"},{"value",bad}});assert(server.code==400&&motion.flickHip==55);}
- server.request("/api/flickhip",{{"token","7"},{"value","60"}});assert(server.code==409&&motion.flickHip==55);
- server.request("/api/status");assert(server.body.find("\"flickHip\":55")!=String::npos);
- server.request("/api/flickhip",{{"token","42"},{"value","90"}});assert(server.code==200);
  // Heading trim: signed percent -30..30, persisted, in status.
  server.request("/api/balance",{{"token","42"},{"value","-12"}});assert(server.code==200&&motion.balance==-12&&trimStore.getInt("balance",0)==-12);
  server.request("/api/balance",{{"token","42"},{"value","15"}});assert(server.code==200&&motion.balance==15&&trimStore.getInt("balance",0)==15);

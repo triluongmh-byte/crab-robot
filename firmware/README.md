@@ -279,3 +279,20 @@ Host tests cover all of this:
 - the face-line widths
 
 The thresholds are first guesses; tune them on the floor (`AUTO_*` in `config.h`).
+
+## One gait, and no brownout boot loop — 2026-11-15
+
+Release `positional180-v23`, from the owner's regrouped backlog:
+
+- **Only the trot is left.** The owner found that only **Chéo** (diagonal trot) actually walks, so the front/rear pairs (v5) and knee-flick (v10–v11) gaits are removed.
+  - Gone from the page: the **Dáng đi** selector and the **Góc hông búng** slider.
+  - Gone from the API: `/api/gait` and `/api/flickhip` (now 404) and the `gait` / `flickHip` status fields.
+  - This also closes the old backlog note that the heading trim had no effect in flick.
+  - `tools/firmware/restore_settings.py` ignores `gait` and `flickHip` in older settings files.
+  - The hip pulse limit stays at ±90° nominal so trims and emotion poses keep their range.
+- **No brownout boot loop.** With weak servo power, arming all 8 servos sagged the supply, the ESP32 reset on brownout, armed again at boot and kept looping.
+  - After a reset with `esp_reset_reason()==ESP_RST_BROWNOUT` the servos stay off.
+  - The screen shows **Sụt áp: bấm Bật servo**. The page shows **Sụt áp**, explains why the servos are off, and lists **Khởi động: Sụt áp — servo chưa bật**. `/api/status` has `"brownoutHold":true`.
+  - **Bật servo** arms as usual and clears the hold. A normal power-on or reset still arms by itself (`cfg::AUTO_ARM`).
+
+Host tests cover the brownout hold and its release, the trot-only gait and tracking, the 404 routes, the page without the selector and the restore plan. The brownout path still needs a real sag on the robot to confirm.
