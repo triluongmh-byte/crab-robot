@@ -38,36 +38,12 @@ inline void applyBalance(float out[8],int percent){
  for(int leg=0;leg<4;leg++)out[2*leg]*=1+(physicalRight(leg)?p:-p);
 }
 inline float smooth(float x){x=clamp(x,0,1);return x*x*(3-2*x);}
-enum class Pattern:uint8_t {Trot,Pairs,Flick};
-inline const cfg::GaitPattern& pattern(Pattern p){return p==Pattern::Pairs?cfg::PAIRS:cfg::TROT;}
-inline const char* patternName(Pattern p){return p==Pattern::Pairs?"pairs":p==Pattern::Flick?"flick":"trot";}
-// Flick only replaces axial Forward/Backward; sideways and diagonals trot.
-inline bool flickActive(Pattern p,Vec v,float yaw=0){return p==Pattern::Flick&&std::fabs(yaw)<.01f&&std::fabs(v.x)>std::fabs(v.y)+.01f;}
-inline float cyclePeriod(Pattern p,Vec v,float yaw=0){return flickActive(p,v,yaw)?cfg::FLICK_PERIOD_S:cfg::PERIOD_S;}
-// The stance is 180-deg symmetric, so identical knee timing on every leg
-// cannot pick a direction (owner video IMG_2637: it only bounced). Timing is
-// set by geometry instead: a trailing leg (foot pointing away from travel)
-// gets the power stroke, a slow lift then a fast drop that strikes and pushes;
-// a leading leg snaps up fast and lowers slowly so it drags little.
-inline void flick(float phase,Vec v,float amplitude,float out[8],float hip=cfg::FLICK_HIP,float knee=cfg::KNEE_LIFT){
- const float cycle=phase/6.2831853072f;
- for(int leg=0;leg<4;leg++){
-  // CAD legs 0,1 swing their feet towards +X, legs 2,3 towards -X.
-  const Vec pose(leg<2?1.f:-1.f,0);
-  out[2*leg]=clamp(hip,0,cfg::FLICK_HIP)*clamp(hipProjection(leg,pose)*1.4142135624f,-1,1)*amplitude;
-  const float group=(leg==0||leg==3)?0:.5f;
-  float u=cycle-group-std::floor(cycle-group);
-  const bool leading=pose.x*v.x>0;
-  if(!leading)u=1-u;
-  const float k=u<cfg::FLICK_STROKE?smooth(u/cfg::FLICK_STROKE):1-smooth((u-cfg::FLICK_STROKE)/(1-cfg::FLICK_STROKE));
-  out[2*leg+1]=-clamp(knee,0,cfg::KNEE_LIFT_MAX)*k*amplitude;
- }
-}
-inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pattern::Trot,float flickHip=cfg::FLICK_HIP,float knee=cfg::KNEE_LIFT,float yaw=0){
- if(flickActive(which,v,yaw)){flick(phase,v,amplitude,out,flickHip,knee);return;}
+// The only gait is the diagonal trot (owner, 2026-11-15: the pairs and
+// knee-flick gaits never walked, so they were removed in v23).
+inline void gait(float phase,Vec v,float amplitude,float out[8],float knee=cfg::KNEE_LIFT,float yaw=0){
  yaw=clamp(yaw,-1,1);
  knee=clamp(knee,0,cfg::KNEE_LIFT_MAX);
- const cfg::GaitPattern& g=pattern(which);
+ const cfg::GaitPattern& g=cfg::TROT;
  // Begin at mid stance: hips start from neutral, not an opposite kick.
  const float cycle=phase/6.2831853072f+g.start;
  const float swingEnd=g.stance+g.lift+g.swing,lower=1-swingEnd;
@@ -89,7 +65,7 @@ inline void gait(float phase,Vec v,float amplitude,float out[8],Pattern which=Pa
 inline int pulse(int ch,float angle,float offset,bool raw=false){
  if(raw)return cfg::CENTRE_US;
  // Clamp AFTER mirror and trim: trim cannot bypass the owner's travel budget.
- // Owner-requested hip range for the 90 deg knee-flick stance; knees unchanged.
+ // Hip pulse range stays at HIP_LIMIT so large trims keep working; knees unchanged.
  const float limit=ch%2?cfg::KNEE_PULSE_LIMIT:cfg::HIP_LIMIT,request=ch%2?cfg::KNEE_LIFT_MAX:cfg::HIP_LIMIT;
  float degrees=clamp(cfg::SIGN[ch]*clamp(angle,-request,request)+clamp(offset,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT),-limit,limit);
  return int(std::lround(cfg::CENTRE_US+cfg::US_PER_DEG*degrees));
@@ -108,6 +84,7 @@ constexpr const char* NOT_FOUND="Không thấy Wi-Fi này";
 constexpr const char* LOST="Mất Wi-Fi. Vẫn dùng cua";
 constexpr const char* ERASED="Đã xóa Wi-Fi";
 constexpr const char* DRIVER="Kiểm tra dây PCA9685";
+constexpr const char* BROWNOUT="Sụt áp: bấm Bật servo";
 }
 enum class NetState {Setup,Connecting,Online};
 // Failure reported by the radio for the current attempt only (from the
@@ -195,6 +172,7 @@ struct Motion {
  bool sequence(uint32_t id,uint32_t seq){if(!id||id!=session||seq<=lastSeq)return false;lastSeq=seq;return true;}
  bool selectActuator(bool positionalMode,uint32_t now){
   if(positionalMode&&(test.opened||continuous.opened))return false;
+  brownoutHold=false; // any explicit choice ends the brownout hold
   const bool keepAssembly=assembly; // disarming must not silently exit the setup page
   stop();test=ServoTest{};continuous=Continuous360{};assembly=keepAssembly;raw=false;actuator=positionalMode?Actuator::Positional:Actuator::Unknown;
   amplitude=phase=0;for(auto& p:position)p=0;begin(now);return true;
@@ -219,10 +197,9 @@ struct Motion {
  Vec velocity{};
  float yaw=0; // body turn share for arcs, see bodyYaw
  int dir=0;   // last accepted drive command, for the eyes
- float amplitude=0,phase=0,speed=cfg::SPEED_DEFAULT,flickHip=cfg::FLICK_HIP;
+ float amplitude=0,phase=0,speed=cfg::SPEED_DEFAULT;
  int balance=0; // percent, see applyBalance
  float kneeLift=cfg::KNEE_LIFT;
- Pattern gaitPattern=Pattern::Trot;
  bool assembly=false,raw=false,inhibit=false,lease=false;
  bool autoMode=false; // Auto mode drives via autoDrive; cleared by any stop or manual command
  uint32_t session=0,lastSeq=0,lastCommand=0,start=0,lastTick=0;
@@ -230,7 +207,14 @@ struct Motion {
  uint32_t outputEpoch=0; // invalidate cached output after synchronous off/settings
  void begin(uint32_t now){start=lastTick=now;enabled=0;}
  // Boot-time arm (cfg::AUTO_ARM): same path as the page's Bật servo button.
- bool bootArm(bool driver,uint32_t now){return cfg::AUTO_ARM&&driver&&selectActuator(true,now);}
+ // After a brownout reset the servos stay off (owner, 2026-11-15: arming all 8
+ // pulled the supply down again, so it reset, re-armed and looped). The owner
+ // arms them with Bật servo; brownoutHold shows why until then.
+ bool brownoutHold=false;
+ bool bootArm(bool driver,uint32_t now,bool brownout=false){
+  if(brownout){brownoutHold=true;return false;}
+  return cfg::AUTO_ARM&&driver&&selectActuator(true,now);
+ }
  bool setKneeLift(int deg){if(deg<cfg::KNEE_LIFT_MIN||deg>cfg::KNEE_LIFT_MAX)return false;kneeLift=float(deg);return true;}
  bool setBalance(int percent){if(percent<-cfg::BALANCE_LIMIT||percent>cfg::BALANCE_LIMIT)return false;balance=percent;return true;}
  // Emotion poses: direct joint targets in the gait's command frame (knee
@@ -287,15 +271,12 @@ struct Motion {
   const float dt=std::min(elapsed(now,lastTick)*.001f,.05f);lastTick=now;
   if(enabled<8){if(elapsed(now,start)<uint32_t(enabled)*cfg::ENABLE_GAP_MS)return -1;return enabled++;}
   bool moving=std::fabs(velocity.x)+std::fabs(velocity.y)+std::fabs(yaw)>.01f;
-  // Flick holds the hips at up to 90 deg; trot keeps them near neutral. Do not
-  // jump between the two stances mid-stride: ramp down first, then switch.
-  if(moving&&amplitude>.02f&&flickActive(gaitPattern,velocity,yaw)!=flickActive(gaitPattern,heading,headingYaw))moving=false;
   // Keep last heading through amplitude decay to avoid snapping the hip target.
   amplitude=clamp(amplitude+(moving?dt*1.5f:-dt*4.0f),0,1);
   if(moving){heading=velocity;headingYaw=yaw;}
-  if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cyclePeriod(gaitPattern,heading,headingYaw),6.2831853072f);
+  if(moving)phase=std::fmod(phase+dt*6.2831853072f*speed/cfg::PERIOD_S,6.2831853072f);
   if(posing){for(int ch=0;ch<8;ch++)position[ch]+=clamp(pose[ch]-position[ch],-poseRate[ch]*dt,poseRate[ch]*dt);return 0;}
-  float target[8]={};if(!assembly){gait(phase,heading,amplitude,target,gaitPattern,flickHip,kneeLift,headingYaw);applyBalance(target,balance);}
+  float target[8]={};if(!assembly){gait(phase,heading,amplitude,target,kneeLift,headingYaw);applyBalance(target,balance);}
   const float rate=relaxing&&!moving?cfg::RELAX_DPS:cfg::SLEW_DPS;bool settled=true;
   for(int ch=0;ch<8;ch++){position[ch]+=clamp(target[ch]-position[ch],-rate*dt,rate*dt);settled=settled&&std::fabs(target[ch]-position[ch])<.01f;}
   if(settled||moving)relaxing=false;

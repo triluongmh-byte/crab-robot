@@ -15,7 +15,7 @@ for(const m of html.matchAll(/id="([^"]+)"/g)){const e=new Element();e.id=m[1];e
 const el=id=>{assert(elements[id],id+' must actually exist');return elements[id];};
 const dirs=[...html.matchAll(/data-dir="(\d+)"/g)].map(m=>{let e=new Element();e.dataset.dir=m[1];e.disabled=true;return e;});
 const events={},timers=[],calls=[],beacons=[];let failMove=false,failStatus=false,failTelemetry=false,mobile=false,deferred=null;
-const state={message:'Đã vào Wi-Fi',online:true,url:'http://192.168.4.1/',driver:true,positional:false,enabled:0,assembly:false,speed:0.65,gait:'trot',offsets:Array(8).fill(0)};
+const state={message:'Đã vào Wi-Fi',online:true,url:'http://192.168.4.1/',driver:true,positional:false,enabled:0,assembly:false,speed:0.65,offsets:Array(8).fill(0)};
 const samples=Array.from({length:8},(_,ch)=>({ch,known:true,active:false,angleDeg:null,pulseUs:null,counts:null}));
 const document={body:new Element(),hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:[],addEventListener:(n,f)=>events[n]=f};
 const fetch=async(path,opt={})=>{const data=Object.fromEntries(opt.body||[]);calls.push({path,data});let d={};
@@ -42,11 +42,12 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  el('speed').onchange();await flush();assert(calls.some(c=>c.path==='/api/speed'&&c.data.value==='0.75'&&c.data.token==='42'));state.speed=.75;await poll();assert.equal(el('speed').value,'75');
  // Armed state is spelled out on the disabled arm button, and Trạng thái lists details.
  assert(el('arm').disabled&&/Servo đang bật/.test(el('arm').textContent));
- const detail=el('statusDetail').children.map(x=>x.textContent);assert(detail.includes('Bật đủ 8/8')&&detail.includes('75%')&&detail.includes('Chéo'));
- // Flick hip slider only shows in flick; release posts whole degrees.
- assert(el('flickHipBox').hidden);state.gait='flick';state.flickHip=90;await poll();assert(!el('flickHipBox').hidden&&el('flickHip').value==='90');
- el('flickHip').value='60';el('flickHip').oninput();await poll();assert.equal(el('flickHip').value,'60');el('flickHip').onchange();await flush();
- assert(calls.some(c=>c.path==='/api/flickhip'&&c.data.value==='60'));state.flickHip=60;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='Búng gối · hông 60°'));state.gait='trot';await poll();assert(el('flickHipBox').hidden);
+ const detail=el('statusDetail').children.map(x=>x.textContent);assert(detail.includes('Bật đủ 8/8')&&detail.includes('75%')&&detail.includes('Bình thường'));
+ // Only the trot is left (v23): no gait picker or flick-hip slider.
+ assert(!elements.gait&&!elements.flickHip&&!elements.flickHipBox&&/id="gaitHint">Hai cặp chân chéo/.test(html));
+ // Brownout reset: servos stayed off, the page says why.
+ state.brownoutHold=true;state.positional=false;state.enabled=0;await poll();assert.equal(el('readiness').textContent,'Sụt áp');assert(/sụt áp/.test(el('status').textContent)&&el('statusDetail').children.some(x=>x.textContent==='Sụt áp — servo chưa bật'));
+ state.brownoutHold=false;state.positional=true;state.enabled=8;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='Bình thường'));
  // Heading trim slider posts signed whole percent; poll does not fight a drag.
  state.balance=0;await poll();assert.equal(el('balance').value,'0');el('balance').value='12';el('balance').oninput();assert.equal(el('balanceValue').textContent,'+12% phải');await poll();assert.equal(el('balance').value,'12');
  el('balance').onchange();await flush();assert(calls.some(c=>c.path==='/api/balance'&&c.data.value==='12'));state.balance=12;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='+12% phải'));
@@ -56,8 +57,6 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  state.knee=45;await poll();assert.equal(el('knee').value,'45');el('knee').value='55';el('knee').oninput();assert.equal(el('kneeValue').textContent,'55°');await poll();assert.equal(el('knee').value,'55');
  el('knee').onchange();await flush();assert(calls.some(c=>c.path==='/api/knee'&&c.data.value==='55'));
  assert(/CH0 · Hông trước trái/.test(el('trim0').textContent)&&/CH6 · Hông sau phải/.test(el('trim6').textContent));
- assert.equal(el('gait').value,'trot');assert(/chéo/.test(el('gaitHint').textContent));state.gait='pairs';await poll();assert.equal(el('gait').value,'pairs');assert(/trước và sau/.test(el('gaitHint').textContent));
- el('gait').value='trot';await el('gait').onchange();await flush();assert(calls.some(c=>c.path==='/api/gait'&&c.data.value==='trot'&&c.data.token==='42'));state.gait='flick';await poll();assert.equal(el('gait').value,'flick');assert(/búng/.test(el('gaitHint').textContent));state.gait='trot';await poll();assert.equal(el('gait').value,'trot');
  for(const b of dirs){b.fire('pointerdown');await flush();let cmd=calls.filter(c=>c.path==='/api/move').at(-1);assert.equal(cmd.data.dir,b.dataset.dir);assert.equal(cmd.data.fresh,'1');await hold();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');}
 
  // Tự đi: needs both sensors and armed servos; toggles /api/auto. Only DỪNG (or a

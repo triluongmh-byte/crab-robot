@@ -125,28 +125,6 @@ static void test_manual90(){
  assert(m.continuous.confirmReference());assert(m.openContinuous(false));assert(!m.continuous.referenceValid); // mode/settings
  assert(m.openTest(true));assert(m.test.config(0,307));assert(m.testCommand(2,1,4,100,true));assert(!m.continuous.referenceValid); // untracked motion
 }
-static void test_pair_sequence(){
- for(int group=0;group<2;group++)for(float u:{.1f,.3f,.55f,.6f,.7f,.8f,.9f,.95f}){
-  float fwd[8],back[8];const float cycle=u+group*.5f;
-  const float phase=(cycle-.25f)*6.2831853072f;
-  gait(phase,direction(1),1,fwd,Pattern::Pairs);gait(phase,direction(2),1,back,Pattern::Pairs);
-  const int first=group*2;
-  for(int leg=0;leg<4;leg++){
-   assert(std::fabs(fwd[2*leg]+back[2*leg])<.001f);
-   assert(std::fabs(fwd[2*leg+1]-back[2*leg+1])<.001f);
-  }
-  assert(std::fabs(fwd[2*first+1]-fwd[2*(first+1)+1])<.001f);
-  assert(std::fabs(fwd[2*first]+fwd[2*(first+1)])<.001f); // mirrored hip push
-  if(u<.5f)assert(fwd[2*first+1]==0);
-  if(u>.5f&&u<.625f)assert(std::fabs(std::fabs(fwd[2*first])-25)<.001f);
-  if(u>.625f&&u<.875f)assert(std::fabs(fwd[2*first+1]+cfg::KNEE_LIFT)<.001f);
-  if(u>.875f)assert(std::fabs(std::fabs(fwd[2*first])-25)<.001f);
- }
- // First forward frame commands front hips from neutral towards the rear.
- float initial[8],after[8];gait(0,direction(1),1,initial,Pattern::Pairs);gait(.02f,direction(1),1,after,Pattern::Pairs);
- assert(std::fabs(initial[0])<.001f&&std::fabs(initial[2])<.001f);
- assert(after[0]>initial[0]&&after[2]<initial[2]&&after[1]==0&&after[3]==0);
-}
 static void test_trot_sequence(){
  // Diagonal pairs FL+RR (legs0,3) and FR+RL (legs1,2), half a cycle apart.
  const int pairs[2][2]={{0,3},{1,2}};
@@ -170,67 +148,25 @@ static void test_trot_sequence(){
  assert(std::fabs((x1[0]-x0[0])-(x2[0]-x1[0]))<.001f);
  // First forward frame: every hip starts from neutral.
  float initial[8];gait(0,direction(1),1,initial);for(int leg=0;leg<4;leg++)assert(std::fabs(initial[2*leg])<.001f);
- // Default Motion pattern is the trot.
- Motion m;assert(m.gaitPattern==Pattern::Trot&&std::string(patternName(m.gaitPattern))=="trot"&&std::string(patternName(Pattern::Pairs))=="pairs");
 }
 static void test_tracking(){
  // At Fast the slew limit must not make joints lag their targets; a lagging
  // hip would still be returning when the knee lowers (foot lands mid-swing).
- for(Pattern which:{Pattern::Trot,Pattern::Pairs,Pattern::Flick})for(int dir=1;dir<=8;dir++){
-  Motion m;ready(m);m.newSession(5);m.speed=1;m.gaitPattern=which;uint32_t seq=0;double worst=0;
+ for(int dir=1;dir<=8;dir++){
+  Motion m;ready(m);m.newSession(5);m.speed=1;uint32_t seq=0;double worst=0;
   for(uint32_t t=2200;t<12200;t+=10){
    if(t%150==100)assert(m.command(5,++seq,dir,t,!m.lease));
    if(m.tick(t)!=0||t<6200)continue;
-   float target[8];gait(m.phase,bodyDirection(dir),m.amplitude,target,which,cfg::FLICK_HIP,cfg::KNEE_LIFT,bodyYaw(dir));
+   float target[8];gait(m.phase,bodyDirection(dir),m.amplitude,target,cfg::KNEE_LIFT,bodyYaw(dir));
    for(int ch=0;ch<8;ch++)worst=std::max(worst,double(std::fabs(target[ch]-m.position[ch])));
   }
-  if(worst>=2.5)std::cerr<<"Tracking lag: pattern="<<int(which)<<" dir="<<dir<<" worstDeg="<<worst<<"\n";
+  if(worst>=2.5)std::cerr<<"Tracking lag: dir="<<dir<<" worstDeg="<<worst<<"\n";
   assert(worst<2.5);
  }
 }
-static void test_flick(){
- assert(std::string(patternName(Pattern::Flick))=="flick");
+static void test_trims(){
  // Owner frame: CH0 is rear right, so Forward/Left are rotated 180 deg into CAD.
  assert(cfg::FRONT_IS_CH46&&bodyDirection(1).x==-1&&bodyDirection(2).x==1&&bodyDirection(3).y==-1&&bodyDirection(4).y==1);
- assert(flickActive(Pattern::Flick,direction(1))&&flickActive(Pattern::Flick,direction(2)));
- assert(!flickActive(Pattern::Flick,direction(3))&&!flickActive(Pattern::Flick,direction(5))&&!flickActive(Pattern::Trot,direction(1)));
- assert(cyclePeriod(Pattern::Flick,direction(1))==cfg::FLICK_PERIOD_S&&cyclePeriod(Pattern::Flick,direction(3))==cfg::PERIOD_S);
- // Left/Right in flick mode are exactly the trot.
- for(int d:{3,4})for(float ph:{0.f,1.f,2.5f,4.f}){float a[8],b[8];gait(ph,direction(d),1,a,Pattern::Flick);gait(ph,direction(d),1,b);for(int i=0;i<8;i++)assert(a[i]==b[i]);}
- // Knee profile of one leg over a cycle: when it first reaches full lift and
- // when it is next back near the ground.
- auto profile=[](int dir,int leg,double& rise,double& fall){
-  rise=fall=-1;
-  for(int k=0;k<1000;k++){float o[8];gait(k*6.2831853072f/1000,bodyDirection(dir),1,o,Pattern::Flick);const double u=k/1000.;
-   if(rise<0&&o[2*leg+1]<=-cfg::KNEE_LIFT+.001f)rise=u;
-   if(rise>=0&&fall<0&&o[2*leg+1]>=-.05f&&u>rise)fall=u;}
-  assert(rise>=0&&fall>rise);
- };
- for(int dir:{1,2}){
-  float first[8];gait(0,bodyDirection(dir),1,first,Pattern::Flick);
-  for(int k=0;k<1000;k++){
-   float o[8];gait(k*6.2831853072f/1000,bodyDirection(dir),1,o,Pattern::Flick);
-   // Hips hold the 90 deg stance: CAD legs 0,1 (CH0-3, physical rear) towards
-   // CAD +X = physical rear; CH4-7 (physical front) towards physical front.
-   for(int leg=0;leg<4;leg++)assert(o[2*leg]==first[2*leg]&&std::fabs(std::fabs(o[2*leg])-cfg::FLICK_HIP)<.001f);
-   assert(o[0]<-89.9f&&o[2]>89.9f&&o[4]>89.9f&&o[6]<-89.9f);
-   for(int leg=0;leg<4;leg++)assert(o[2*leg+1]<=0.0001f&&o[2*leg+1]>=-cfg::KNEE_LIFT-.0001f);
-   // Same-side legs (same stance) run the same profile half a cycle apart.
-   float h[8];gait((k/1000.f+.5f)*6.2831853072f,bodyDirection(dir),1,h,Pattern::Flick);
-   assert(std::fabs(o[1]-h[3])<.001f&&std::fabs(o[7]-h[5])<.001f);
-  }
-  // Physical Forward (dir 1): rear legs (CH1 knee) trail and get the fast
-  // drop; front legs (CH7 knee) lead and snap up fast. Backward swaps them.
-  double rr,rf,fr,ff;profile(dir,0,rr,rf);profile(dir,3,fr,ff);
-  const bool rearTrails=dir==1;
-  const double trailRise=rearTrails?rr:fr,trailFall=rearTrails?rf:ff,leadRise=rearTrails?fr:rr,leadFall=rearTrails?ff:rf;
-  assert(trailRise>.7&&trailFall-trailRise<=cfg::FLICK_STROKE+.01);
-  assert(leadRise<=cfg::FLICK_STROKE+.01&&leadFall-leadRise>.7);
- }
- // Owner hip slider scales the stance; it never exceeds FLICK_HIP.
- {float o[8];gait(0,bodyDirection(1),1,o,Pattern::Flick,45);for(int leg=0;leg<4;leg++)assert(std::fabs(std::fabs(o[2*leg])-45)<.001f);
-  gait(0,bodyDirection(1),1,o,Pattern::Flick,200);for(int leg=0;leg<4;leg++)assert(std::fabs(std::fabs(o[2*leg])-cfg::FLICK_HIP)<.001f);
-  Motion m;assert(m.flickHip==cfg::FLICK_HIP);}
  // Heading trim: physical right legs are CH0 (rear right) and CH4 (front right).
  assert(physicalRight(0)&&!physicalRight(1)&&physicalRight(2)&&!physicalRight(3));
  {float o[8]={10,5,10,5,10,5,10,5};applyBalance(o,20);assert(std::fabs(o[0]-12)<1e-4f&&std::fabs(o[2]-8)<1e-4f&&std::fabs(o[4]-12)<1e-4f&&std::fabs(o[6]-8)<1e-4f&&o[1]==5&&o[7]==5);
@@ -242,55 +178,42 @@ static void test_flick(){
   double ra=0,rb=0,la=0,lb=0;for(int leg=0;leg<4;leg++){if(physicalRight(leg)){ra+=std::fabs(a.position[2*leg]);rb+=std::fabs(b.position[2*leg]);}else{la+=std::fabs(a.position[2*leg]);lb+=std::fabs(b.position[2*leg]);}}
   assert(rb>ra*1.15&&lb<la*.85);}
  // Boot arm follows the Bật servo path, only with a working driver.
- {Motion m;assert(cfg::AUTO_ARM&&!m.bootArm(false,0)&&!m.positional());assert(m.bootArm(true,0)&&m.positional()&&m.enabled==0);
-  for(uint32_t t=0;t<3000;t+=10)m.tick(t);assert(m.enabled==8);}
- // Knee lift: default raised to 45 (feet dragged), owner range 20-60, every gait.
+ {Motion m;assert(cfg::AUTO_ARM&&!m.bootArm(false,0)&&!m.positional()&&!m.brownoutHold);assert(m.bootArm(true,0)&&m.positional()&&m.enabled==0);
+  for(uint32_t t=0;t<3000;t+=10)m.tick(t);assert(m.enabled==8&&!m.brownoutHold);}
+ // After a brownout reset the servos stay off (no reset -> arm -> sag loop)
+ // until the owner presses Bật servo, which also clears the hold.
+ {Motion m;assert(!m.bootArm(true,0,true)&&!m.positional()&&m.brownoutHold);
+  for(uint32_t t=0;t<3000;t+=10)assert(m.tick(t)==-1);assert(m.enabled==0&&m.brownoutHold);
+  assert(m.selectActuator(true,3000)&&m.positional()&&!m.brownoutHold);
+  for(uint32_t t=3000;t<6000;t+=10)m.tick(t);assert(m.enabled==8);}
+ // Knee lift: default raised to 45 (feet dragged), owner range 20-60.
  {assert(cfg::KNEE_LIFT==45);Motion m;assert(m.kneeLift==cfg::KNEE_LIFT&&m.setKneeLift(60)&&!m.setKneeLift(61)&&!m.setKneeLift(19)&&m.kneeLift==60);
-  for(Pattern w:{Pattern::Trot,Pattern::Pairs,Pattern::Flick})for(int d:{1,3}){double lo=0;for(int k=0;k<200;k++){float o[8];gait(k*.0314f,bodyDirection(d),1,o,w,cfg::FLICK_HIP,55);for(int leg=0;leg<4;leg++)lo=std::min(lo,double(o[2*leg+1]));}assert(std::fabs(lo+55)<.01);}}
- // The fix for IMG_2637: Forward and Backward knee patterns now differ.
- float f[8],b[8];bool differ=false;
- for(int k=0;k<100;k++){gait(k*.0628f,bodyDirection(1),1,f,Pattern::Flick);gait(k*.0628f,bodyDirection(2),1,b,Pattern::Flick);for(int i=1;i<8;i+=2)differ=differ||std::fabs(f[i]-b[i])>1;}
- assert(differ);
+  for(int d:{1,3}){double lo=0;for(int k=0;k<200;k++){float o[8];gait(k*.0314f,bodyDirection(d),1,o,55);for(int leg=0;leg<4;leg++)lo=std::min(lo,double(o[2*leg+1]));}assert(std::fabs(lo+55)<.01);}}
 }
 
 // Owner, 2026-11-14: four slanted moves that walk and turn the body.
 static void test_arcs(){
  // Equal-reach model as in the simulation: a grounded foot (knee at 0) that
  // sweeps by dq moves the body by -dq along its hip tangent and turns it by -dq.
- auto travel=[](int dir,Pattern which,double& along,double& turn){
+ auto travel=[](int dir,double& along,double& turn){
   along=turn=0;const Vec fwd=bodyDirection(1);const int n=720;
   for(int k=0;k<n;k++){const float ph=k*6.2831853072f/n;float a[8],b[8];
-   gait(ph,bodyDirection(dir),1,a,which,cfg::FLICK_HIP,cfg::KNEE_LIFT,bodyYaw(dir));gait(ph+6.2831853072f/n,bodyDirection(dir),1,b,which,cfg::FLICK_HIP,cfg::KNEE_LIFT,bodyYaw(dir));
+   gait(ph,bodyDirection(dir),1,a,cfg::KNEE_LIFT,bodyYaw(dir));gait(ph+6.2831853072f/n,bodyDirection(dir),1,b,cfg::KNEE_LIFT,bodyYaw(dir));
    for(int leg=0;leg<4;leg++){if(std::fabs(a[2*leg+1])>1e-4f||std::fabs(b[2*leg+1])>1e-4f)continue;const double dq=b[2*leg]-a[2*leg];
     turn-=dq;along-=dq*(-std::sin(cfg::RADIAL[leg])*fwd.x+std::cos(cfg::RADIAL[leg])*fwd.y);}}
  };
  assert(bodyDirection(5).x==bodyDirection(1).x&&bodyDirection(6).x==bodyDirection(1).x&&bodyDirection(7).x==bodyDirection(2).x&&bodyDirection(8).x==bodyDirection(2).x);
  assert(bodyYaw(1)==0&&bodyYaw(4)==0&&bodyYaw(5)>0&&bodyYaw(6)<0&&bodyYaw(7)<0&&bodyYaw(8)>0);
- for(Pattern which:{Pattern::Trot,Pattern::Pairs}){
-  double a1,t1;travel(1,which,a1,t1);assert(a1>0&&std::fabs(t1)<.01);
+ {
+  double a1,t1;travel(1,a1,t1);assert(a1>0&&std::fabs(t1)<.01);
   double a,t;
-  travel(5,which,a,t);assert(a>.2*a1&&t>.2*a1);   // forward, turning left (counter-clockwise)
-  travel(6,which,a,t);assert(a>.2*a1&&t<-.2*a1);  // forward, turning right
-  travel(7,which,a,t);assert(a<-.2*a1&&t<-.2*a1); // backward, tail swings left (clockwise)
-  travel(8,which,a,t);assert(a<-.2*a1&&t>.2*a1);  // backward, tail swings right
+  travel(5,a,t);assert(a>.2*a1&&t>.2*a1);   // forward, turning left (counter-clockwise)
+  travel(6,a,t);assert(a>.2*a1&&t<-.2*a1);  // forward, turning right
+  travel(7,a,t);assert(a<-.2*a1&&t<-.2*a1); // backward, tail swings left (clockwise)
+  travel(8,a,t);assert(a<-.2*a1&&t>.2*a1);  // backward, tail swings right
  }
- // In flick mode the arcs use the trot (no 90-degree stance while turning).
- assert(!flickActive(Pattern::Flick,bodyDirection(5),bodyYaw(5))&&cyclePeriod(Pattern::Flick,bodyDirection(5),bodyYaw(5))==cfg::PERIOD_S);
  // Stop clears the turn; the last drive command is kept for the eyes.
  {Motion m;ready(m);m.newSession(5);assert(m.command(5,1,6,2200,true)&&m.yaw<0&&m.dir==6);m.stop();assert(m.yaw==0&&m.dir==0);}
- // Flick Forward then a turn: the 90-degree stance ramps down before the trot
- // takes over, so no hip whips across (was up to 115 deg at full slew).
- {Motion m;ready(m);m.newSession(5);m.speed=1;m.gaitPattern=Pattern::Flick;uint32_t seq=0,t=2200;
-  for(;t<5200;t+=10){if(t%150==100)assert(m.command(5,++seq,1,t,!m.lease));m.tick(t);}
-  assert(m.amplitude>.99f&&std::fabs(m.position[0])>80);
-  float last[8];for(int ch=0;ch<8;ch++)last[ch]=m.position[ch];double worst=0;
-  const uint32_t turn=t;
-  for(;t<7200;t+=10){if(t%150==100)assert(m.command(5,++seq,5,t,false));if(m.tick(t)!=0)continue;
-   // First 0.25 s: hips only shrink with the amplitude decay (4/s -> 7.2 deg
-   // per 20 ms frame at 90 deg), never past neutral towards the trot pose.
-   if(t-turn<250)for(int ch=0;ch<8;ch+=2){worst=std::max(worst,double(std::fabs(m.position[ch]-last[ch])));assert(std::fabs(m.position[ch])<=std::fabs(last[ch])+1e-3f);last[ch]=m.position[ch];}}
-  assert(worst<=4*90*.02f+.01&&m.amplitude>.9f); // decay-limited, then walking the arc
- }
 }
 static void test_pose(){
  Motion m;const float a[8]={20,-30,-20,-30,10,0,-10,0};
@@ -400,7 +323,7 @@ static void test_motion(){
  assert(!m.trim(8,1));assert(!m.trim(2,22));m.setAssembly(false);assert(!m.trim(2,-1));
  m.inhibit=true;assert(!m.command(12,8,1,2900));m.inhibit=false;assert(m.command(12,9,1,3000));m.newSession(99);assert(!m.lease&&!m.command(12,10,1,3010));
  for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1000&&p<=2000);const int limit=ch%2?361:500;assert(std::abs(p-1500)<=limit);}
- // Hips reach the full 90 deg flick stance; knees still stop at 35 deg.
+ // Hip pulses reach +/-90 deg (trims, poses); knees still stop at 35 deg.
  assert(pulse(0,90,0)==2000&&pulse(0,-90,0)==1000&&pulse(1,90,0)==1833&&pulse(1,90,12)==1861);
  Motion wrap;ready(wrap,0xfffff000);wrap.newSession(2);assert(wrap.command(2,1,1,0xffffff00));wrap.tick(0x200);assert(!wrap.lease);
  // Long realistic run tests the production scheduler, lease renewal, limits, ramp and exact startup order.
@@ -415,13 +338,13 @@ static void test_qr(const std::string& path){
  const std::string cases[]={wifiQr(apName(0x1234)),webQr("192.168.1.245")};int index=0;
  for(auto& payload:cases){uint8_t tmp[qrcodegen_BUFFER_LEN_FOR_VERSION(5)],qr[qrcodegen_BUFFER_LEN_FOR_VERSION(5)];assert(qrcodegen_encodeText(payload.c_str(),tmp,qr,qrcodegen_Ecc_MEDIUM,1,5,qrcodegen_Mask_AUTO,true));int n=qrcodegen_getSize(qr);int scale=std::min(4,160/(n+8));assert(scale>=3);int side=(n+8)*scale;std::ofstream out(path+"/qr"+std::to_string(++index)+".pgm",std::ios::binary);out<<"P5\n"<<side<<" "<<side<<"\n255\n";for(int y=0;y<side;y++)for(int x=0;x<side;x++){int qx=x/scale-4,qy=y/scale-4;unsigned char c=qrcodegen_getModule(qr,qx,qy)?0:255;out.write((char*)&c,1);}}
 }
-static void simulatePattern(Pattern which,std::ofstream& out,std::ofstream& report){
- const bool trot=which==Pattern::Trot;
+static void simulatePattern(std::ofstream& out,std::ofstream& report){
+ const bool trot=true;
  for(int d=1;d<=8;d++){
   Vec v=direction(d);double sx=0,sy=0,maxAngle=0,maxYaw=0;int samples=720,minGrounded=4,maxLifted=0,fourFoot=0;
   int unilateralSupport=0,supportMasks[16]={};
   for(int k=0;k<samples;k++){
-   float phase=k*6.2831853072f/samples,outAngles[8];gait(phase,v,1,outAngles,which);out<<patternName(which)<<","<<d<<","<<phase;
+   float phase=k*6.2831853072f/samples,outAngles[8];gait(phase,v,1,outAngles);out<<"trot,"<<d<<","<<phase;
    for(float a:outAngles){out<<","<<a;assert(std::fabs(a)<=cfg::KNEE_LIFT_MAX);maxAngle=std::max(maxAngle,double(std::fabs(a)));}
    // Infer contact from the production knee output, not from the phase table:
    // negative knee = raised foot. Tolerance ignores float roundoff at zero.
@@ -439,7 +362,7 @@ static void simulatePattern(Pattern which,std::ofstream& out,std::ofstream& repo
    // Feet sit on rays RADIAL[leg] at equal reach R: yaw of a grounded foot about
    // the body centre is R^2*dq, so body yaw rate is proportional to the sum of
    // grounded hip rates (hip SIGN is +1 on every leg).
-   float next[8];gait(phase+.0001f,v,1,next,which);double yaw=0;
+   float next[8];gait(phase+.0001f,v,1,next);double yaw=0;
    for(int leg=0;leg<4;leg++){
     if(!(grounded&(1u<<leg)))continue;
     // Finite differences of the actual gait, independent of its phase formula.
@@ -448,8 +371,8 @@ static void simulatePattern(Pattern which,std::ofstream& out,std::ofstream& repo
    }
    maxYaw=std::max(maxYaw,std::fabs(yaw));
   }
-  // Trot is yaw-free in every direction; owner pairs only for Forward/Backward.
-  if(trot||d<=2){if(maxYaw>.01)std::cerr<<"Yaw: pattern="<<patternName(which)<<" direction="<<d<<" maxYaw="<<maxYaw<<"\n";assert(maxYaw<.01);}
+  // Trot is yaw-free in every direction.
+  {if(maxYaw>.01)std::cerr<<"Yaw: direction="<<d<<" maxYaw="<<maxYaw<<"\n";assert(maxYaw<.01);}
   if(trot)assert(fourFoot>=samples/10);
   double along=sx*v.x+sy*v.y,cross=sx*v.y-sy*v.x;assert(along>1);assert(std::fabs(cross)<along*.02);
   if(d>1)report<<",";report<<"{\"direction\":"<<d<<",\"forwardProjection\":"<<along<<",\"crossProjection\":"<<cross<<",\"maxYawRate\":"<<maxYaw<<",\"maxJointDeg\":"<<maxAngle<<",\"samples\":"<<samples
@@ -459,10 +382,8 @@ static void simulatePattern(Pattern which,std::ofstream& out,std::ofstream& repo
 }
 static void simulation(const std::string& dir){
  std::ofstream out(dir+"/gait.csv");out<<"pattern,direction,phase,hip_fl,knee_fl,hip_fr,knee_fr,hip_rl,knee_rl,hip_rr,knee_rr,grounded_mask\n";
- std::ofstream report(dir+"/gait-summary.json");report<<"{\"model\":\"default diagonal trot plus owner front/rear pairs option; ideal knee-angle contact, tangent stance projection and equal-reach yaw; not physical stability or CAD collision proof\",\"contactToleranceDeg\":0.0001,\"defaultPattern\":\"trot\",\"directions\":[";
- simulatePattern(Pattern::Trot,out,report);
- report<<"],\"ownerPairsDirections\":[";
- simulatePattern(Pattern::Pairs,out,report);
+ std::ofstream report(dir+"/gait-summary.json");report<<"{\"model\":\"diagonal trot (the only gait since v23); ideal knee-angle contact, tangent stance projection and equal-reach yaw; not physical stability or CAD collision proof\",\"contactToleranceDeg\":0.0001,\"defaultPattern\":\"trot\",\"directions\":[";
+ simulatePattern(out,report);
  report<<"],\"sidewaysSupportedByModel\":true,\"hardwareTested\":false}\n";
 }
-int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_pair_sequence();test_trot_sequence();test_flick();test_arcs();test_pose();test_sonar();test_autopilot();test_tracking();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: sonar median/ping/stale, autopilot cruise/veer/halt/backoff/turn/stuck/wander/lost and Motion auto takeover/deadman; manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, diagonal trot default/owner knee flick forward-back with held hip pose/emotion pose timing/clamp/lease/deadman relax/walk cancel/assembly block/four-foot overlap/zero yaw all 8 directions/Fast slew tracking, owner front-rear pairs option push/lift/return/lower/full hip stroke/forward-back reversal, pulse bounds, QR encoding\n";}
+int main(int argc,char**argv){assert(argc==2);test_network();test_unknown();test_button();test_case_knee_lift();test_trot_sequence();test_trims();test_arcs();test_pose();test_sonar();test_autopilot();test_tracking();test_normal_speed();test_motion();test_manual90();test_qr(argv[1]);simulation(argv[1]);std::cout<<"PASS: sonar median/ping/stale, autopilot cruise/veer/halt/backoff/turn/stuck/wander/lost and Motion auto takeover/deadman; manual90 reference/invalidation/calibration pending/CW viewpoint/all8 budgets both directions/clipping/refusal/estimate; unknown default/no startup, test bounds/deadman/cap/wrap, network, BOOT, lease, assembly, explicit positional startup, case knee lift from pulses, diagonal trot (only gait), heading trim, boot arm and brownout hold, emotion pose timing/clamp/lease/deadman relax/walk cancel/assembly block/four-foot overlap/zero yaw all 8 directions/Fast slew tracking, pulse bounds, QR encoding\n";}

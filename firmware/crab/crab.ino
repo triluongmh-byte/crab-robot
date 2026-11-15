@@ -5,6 +5,7 @@
 #include <WebServer.h>
 #include <Preferences.h>
 #include <atomic>
+#include <esp_system.h>
 #include "core.h"
 #include "drivers.h"
 #include "actuator_output.h"
@@ -63,7 +64,7 @@ void setup(){
   if(!motion.setBalance(trimStore.getInt("balance",0)))motion.balance=0;
   lightRgb=uint32_t(trimStore.getInt("led",0xffffff))&0xffffff;
   if(!motion.setKneeLift(trimStore.getInt("knee",int(cfg::KNEE_LIFT))))motion.kneeLift=cfg::KNEE_LIFT;
-  motion.begin(millis());motion.bootArm(driverReady.load(),millis());}
+  motion.begin(millis());motion.bootArm(driverReady.load(),millis(),esp_reset_reason()==ESP_RST_BROWNOUT);}
  applyLight();
  xTaskCreatePinnedToCore(motionTask,"cua-motion",4096,nullptr,3,nullptr,1);
  WiFi.onEvent([](WiFiEvent_t event,WiFiEventInfo_t info){
@@ -107,7 +108,7 @@ void loop(){
   in.color=crab::eyeColor(lightOn?shownRgb:0);
   const crab::EyeFrame f=eyes.frame(now,in);
   const char* autoLine=autopilot.message(now);
-  const String message=!driverReady?String(crab::msg::DRIVER):autoLine?String(autoLine):String(network.message);
+  const String message=!driverReady?String(crab::msg::DRIVER):autoLine?String(autoLine):motion.brownoutHold?String(crab::msg::BROWNOUT):String(network.message);
   const String address=!driverReady?String():network.state==crab::NetState::Online?WiFi.localIP().toString():ap+" 192.168.4.1";
   const String line=message+"|"+address;
   if(!faceShown||f!=drawnEyes||line!=drawnKey){if(screen.face(f,message.c_str(),address.c_str())){drawnEyes=f;drawnKey=line;faceShown=true;}}

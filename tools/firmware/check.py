@@ -26,7 +26,7 @@ def gait_report(core_digest):
   'softJointLimitDeg':30,'trimLimitDeg':12,'coreInputDigest':core_digest,
   'interpretation':'Default diagonal trot (FL+RR / FR+RL): a full diagonal is always grounded, so the support line passes under the body centre; '
    'about 12% of each cycle has all four feet down. Equal-reach yaw model: trot gives zero body yaw in all 8 directions; '
-   'the owner front/rear pairs option is yaw-free only for Forward/Backward and yaws during sideways/diagonal moves. '
+   'the trot is the only gait (pairs and knee-flick were removed in v23). '
    'Two-foot support is a line, not a COM stability margin; mass, friction, dynamic stability, servo load, actual SG90 '
    'angle per microsecond and CAD collisions are not modelled. Physical walking remains unverified.',
   'source':'firmware/crab/core.h::gait; firmware/tests/test_core.cpp::simulation',

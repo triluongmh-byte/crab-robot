@@ -87,12 +87,12 @@ static void test_positional180(){
  assert(!m.command(70,++seq,1,now+610));assert(!m.drive.active);
  assert(m.selectActuator(true,now+1000));assert(out.service(m,d,now+1020));Wire.fail=true;assert(!out.service(m,d,now+1310));assert(m.inhibit);Wire.fail=false;
 }
-static void test_pair_frames(crab::Pattern which){
- // Knee channels moving together: pairs FL/FR + RL/RR, trot FL/RR + FR/RL.
- const bool trot=which==crab::Pattern::Trot;const int k[4]={1,trot?7:3,trot?3:5,trot?5:7};
+static void test_pair_frames(){
+ // Knee channels moving together in the trot: FL/RR + FR/RL.
+ const bool trot=true;const int k[4]={1,7,3,5};
  Wire.writes.clear();ServoDriver d;assert(d.begin());ActuatorOutput out;crab::Motion m;m.begin(0);m.newSession(81);assert(m.selectActuator(true,0));
  for(uint32_t t=0;t<=2200;t+=20)assert(out.service(m,d,t));assert(m.enabled==8);
- m.speed=1;m.gaitPattern=which;uint32_t seq=0;int previous[8]={},checkedReturns=0,frames=0;
+ m.speed=1;uint32_t seq=0;int previous[8]={},checkedReturns=0,frames=0;
  for(uint32_t t=3000;t<14000;t+=10){
   if((t-3000)%150==0)assert(m.command(81,++seq,1,t,!m.lease));
   size_t before=Wire.writes.size();assert(out.service(m,d,t));size_t count=Wire.writes.size()-before;
@@ -140,7 +140,7 @@ int main(){
  assert(!p.begin());Wire.fail=false;assert(!p.pulse(0,1500)); // init failure remains inhibited
  assert(p.begin());p.snapshot(snapshot);for(const auto& x:snapshot)assert(x.known&&!x.active);
  assert(p.pulse(0,1500));p.allOff();assert(!p.pulse(0,1500));
- test_positional180();test_pair_frames(crab::Pattern::Pairs);test_pair_frames(crab::Pattern::Trot);
+ test_positional180();test_pair_frames();
  test_sonar();
  LightDriver light;assert(light.begin());assert(rmtCapture.gpio_num==1&&rmtCapture.clk_div==8&&rmtCapture.tx_config.idle_output_en);assert(rmtBits.size()==192);
  for(auto bit:rmtBits)assert(bit.duration0==4&&bit.duration1==9); // off at boot
