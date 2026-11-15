@@ -1,0 +1,466 @@
+{
+ "robotExports": "case/robot (exports of 2026-11-10)",
+ "convention": "robot (CAD) frame of case/model.py: +X = bank end, -X = walking front (CH4/CH6)",
+ "beamHalfAngleDeg": 15.0,
+ "static": {
+  "closest": [
+   {
+    "ours": "bracket",
+    "body": "frame_lower",
+    "minDistanceMm": 0.0,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "bracket",
+    "body": "frame_upper",
+    "minDistanceMm": 0.0,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "zip tie y+2.4 (part inside base slots and around the bar)",
+    "body": "frame_lower",
+    "minDistanceMm": 0.0,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "zip tie y-2.4 (part inside base slots and around the bar)",
+    "body": "frame_lower",
+    "minDistanceMm": 0.0,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "zip tie y+2.4 (part inside base slots and around the bar)",
+    "body": "electronics #53",
+    "minDistanceMm": 0.35,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "zip tie y-2.4 (part inside base slots and around the bar)",
+    "body": "electronics #52",
+    "minDistanceMm": 0.35,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "bracket",
+    "body": "SG90 hip RL",
+    "minDistanceMm": 0.6,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "bracket",
+    "body": "SG90 hip RR",
+    "minDistanceMm": 0.6,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "zip tie y+2.4 (part inside base slots and around the bar)",
+    "body": "SG90 hip RL",
+    "minDistanceMm": 2.25,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "zip tie y-2.4 (part inside base slots and around the bar)",
+    "body": "SG90 hip RR",
+    "minDistanceMm": 2.25,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "bracket",
+    "body": "electronics #52",
+    "minDistanceMm": 3.5,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "bracket",
+    "body": "electronics #53",
+    "minDistanceMm": 3.5,
+    "overlapMm3": 0.0
+   }
+  ],
+  "collisions": [],
+  "note": "bracket touching frame_lower (deck end bar face) and frame_upper (end bar face + top) and the ties wrapping the deck bar are the intended contacts",
+  "unintendedCollisions": []
+ },
+ "moduleInHolder": [
+  {
+   "module part": "HC-SR04P left pcb",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 0.0
+  },
+  {
+   "module part": "HC-SR04P right pcb",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 0.0
+  },
+  {
+   "module part": "HC-SR04P left cans",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 0.15
+  },
+  {
+   "module part": "HC-SR04P right cans",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 0.15
+  },
+  {
+   "module part": "HC-SR04P left back parts",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 1.6
+  },
+  {
+   "module part": "HC-SR04P right back parts",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 1.6
+  },
+  {
+   "module part": "HC-SR04P left crystal",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 0.5
+  },
+  {
+   "module part": "HC-SR04P right crystal",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 0.5
+  },
+  {
+   "module part": "HC-SR04P left header",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 1.1
+  },
+  {
+   "module part": "HC-SR04P right header",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 1.1
+  },
+  {
+   "module part": "HC-SR04P left dupont plug",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 0.05
+  },
+  {
+   "module part": "HC-SR04P right dupont plug",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 0.05
+  },
+  {
+   "module part": "HC-SR04P(back-pin) left header",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 1.94
+  },
+  {
+   "module part": "HC-SR04P(back-pin) right header",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 1.94
+  },
+  {
+   "module part": "HC-SR04P(back-pin) left dupont plug",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 4.1
+  },
+  {
+   "module part": "HC-SR04P(back-pin) right dupont plug",
+   "overlapWithBracketMm3": 0.0,
+   "minDistanceMm": 4.1
+  }
+ ],
+ "usbCable": {
+  "route": "D29 port-1 cable, under the centre saddle at z 28, then rising to z 30.6 at the end window to lie in the bracket channel (D29 used z 26)",
+  "minDistanceToBracketMm": 0.36,
+  "minDistanceToTiesMm": 3.17,
+  "minDistanceToFrameMm": 0.35
+ },
+ "trotGrid": {
+  "poses": 98,
+  "hipDeg": [
+   -30,
+   30
+  ],
+  "kneeDeg": [
+   -35,
+   35
+  ],
+  "minClearanceMm": 3.97,
+  "worst": {
+   "corner": "RL",
+   "hip": -30,
+   "knee": -35,
+   "minClearanceMm": 3.97,
+   "closest": "RL thigh vs bracket",
+   "collisions": []
+  },
+  "collisions": []
+ },
+ "flick": {
+  "hipDegTested": "±40..90",
+  "firstBracketContactHipDeg": {
+   "+": null,
+   "-": 65
+  },
+  "contacts": [
+   {
+    "corner": "RL",
+    "hip": -65,
+    "knee": -30,
+    "minClearanceMm": 0.0,
+    "closest": "RL knee servo vs bracket",
+    "collisions": [
+     {
+      "leg": "RL knee servo",
+      "with": "bracket",
+      "overlapMm3": 10.82
+     }
+    ]
+   },
+   {
+    "corner": "RL",
+    "hip": -65,
+    "knee": 0,
+    "minClearanceMm": 0.0,
+    "closest": "RL knee servo vs bracket",
+    "collisions": [
+     {
+      "leg": "RL knee servo",
+      "with": "bracket",
+      "overlapMm3": 10.82
+     }
+    ]
+   },
+   {
+    "corner": "RL",
+    "hip": -65,
+    "knee": 30,
+    "minClearanceMm": 0.0,
+    "closest": "RL knee servo vs bracket",
+    "collisions": [
+     {
+      "leg": "RL knee servo",
+      "with": "bracket",
+      "overlapMm3": 10.82
+     }
+    ]
+   },
+   {
+    "corner": "RL",
+    "hip": -70,
+    "knee": -30,
+    "minClearanceMm": 0.0,
+    "closest": "RL knee servo vs bracket",
+    "collisions": [
+     {
+      "leg": "RL knee servo",
+      "with": "bracket",
+      "overlapMm3": 101.12
+     }
+    ]
+   },
+   {
+    "corner": "RL",
+    "hip": -70,
+    "knee": 0,
+    "minClearanceMm": 0.0,
+    "closest": "RL knee servo vs bracket",
+    "collisions": [
+     {
+      "leg": "RL knee servo",
+      "with": "bracket",
+      "overlapMm3": 101.12
+     }
+    ]
+   },
+   {
+    "corner": "RL",
+    "hip": -70,
+    "knee": 30,
+    "minClearanceMm": 0.0,
+    "closest": "RL knee servo vs bracket",
+    "collisions": [
+     {
+      "leg": "RL knee servo",
+      "with": "bracket",
+      "overlapMm3": 101.12
+     }
+    ]
+   },
+   {
+    "corner": "RL",
+    "hip": -75,
+    "knee": -30,
+    "minClearanceMm": 0.0,
+    "closest": "RL thigh vs bracket",
+    "collisions": [
+     {
+      "leg": "RL thigh",
+      "with": "bracket",
+      "overlapMm3": 14.52
+     },
+     {
+      "leg": "RL knee servo",
+      "with": "bracket",
+      "overlapMm3": 275.07
+     }
+    ]
+   },
+   {
+    "corner": "RL",
+    "hip": -75,
+    "knee": 0,
+    "minClearanceMm": 0.0,
+    "closest": "RL thigh vs bracket",
+    "collisions": [
+     {
+      "leg": "RL thigh",
+      "with": "bracket",
+      "overlapMm3": 14.52
+     },
+     {
+      "leg": "RL knee servo",
+      "with": "bracket",
+      "overlapMm3": 275.07
+     }
+    ]
+   },
+   {
+    "corner": "RL",
+    "hip": -75,
+    "knee": 30,
+    "minClearanceMm": 0.0,
+    "closest": "RL thigh vs bracket",
+    "collisions": [
+     {
+      "leg": "RL thigh",
+      "with": "bracket",
+      "overlapMm3": 14.52
+     },
+     {
+      "leg": "RL knee servo",
+      "with": "bracket",
+      "overlapMm3": 275.07
+     }
+    ]
+   },
+   {
+    "corner": "RL",
+    "hip": -80,
+    "knee": -30,
+    "minClearanceMm": 0.0,
+    "closest": "RL thigh vs bracket",
+    "collisions": [
+     {
+      "leg": "RL thigh",
+      "with": "bracket",
+      "overlapMm3": 79.54
+     },
+     {
+      "leg": "RL knee servo",
+      "with": "bracket",
+      "overlapMm3": 472.92
+     }
+    ]
+   }
+  ],
+  "frontLegsTouchEachOtherFromHipDeg": {
+   "+": null,
+   "-": 60
+  },
+  "footCentreXAtHip60": {
+   "+": -25.8,
+   "-": -96.8
+  }
+ },
+ "beams": [
+  {
+   "beam": "left can outer",
+   "faceCentre": [
+    -63.5,
+    -39.7,
+    79.8
+   ],
+   "axis": [
+    -0.903,
+    -0.421,
+    0.087
+   ],
+   "yawDegTowardRobotLeft": 25.0,
+   "pitchDeg": 5.0,
+   "heightAboveFloorMm": 96.3,
+   "floorHitRangeMm": 546.0,
+   "staticObstaclesInCone": []
+  },
+  {
+   "beam": "right can outer",
+   "faceCentre": [
+    -63.5,
+    39.7,
+    79.8
+   ],
+   "axis": [
+    -0.903,
+    0.421,
+    0.087
+   ],
+   "yawDegTowardRobotLeft": -25.0,
+   "pitchDeg": 5.0,
+   "heightAboveFloorMm": 96.3,
+   "floorHitRangeMm": 546.0,
+   "staticObstaclesInCone": []
+  },
+  {
+   "beam": "left can inner",
+   "faceCentre": [
+    -74.4,
+    -16.2,
+    79.8
+   ],
+   "axis": [
+    -0.903,
+    -0.421,
+    0.087
+   ],
+   "yawDegTowardRobotLeft": 25.0,
+   "pitchDeg": 5.0,
+   "heightAboveFloorMm": 96.3,
+   "floorHitRangeMm": 546.0,
+   "staticObstaclesInCone": []
+  },
+  {
+   "beam": "right can inner",
+   "faceCentre": [
+    -74.4,
+    16.2,
+    79.8
+   ],
+   "axis": [
+    -0.903,
+    0.421,
+    0.087
+   ],
+   "yawDegTowardRobotLeft": -25.0,
+   "pitchDeg": 5.0,
+   "heightAboveFloorMm": 96.3,
+   "floorHitRangeMm": 546.0,
+   "staticObstaclesInCone": []
+  }
+ ],
+ "beamVsFrontLegs": {
+  "gridHipDeg": "-30..30 step 15",
+  "gridKneeDeg": [
+   -35,
+   0,
+   35
+  ],
+  "entries": [],
+  "count": 0
+ },
+ "bracketRobotBBox": [
+  [
+   -72.2,
+   -46.4,
+   13.8
+  ],
+  [
+   -44.4,
+   46.4,
+   88.7
+  ]
+ ]
+}
