@@ -1,0 +1,25 @@
+{
+  "stem": "power_tray",
+  "is_solid": true,
+  "volume_mm3": 15097.752,
+  "bbox": {
+    "min": [
+      -41.8,
+      -24.3,
+      -0.0
+    ],
+    "max": [
+      41.8,
+      30.9,
+      14.4
+    ]
+  },
+  "mesh_tolerance": 0.05,
+  "mesh_angular_tolerance": 0.05235987755982989,
+  "validation": {
+    "warnings": [],
+    "is_solid": true,
+    "volume_mm3": 15097.752
+  },
+  "parts": []
+}
