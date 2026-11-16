@@ -169,7 +169,7 @@ A wrong file or a cut upload leaves the old firmware running. If new firmware cr
 
 ## Firmware
 
-- **Running now:** `positional180-v24`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
+- **Running now:** `positional180-v25`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
 - **Build, flash and version history:** [firmware/README.md](firmware/README.md). See also [gaits](firmware/CRAWL.md), [web controls](firmware/WEB-CONTROL.md) and [emotions](firmware/EMOTIONS.md).
 
 ```sh
@@ -185,6 +185,7 @@ Building doesn't flash a board, run motors, print or order anything.
 
 ## Known issues
 
+- **Weak Wi-Fi makes the page spin.** Check **Sóng Wi-Fi** in ☰ → Trạng thái. Below about −75 dBm, move the crab nearer the router. Also keep the 18650 cell and the servo wires away from the LILYGO's antenna end.
 - **Speed isn't saved on the crab.** A reboot brings back 90%.
 - **After a brownout reset the servos stay off.** The screen and page show **Sụt áp: bấm Bật servo**. Check the power (cable, power bank), then tap **Bật servo**. Before v23 the crab re-armed straight away, sagged again and kept resetting.
 - **Walking direction and leg names are set separately** (see the warning under [servo channels](#which-servo-goes-where)). Built-in emotions and the heading trim may feel "back to front" relative to Tiến.
