@@ -44,13 +44,16 @@ main{max-width:1100px;margin:auto;padding:14px;display:grid;gap:14px;grid-templa
 const $=id=>document.getElementById(id);
 // Leg order FL, FR, RL, RR. Page units: hip + = foot forwards, knee + = lift.
 // Firmware command frame: knee negative lifts; left hips move forwards when negative.
-const LEGS=['Trước trái','Trước phải','Sau trái','Sau phải'],HIP_FORWARD=[-1,1,-1,1],LIMIT=30,TICK=150,MAX_LIST=3800;
+const LEGS=['Trước trái','Trước phải','Sau trái','Sau phải'],HIP_FORWARD=[-1,1,-1,1],LIMIT=30,KNEE_UP=60,TICK=150,MAX_LIST=3800;
 const clampDeg=v=>Math.max(-LIMIT,Math.min(LIMIT,Math.round(Number(v)||0)));
+// Knees (positive = lift) may go up to KNEE_UP; pressing down stays at LIMIT.
+const clampKnee=v=>Math.max(-LIMIT,Math.min(KNEE_UP,Math.round(Number(v)||0)));
+const clampJoint=(i,v)=>i%2?clampKnee(v):clampDeg(v);
 // Sliders use the owner's leg names, same as the calibration menu: front left =
 // CH0/1, front right = CH2/3, rear left = CH4/5, rear right = CH6/7 (owner,
 // 2026-11-13). Independent of the FRONT_IS_CH46 drive rotation.
 const CAD_LEG=[0,1,2,3];
-function toCommand(p){const a=Array(8).fill(0);for(let leg=0;leg<4;leg++){const c=CAD_LEG[leg];a[2*c]=clampDeg(p[2*leg])*HIP_FORWARD[leg];a[2*c+1]=-clampDeg(p[2*leg+1]);}return a.map(v=>v===0?0:v).join(',');}
+function toCommand(p){const a=Array(8).fill(0);for(let leg=0;leg<4;leg++){const c=CAD_LEG[leg];a[2*c]=clampDeg(p[2*leg])*HIP_FORWARD[leg];a[2*c+1]=-clampKnee(p[2*leg+1]);}return a.map(v=>v===0?0:v).join(',');}
 function hexRgb(c){const m=/^#([0-9a-f]{6})$/i.exec(c||'');const n=m?parseInt(m[1],16):0;return {r:n>>16&255,g:n>>8&255,b:n&255};}
 // Frame: [h0,k0,h1,k1,h2,k2,h3,k3,'#rrggbb',moveMs,holdMs]
 const F=(p,c,ms,hold=0)=>[...p,c,ms,hold];
@@ -60,7 +63,8 @@ const PRESETS=[
  {n:'😄 Vui',e:'happy',f:[F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(STAND,'#ffc400',200)]},
  {n:'😢 Buồn',e:'sad',f:[F(P([-10,-10,0,0],[28,28,15,15]),'#2050ff',1200,1500),F(P([-10,-10,0,0],[22,22,12,12]),'#102890',900,600),F(STAND,'#2050ff',900)]},
  {n:'😡 Giận',e:'angry',f:[F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(P([15,15,0,0],[0,30,0,0]),'#ff0000',120),F(P([15,15,0,0],[0,-25,0,0]),'#600000',100),F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(STAND,'#ff0000',250)]},
- {n:'👋 Chào',e:'wink',f:[F(P([0,25,0,0],[-10,30,-10,-10]),'#00d0ff',300),F(P([0,5,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,25,0,0],[-10,30,-10,-10]),'#80f0ff',200),F(P([0,5,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,25,0,0],[-10,30,-10,-10]),'#80f0ff',200),F(STAND,'#00d0ff',300)]},
+ // Owner, 2026-11-16: CH3's knee lifts all the way and waves down/up.
+ {n:'👋 Chào',e:'wink',f:[F(P([0,15,0,0],[-10,60,-10,-10]),'#00d0ff',400),F(P([0,15,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,15,0,0],[-10,60,-10,-10]),'#80f0ff',200),F(P([0,15,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,15,0,0],[-10,60,-10,-10]),'#80f0ff',200),F(P([0,15,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,15,0,0],[-10,60,-10,-10]),'#80f0ff',200,300),F(STAND,'#00d0ff',400)]},
  {n:'💃 Nhảy',e:'love',f:[F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(STAND,'#c040ff',250)]},
  {n:'😴 Ngủ',e:'asleep',f:[F(P([0,0,0,0],[30,30,30,30]),'#301060',2000,2500),F(STAND,'#301060',1500)]},
  {n:'😲 Ngạc nhiên',e:'surprised',f:[F(P([0,0,0,0],[-30,-30,-30,-30]),'#ffffff',100,700),F(STAND,'#ffffff',400)]}
@@ -89,7 +93,7 @@ async function playFrames(list,loop,mood){
  if(id===run)halt();
 }
 function halt(){run++;liveOff();lastColor='';lastMood='';if(token&&navigator.sendBeacon)navigator.sendBeacon('/api/move',new URLSearchParams({token,seq:String(++seq),dir:'0',fresh:'0'}));}
-function readEditor(){const p=[];for(let i=0;i<8;i++)p.push(clampDeg($('j'+i).value));const f=F(p,$('color').value,Math.max(0,Math.min(3000,Number($('ms').value)||0)),Math.max(0,Math.min(5000,Number($('hold').value)||0)));if($('mood').value!=='normal')f.push($('mood').value);return f;}
+function readEditor(){const p=[];for(let i=0;i<8;i++)p.push(clampJoint(i,$('j'+i).value));const f=F(p,$('color').value,Math.max(0,Math.min(3000,Number($('ms').value)||0)),Math.max(0,Math.min(5000,Number($('hold').value)||0)));if($('mood').value!=='normal')f.push($('mood').value);return f;}
 function writeEditor(f){for(let i=0;i<8;i++){$('j'+i).value=f[i];$('v'+i).textContent=f[i]+'°';}$('color').value=f[8];$('ms').value=f[9];$('hold').value=f[10];$('mood').value=MOODS.includes(f[11])?f[11]:'normal';}
 function mirrorFrom(i){if(!$('mirror').checked)return;const leg=i>>1,joint=i&1,other=leg^1,j=2*other+joint;$('j'+j).value=$('j'+i).value;$('v'+j).textContent=$('j'+j).value+'°';}
 function renderFrames(){const ul=$('frames');ul.replaceChildren();frames.forEach((f,i)=>{const li=document.createElement('li'),b=document.createElement('button');b.textContent=String(i+1);b.style.borderBottom='6px solid '+f[8];if(i===selected)b.className='sel';b.onclick=()=>{selected=i;writeEditor(f);renderFrames();};li.appendChild(b);ul.appendChild(li);});}
@@ -104,7 +108,7 @@ function liveOff(){if(!liveOn)return;liveOn=false;$('live').textContent='Xem tr�
 async function poll(){try{const r=await fetch('/api/status',{cache:'no-store'});const d=await r.json();ready=!!d.driver&&!!d.positional&&d.enabled===8&&!d.assembly;$('arm').disabled=!!d.positional||!d.driver;setStatus((ready?'Sẵn sàng diễn cảm xúc.':!d.driver?'Kiểm tra dây PCA9685.':d.assembly?'Đang ở trang Ráp: thoát Ráp trước.':d.positional?'Đang bật servo '+d.enabled+'/8…':'Servo đang tắt — bấm Bật servo.')+(run?'':''));}catch(e){ready=false;setStatus('Mất kết nối. Cua tự về đứng.');}}
 function build(){
  const legs=$('legs');LEGS.forEach((n,leg)=>{const box=document.createElement('div');box.className='leg';const h=document.createElement('h3');h.textContent=n;box.appendChild(h);
-  ['Hông','Gối'].forEach((jn,joint)=>{const i=2*leg+joint,l=document.createElement('label'),v=document.createElement('span'),r=document.createElement('input');v.className='val';v.id='v'+i;v.textContent='0°';r.type='range';r.min=-LIMIT;r.max=LIMIT;r.step=1;r.value=0;r.id='j'+i;r.oninput=()=>{v.textContent=r.value+'°';mirrorFrom(i);autoLive();};l.append(jn,v,r);box.appendChild(l);});legs.appendChild(box);});
+  ['Hông','Gối'].forEach((jn,joint)=>{const i=2*leg+joint,l=document.createElement('label'),v=document.createElement('span'),r=document.createElement('input');v.className='val';v.id='v'+i;v.textContent='0°';r.type='range';r.min=-LIMIT;r.max=joint?KNEE_UP:LIMIT;r.step=1;r.value=0;r.id='j'+i;r.oninput=()=>{v.textContent=r.value+'°';mirrorFrom(i);autoLive();};l.append(jn,v,r);box.appendChild(l);});legs.appendChild(box);});
  for(const m of MOODS){const o=document.createElement('option');o.value=m;o.textContent=MOOD_NAMES[m];$('mood').appendChild(o);}
  PRESETS.forEach(e=>{const b=document.createElement('button');b.textContent=e.n;b.onclick=()=>{if(!ready){setStatus('Bật servo trước đã.');return;}playFrames(e.f,$('loopPreset').checked,e.e);};$('presets').appendChild(b);});
 }

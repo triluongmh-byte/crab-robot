@@ -235,7 +235,8 @@ static void test_pose(){
  for(uint32_t k=t;k<t+150;k+=10)m.tick(k);assert(m.position[1]<-10&&m.position[1]>-20);
  for(uint32_t k=t+150;k<t+400;k+=10){if(k%100==0)assert(m.poseCommand(5,m.lastSeq+1,a,0,k,false));m.tick(k);}
  for(int ch=0;ch<8;ch++)assert(std::fabs(m.position[ch]-a[ch])<.01f);
- float big[8]={90,-90,0,0,0,0,0,0};assert(m.poseCommand(5,m.lastSeq+1,big,0,t+400,false)&&m.pose[0]==cfg::JOINT_LIMIT&&m.pose[1]==-cfg::JOINT_LIMIT);
+ float big[8]={90,-90,0,0,0,0,0,0};assert(m.poseCommand(5,m.lastSeq+1,big,0,t+400,false)&&m.pose[0]==cfg::JOINT_LIMIT&&m.pose[1]==-cfg::KNEE_LIFT_MAX);
+ {float down[8]={-90,90,0,-45,0,0,0,0};assert(m.poseCommand(5,m.lastSeq+1,down,0,t+410,false)&&m.pose[0]==-cfg::JOINT_LIMIT&&m.pose[1]==cfg::JOINT_LIMIT&&m.pose[3]==-45);} // knees lift to 60, press down only 30
  assert(m.poseCommand(5,m.lastSeq+1,a,0,t+410,false));for(uint32_t k=t+410;k<t+500;k+=10)m.tick(k);
  // Deadman: no renewal for 500 ms -> relax towards standing at RELAX_DPS.
  uint32_t k=t+500;while(m.posing){m.tick(k);k+=10;}assert(m.relaxing&&k-(t+410)>=cfg::DEADMAN_MS&&k-(t+410)<=cfg::DEADMAN_MS+30);
@@ -332,9 +333,10 @@ static void test_motion(){
  assert(pwmCounts(pulse(0,0,3))-pwmCounts(pulse(0,0,0))>=3);
  assert(!m.trim(8,1));assert(!m.trim(2,22));m.setAssembly(false);assert(!m.trim(2,-1));
  m.inhibit=true;assert(!m.command(12,8,1,2900));m.inhibit=false;assert(m.command(12,9,1,3000));m.newSession(99);assert(!m.lease&&!m.command(12,10,1,3010));
- for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1000&&p<=2000);const int limit=ch%2?361:500;assert(std::abs(p-1500)<=limit);}
- // Hip pulses reach +/-90 deg (trims, poses); knees still stop at 35 deg.
- assert(pulse(0,90,0)==2000&&pulse(0,-90,0)==1000&&pulse(1,90,0)==1833&&pulse(1,90,12)==1861);
+ for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(p>=1000&&p<=2000);const int limit=500;assert(std::abs(p-1500)<=limit);}
+ // Hip and knee pulses reach +/-90 deg (v29); a knee request stops at KNEE_LIFT_MAX before trim.
+ assert(pulse(0,90,0)==2000&&pulse(0,-90,0)==1000&&pulse(1,90,0)==1833&&pulse(1,90,12)==1900&&pulse(1,90,30)==2000);
+ assert(pulse(3,-60,30)==2000); // CH3 (sign -1, trim +30) now gets the whole lift; was capped at 65 deg
  Motion wrap;ready(wrap,0xfffff000);wrap.newSession(2);assert(wrap.command(2,1,1,0xffffff00));wrap.tick(0x200);assert(!wrap.lease);
  // Long realistic run tests the production scheduler, lease renewal, limits, ramp and exact startup order.
  for(int dir=1;dir<=8;dir++){
