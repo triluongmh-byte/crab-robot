@@ -364,3 +364,14 @@ Release `positional180-v27`. Unplugging and re-plugging the PCA9685 used to leav
 ## Speed is saved — 2026-11-16
 
 Release `positional180-v28`. Every firmware update restarts the crab, and the walking speed came back at 90% each time. `/api/speed` now saves the value as a percent (`speed` in the `cua-180-v1` store), and boot restores it through `crab::savedSpeed`. A missing or out-of-range value gives the default.
+
+## Higher knee lift and a new 👋 Chào — 2026-11-16
+
+Release `positional180-v29`. The owner found that the knees can lift much higher than the firmware allowed.
+
+- **Knee pulse limit:** `KNEE_PULSE_LIMIT` goes from 65 to 90 deg nominal (1000–2000 µs), the same as the hips.
+  - On CH3/CH5 the ±30 trims used to eat the lift, so a 45° knee lift stopped at 35°. These knees now get the whole lift.
+  - At the owner's current Nhấc gối of 35° the walk is unchanged.
+- **Emotion poses:** a knee may lift up to `KNEE_LIFT_MAX` (60°). Pressing a knee down stays at 30°, and hips stay at ±30°.
+  - The emotion editor's knee sliders go to 60.
+- **👋 Chào:** CH3's knee lifts all the way and waves 60° ↔ 30° three times, then the crab stands again.

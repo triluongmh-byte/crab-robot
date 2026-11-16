@@ -8,7 +8,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v28")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v29")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());

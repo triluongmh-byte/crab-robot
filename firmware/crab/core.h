@@ -238,7 +238,7 @@ struct Motion {
   for(int ch=0;ch<8;ch++)if(!std::isfinite(angles[ch]))return false;
   const float seconds=std::min(ms,uint32_t(5000))*.001f;
   for(int ch=0;ch<8;ch++){
-   pose[ch]=clamp(angles[ch],-cfg::JOINT_LIMIT,cfg::JOINT_LIMIT);
+   pose[ch]=ch%2?clamp(angles[ch],-cfg::KNEE_LIFT_MAX,cfg::JOINT_LIMIT):clamp(angles[ch],-cfg::JOINT_LIMIT,cfg::JOINT_LIMIT); // knee: negative lifts
    const float distance=std::fabs(pose[ch]-position[ch]);
    poseRate[ch]=seconds>0?clamp(distance/seconds,1,cfg::SLEW_DPS):cfg::SLEW_DPS;
   }
