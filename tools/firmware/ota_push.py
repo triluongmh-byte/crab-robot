@@ -79,7 +79,7 @@ def main():
         p = subprocess.run(cmd + [url], input=body, capture_output=True)
         out, _, code = p.stdout.rpartition(b'\n')
         try:
-            code = int(code)
+            code = int(code) if p.returncode == 0 else 0  # cut-off body on a weak link
         except ValueError:
             code = 0
         try:
@@ -87,11 +87,12 @@ def main():
         except ValueError:
             return code, {}
 
-    for _ in range(5):  # a weak Wi-Fi link drops some requests
+    for _ in range(8):  # a weak Wi-Fi link drops or cuts some requests
         code, status = call('status')
-        if code == 200:
+        if code == 200 and status.get('firmware'):
             break
-    if code != 200:
+        time.sleep(0.5)
+    if code != 200 or not status.get('firmware'):
         sys.exit('No crab at %s (HTTP %s)' % (a.host, code))
     print('Running now: %s, slot %s, target %s' % (status.get('firmware'), status.get('slot', '?'), status.get('target', '?')))
     if status.get('target', a.target) != a.target or 'otaMarker' not in status:
@@ -125,7 +126,7 @@ def main():
     time.sleep(4)
     for _ in range(30):
         code, st = call('status', timeout=3)
-        if code == 200:
+        if code == 200 and st.get('firmware'):
             print('Back up: %s, slot %s' % (st.get('firmware'), st.get('slot', '?')))
             return
         time.sleep(1)
