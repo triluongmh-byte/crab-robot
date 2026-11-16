@@ -18,7 +18,10 @@ const events={},timers=[],calls=[],beacons=[];let failMove=false,failStatus=fals
 const state={message:'Đã vào Wi-Fi',online:true,url:'http://192.168.4.1/',driver:true,positional:false,enabled:0,assembly:false,speed:0.65,offsets:Array(8).fill(0)};
 const samples=Array.from({length:8},(_,ch)=>({ch,known:true,active:false,angleDeg:null,pulseUs:null,counts:null}));
 const document={body:new Element(),hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:[],addEventListener:(n,f)=>events[n]=f};
+class FormData{constructor(){this.items=[];}append(k,v,name){this.items.push([k,name||v]);}[Symbol.iterator](){return this.items[Symbol.iterator]();}}
+const location={reloads:0,reload(){this.reloads++;}};const timeouts=[];let otaReply={ok:true,d:{ok:true,restarting:true}};
 const fetch=async(path,opt={})=>{const data=Object.fromEntries(opt.body||[]);calls.push({path,data});let d={};
+ if(path.startsWith('/api/ota?')){if(deferred)await deferred;return {ok:otaReply.ok,json:async()=>otaReply.d};}
  if(path==='/api/move'){if(deferred)await deferred;if(failMove)throw Error('offline');}
  if(path==='/api/status'){if(failStatus)throw Error('offline');d={...state};}
  if(path==='/api/servos'){if(failTelemetry)throw Error('telemetry offline');d={kind:'commanded',feedback:false,sampledAtMs:1234,servos:samples.map(x=>({...x}))};}
@@ -29,7 +32,7 @@ const fetch=async(path,opt={})=>{const data=Object.fromEntries(opt.body||[]);cal
  if(path==='/api/trim')state.offsets[Number(data.ch)]+=Number(data.delta);
  if(path==='/api/scan')d={busy:false,networks:['Nhà tôi','<script>bad</script>']};
  return {ok:true,json:async()=>d};};
-const ctx=vm.createContext({document,window:{matchMedia:()=>({matches:mobile}),addEventListener:(n,f)=>events[n]=f},navigator:{sendBeacon:(path,b)=>beacons.push({path,data:Object.fromEntries(b)})},fetch,URLSearchParams,setInterval:(f,ms)=>timers.push({f,ms}),console});vm.runInContext(code,ctx);
+const ctx=vm.createContext({document,window:{matchMedia:()=>({matches:mobile}),addEventListener:(n,f)=>events[n]=f},navigator:{sendBeacon:(path,b)=>beacons.push({path,data:Object.fromEntries(b)})},fetch,URLSearchParams,FormData,location,setTimeout:(f,ms)=>timeouts.push({f,ms}),setInterval:(f,ms)=>timers.push({f,ms}),console});vm.runInContext(code,ctx);
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 (async()=>{
  await flush();const poll=async()=>{await timers.find(t=>t.ms===1000).f();await flush();};const hold=()=>timers.find(t=>t.ms===150).f();
@@ -112,7 +115,17 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  assert.equal(el('ssid').value,'Nhà tôi');assert(/id="password" type="text"/.test(html)&&/id="ssid"[^>]*autocapitalize="none"/.test(html)&&/id="password"[^>]*autocapitalize="none"/.test(html));
  el('ssid').value=' Home ';el('password').value='example-password';await el('connect').onclick();assert.equal(el('password').value,'example-password');assert(calls.some(c=>c.path==='/api/wifi'&&c.data.ssid==='Home'&&c.data.password==='example-password'));
  const wifiCalls=calls.filter(c=>c.path==='/api/wifi').length;el('ssid').value='';await el('connect').onclick();assert.equal(calls.filter(c=>c.path==='/api/wifi').length,wifiCalls);
+ // OTA: PIN first, then file + 6 digits; polls pause during the upload; errors are shown.
+ await el('otaPin').onclick();await flush();assert(calls.some(c=>c.path==='/api/ota/begin'&&c.data.token==='42')&&/6 số/.test(el('otaInfo').textContent));
+ el('otaFile').files=[];el('otaCode').value='123456';await el('otaSend').onclick();assert(!calls.some(c=>c.path.startsWith('/api/ota?'))&&/Chọn file/.test(el('otaInfo').textContent));
+ el('otaFile').files=[{name:'crab.ino.bin',size:860000}];el('otaCode').value='12345';await el('otaSend').onclick();assert(!calls.some(c=>c.path.startsWith('/api/ota?')));
+ otaReply={ok:false,d:{error:'Mã sai hoặc hết hạn. Bấm Hiện mã để lấy mã mới.'}};el('otaCode').value='123456';await el('otaSend').onclick();await flush();
+ assert(calls.some(c=>c.path==='/api/ota?token=42&pin=123456'&&c.data.firmware==='crab.ino.bin')&&/Mã sai/.test(el('otaInfo').textContent)&&!el('otaSend').disabled&&!vm.runInContext('otaBusy',ctx));
+ let otaRelease;deferred=new Promise(r=>otaRelease=r);otaReply={ok:true,d:{ok:true,restarting:true}};const sending=el('otaSend').onclick();await flush();
+ assert(el('otaSend').disabled&&vm.runInContext('otaBusy',ctx));const polls=calls.filter(c=>c.path==='/api/status').length;await poll();assert.equal(calls.filter(c=>c.path==='/api/status').length,polls); // no status poll mid-upload
+ otaRelease();deferred=null;await sending;await flush();assert(/Nạp xong/.test(el('otaInfo').textContent));const t=timeouts.find(x=>x.ms===15000);assert(t);t.f();assert.equal(location.reloads,1);
+ vm.runInContext('otaBusy=false',ctx);
  failStatus=true;await poll();assert(dirs.every(b=>b.disabled));assert.equal(vm.runInContext('held',ctx),0);
  assert(!calls.some(c=>c.path.includes('/360')||c.path.includes('/test')));assert(!html.includes('id="show360"'));
- console.log('PASS: Tự đi toggle (sensors/armed gating, DỪNG ends it, blur/sleep/menu do not), actual180-only UI, auto-arm/explicit arm, enable8 readiness, 8-direction (4 straight + 4 turning arcs) split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
+ console.log('PASS: OTA PIN/file/6-digit checks/upload error shown/polls paused/reload after success, Tự đi toggle (sensors/armed gating, DỪNG ends it, blur/sleep/menu do not), actual180-only UI, auto-arm/explicit arm, enable8 readiness, 8-direction (4 straight + 4 turning arcs) split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

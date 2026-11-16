@@ -65,10 +65,44 @@ String autoJson(){
  return s+"]";
 }
 void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° trước, chờ bật đủ8 kênh và thoát Ráp để lái.\"}");}
+// Firmware update over Wi-Fi: /api/ota/begin shows a PIN on the screen, the
+// upload must carry it (query string: token, pin). Loop task only.
+crab::OtaPin otaPin;crab::OtaUpload ota;uint32_t restartAt=0;
+void otaChunk(){
+ HTTPUpload& u=server.upload();const uint32_t now=millis();
+ if(u.status==UPLOAD_FILE_START){
+  ota=crab::OtaUpload{};uint32_t pin=0;
+  if(!owns()){ota.why=crab::otamsg::OWNER;return;}
+  if(!uintArg("pin",pin)||!otaPin.take(pin,now)){ota.why=crab::otamsg::PIN;return;}
+  // Nothing may move while flash is written: end Tự đi and switch the servos off.
+  if(autopilot.active())autopilot.stop(now,crab::automsg::MANUAL);
+  {Guard g;offForChangeLocked();motion.selectActuator(false,now);}
+  if(!Update.begin(UPDATE_SIZE_UNKNOWN)){ota.why=crab::otamsg::WRITE;return;}
+  ota.accepted=true;
+ }else if(u.status==UPLOAD_FILE_WRITE){
+  if(!ota.writing())return;
+  ota.scan.feed(u.buf,u.currentSize);
+  if(Update.write(u.buf,u.currentSize)!=u.currentSize){ota.why=crab::otamsg::WRITE;Update.abort();}
+ }else if(u.status==UPLOAD_FILE_END){
+  if(!ota.writing())return;
+  // The boot slot only switches in end(): a refused or cut upload leaves the old firmware.
+  if(!ota.scan.found){ota.why=crab::otamsg::TARGET;Update.abort();}
+  else if(!Update.end(true))ota.why=crab::otamsg::WRITE;
+  else ota.ok=true;
+ }else if(u.status==UPLOAD_FILE_ABORTED){
+  if(ota.writing()){ota.why=crab::otamsg::EMPTY;Update.abort();}
+ }
+}
+void otaDone(){
+ if(ota.ok){json(200,"{\"ok\":true,\"restarting\":true}");restartAt=millis()+1500;if(!restartAt)restartAt=1;ota=crab::OtaUpload{};return;}
+ const char* why=ota.why?ota.why:crab::otamsg::EMPTY;
+ json(why==crab::otamsg::OWNER?409:why==crab::otamsg::PIN?403:why==crab::otamsg::WRITE?500:400,"{\"error\":"+jsonString(why)+"}");
+ ota=crab::OtaUpload{};
+}
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v23\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"brownoutHold\":"+(state.brownoutHold?"true":"false")+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+","+autoJson()+"}");});
+  json(200,String("{\"firmware\":\"positional180-v24\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"brownoutHold\":"+(state.brownoutHold?"true":"false")+",\"otaPin\":"+(otaPin.shown(millis())?"true":"false")+",\"slot\":"+jsonString(runningSlot())+",\"target\":"+jsonString(cfg::HARDWARE_TARGET)+",\"otaMarker\":"+jsonString(crab::OTA_MARKER)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+","+autoJson()+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -147,6 +181,9 @@ void configureHttp(){
  // The former /api/test and /api/360 routes are intentionally not registered.
  // Captive portal probes (Android/iOS/Windows) all land on our embedded page.
  server.onNotFound([]{if(server.uri().startsWith("/api/")){error(404);return;}server.sendHeader("Cache-Control","no-store");server.send_P(200,"text/html; charset=utf-8",WEB_UI);});
+ // Firmware update: PIN on the screen first, then the upload (see otaChunk).
+ server.on("/api/ota/begin",HTTP_POST,[]{if(!owns()){error(409);return;}otaPin.issue(millis(),esp_random());json(200,"{\"ok\":true,\"seconds\":"+String(crab::OTA_PIN_MS/1000)+"}");});
+ server.on("/api/ota",HTTP_POST,otaDone,otaChunk);
  server.begin();
 }
 void serviceNetwork(uint32_t now){

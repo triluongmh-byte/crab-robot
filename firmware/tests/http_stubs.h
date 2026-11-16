@@ -6,6 +6,7 @@
 #include <functional>
 #include <atomic>
 #include <cstring>
+#include <algorithm>
 #include <cassert>
 #include <type_traits>
 #include <sstream>
@@ -29,12 +30,27 @@ uint32_t esp_random(){return 42;}
 int lockDepth=0;
 struct Guard{Guard(){lockDepth++;}~Guard(){lockDepth--;}};
 struct Servos{int offCalls=0;crab::ServoTelemetry samples[8];void snapshot(crab::ServoTelemetry (&out)[8])const{assert(lockDepth>0);for(int ch=0;ch<8;ch++)out[ch]=samples[ch];}bool disableOutputs(){assert(lockDepth>0);offCalls++;for(auto& s:samples){s.known=true;s.active=false;}return true;}} servos;
+enum HTTPUploadStatus{UPLOAD_FILE_START,UPLOAD_FILE_WRITE,UPLOAD_FILE_END,UPLOAD_FILE_ABORTED};
+struct HTTPUpload{HTTPUploadStatus status=UPLOAD_FILE_START;String filename;size_t totalSize=0,currentSize=0;uint8_t buf[1436];};
+constexpr uint32_t UPDATE_SIZE_UNKNOWN=0xFFFFFFFF;
+// Fake Arduino Update: records what reached flash and whether the boot slot switched.
+struct FakeUpdate{
+ bool running=false,switched=false,failBegin=false,failWrite=false,failEnd=false;std::string written;int aborts=0;
+ bool begin(uint32_t){if(failBegin)return false;running=true;written.clear();return true;}
+ size_t write(uint8_t* d,size_t n){assert(running&&lockDepth==0);if(failWrite)return 0;written.append((const char*)d,n);return n;}
+ bool end(bool){assert(running);running=false;if(failEnd)return false;switched=true;return true;}
+ void abort(){running=false;aborts++;}
+} Update;
+String runningSlot(){return "app0";}
 struct Server{
  std::map<std::string,std::function<void()>> handlers;
  std::map<std::string,String> args;
  std::function<void()> fallback;
+ std::map<std::string,std::function<void()>> uploads;HTTPUpload up;
  String currentUri,body;int code=0;
  void on(const char* path,int,std::function<void()> fn){handlers[path]=fn;}
+ void on(const char* path,int,std::function<void()> fn,std::function<void()> upload){handlers[path]=fn;uploads[path]=upload;}
+ HTTPUpload& upload(){return up;}
  void onNotFound(std::function<void()> fn){fallback=fn;}
  void begin(){}
  String arg(const char* name){return args[name];}
@@ -46,6 +62,17 @@ struct Server{
   args=a;currentUri=path;body="";code=0;
   auto it=handlers.find(path);if(it==handlers.end())fallback();else it->second();
   assert(code!=0);
+ }
+ // Multipart upload as WebServer delivers it: START, WRITE chunks, then END
+ // (or ABORTED when the client drops), then the route's reply handler.
+ void uploadFile(const char* path,std::map<std::string,String> a,const std::string& data,size_t chunk=1436,bool drop=false){
+  args=a;currentUri=path;body="";code=0;auto f=uploads.at(path);
+  up=HTTPUpload{};up.filename="crab.ino.bin";up.status=UPLOAD_FILE_START;f();
+  for(size_t i=0;i<data.size();i+=chunk){const size_t n=std::min(chunk,data.size()-i);
+   if(drop&&i>=data.size()/2){up.status=UPLOAD_FILE_ABORTED;up.currentSize=0;f();return;}
+   up.status=UPLOAD_FILE_WRITE;memcpy(up.buf,data.data()+i,n);up.currentSize=n;up.totalSize+=n;f();}
+  up.status=UPLOAD_FILE_END;up.currentSize=0;f();
+  handlers.at(path)();assert(code!=0);
  }
 } server;
 struct Wifi{

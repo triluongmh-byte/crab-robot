@@ -149,9 +149,19 @@ python3 tools/firmware/restore_settings.py firmware/settings/owner-2026-11-13.js
 
 Add `--dry-run` to preview the requests. The script needs all 8 servos armed, and it takes control away from any open web page (reload the page afterwards).
 
+## Update firmware over Wi-Fi (OTA)
+
+No USB cable needed (since v24): ☰ → **Trạng thái** → **Cập nhật firmware qua Wi-Fi**.
+
+1. Tap **Hiện mã trên màn hình cua**. A 6-digit code shows on the crab's screen for 2 minutes.
+2. Type the code, pick the **lilygo** `crab.ino.bin` and tap **Nạp firmware**.
+3. The servos switch off, the firmware is written, and the crab restarts by itself.
+
+A wrong file or a cut upload leaves the old firmware running. If new firmware crashes in its first 20 s, the crab goes back to the previous one. Details are in [firmware/README.md](firmware/README.md).
+
 ## Firmware
 
-- **Running now:** `positional180-v23`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
+- **Running now:** `positional180-v24`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
 - **Build, flash and version history:** [firmware/README.md](firmware/README.md). See also [gaits](firmware/CRAWL.md), [web controls](firmware/WEB-CONTROL.md) and [emotions](firmware/EMOTIONS.md).
 
 ```sh

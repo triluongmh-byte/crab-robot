@@ -1,5 +1,6 @@
 #include <cmath>
 #include "../crab/core.h"
+#include "../crab/ota.h"
 #include "http_stubs.h"
 // Use the exact embedded page served by the device.
 #include "../crab/web_ui.h"
@@ -7,7 +8,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v23")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v24")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -179,5 +180,40 @@ int main(){
  server.request("/api/actuator",{{"token","42"},{"seq","53"},{"value","positional"},{"confirm","1"}});assert(server.code==200&&motion.assembly);
  server.request("/api/actuator",{{"token","42"},{"seq","54"},{"value","unknown"}});assert(server.code==200&&motion.assembly&&!motion.positional());
  server.request("/api/actuator",{{"token","42"},{"seq","55"},{"value","positional"},{"confirm","1"}});assert(server.code==200&&motion.assembly);
- std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<":180-only HTTP/status/arm/disarm/assembly/centre; removed360 endpoints; sequence release; saved Wi-Fi/AP/QR/scan/errors and credentials preserved; HTTP outside mutex; Auto mode sensors/token/arming/status/manual takeover\n";
+ // OTA (v24): marker scan, PIN on the screen, then the upload.
+ {const std::string m=crab::OTA_MARKER;assert(m=="crab-ota-target="+std::string(cfg::HARDWARE_TARGET)+";"&&m.find(m[0],1)==std::string::npos);
+  crab::MarkerScan a;const std::string t="xxcrab-ocrab-ota-target="+std::string(cfg::HARDWARE_TARGET)+";yy";for(char c:t)a.feed((const uint8_t*)&c,1);assert(a.found);
+  crab::MarkerScan b;const std::string u=m.substr(0,m.size()-1)+"!";b.feed((const uint8_t*)u.data(),u.size());assert(!b.found);
+  crab::OtaPin p;assert(!p.shown(0));p.issue(1000,7);assert(p.pin==100007&&p.shown(1000+crab::OTA_PIN_MS-1)&&!p.shown(1000+crab::OTA_PIN_MS));
+  assert(!p.take(100008,2000)&&!p.take(100007,2000)); // one wrong guess burns it
+  p.issue(0,899999);assert(p.pin==999999&&p.take(999999,5)&&!p.take(999999,6));}
+ {std::string img(6000,'\x11');img[0]='\xE9';img.replace(1430,sizeof(crab::OTA_MARKER)-1,crab::OTA_MARKER); // marker spans two chunks
+  std::string other(6000,'\x11');other[0]='\xE9';
+  const uint32_t t0=clockMs;
+  // Upload without a PIN, or with a non-owner token: refused before flash is touched.
+  server.uploadFile("/api/ota",{{"token","42"},{"pin","123456"}},img);assert(server.code==403&&!Update.switched&&Update.written.empty());
+  server.request("/api/ota/begin",{{"token","7"}});assert(server.code==409&&!otaPin.shown(clockMs));
+  server.request("/api/ota/begin",{{"token","42"}});assert(server.code==200&&otaPin.shown(clockMs)&&server.body.find("\"seconds\":120")!=String::npos);
+  server.request("/api/status");assert(server.body.find("\"otaPin\":true")!=String::npos&&server.body.find(std::to_string(otaPin.pin))==String::npos&&server.body.find("\"slot\":\"app0\"")!=String::npos&&server.body.find(crab::OTA_MARKER)!=String::npos);
+  const std::string pin=std::to_string(otaPin.pin);
+  server.uploadFile("/api/ota",{{"token","7"},{"pin",pin}},img);assert(server.code==409&&!Update.switched&&otaPin.shown(clockMs)); // wrong owner does not burn the PIN
+  server.uploadFile("/api/ota",{{"token","42"},{"pin","100000"}},img);assert(server.code==403&&!otaPin.shown(clockMs)); // a wrong PIN burns it
+  server.uploadFile("/api/ota",{{"token","42"},{"pin",pin}},img);assert(server.code==403&&!Update.switched);
+  // Expired PIN.
+  server.request("/api/ota/begin",{{"token","42"}});clockMs+=crab::OTA_PIN_MS;
+  server.uploadFile("/api/ota",{{"token","42"},{"pin",std::to_string(otaPin.pin)}},img);assert(server.code==403&&!Update.switched);
+  // Not a crab image for this board: written, then refused before the boot slot switches.
+  server.request("/api/actuator",{{"token","42"},{"seq","60"},{"value","positional"},{"confirm","1"}});assert(server.code==200&&motion.positional());
+  int aborts=Update.aborts;server.request("/api/ota/begin",{{"token","42"}});
+  server.uploadFile("/api/ota",{{"token","42"},{"pin",std::to_string(otaPin.pin)}},other);assert(server.code==400&&server.body.find("không phải firmware")!=String::npos&&!Update.switched&&Update.aborts==aborts+1&&!motion.positional()&&!restartAt);
+  // Client drops mid-upload: aborted, old firmware stays.
+  server.request("/api/ota/begin",{{"token","42"}});server.uploadFile("/api/ota",{{"token","42"},{"pin",std::to_string(otaPin.pin)}},img,1436,true);assert(!Update.switched&&!Update.running&&Update.aborts==aborts+2&&!restartAt);
+  // Flash write error.
+  Update.failWrite=true;server.request("/api/ota/begin",{{"token","42"}});server.uploadFile("/api/ota",{{"token","42"},{"pin",std::to_string(otaPin.pin)}},img);assert(server.code==500&&!Update.switched);Update.failWrite=false;
+  // Success: servos off, Tự đi ended, exact bytes written, slot switched, restart scheduled after the reply.
+  server.request("/api/actuator",{{"token","42"},{"seq","61"},{"value","positional"},{"confirm","1"}});assert(server.code==200&&motion.positional());
+  server.request("/api/ota/begin",{{"token","42"}});server.uploadFile("/api/ota",{{"token","42"},{"pin",std::to_string(otaPin.pin)}},img,1000);
+  assert(server.code==200&&server.body.find("\"restarting\":true")!=String::npos&&Update.switched&&Update.written==img&&!motion.positional()&&restartAt&&!otaPin.shown(clockMs));
+  (void)t0;}
+ std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<":180-only HTTP/status/arm/disarm/assembly/centre; removed360 endpoints; sequence release; saved Wi-Fi/AP/QR/scan/errors and credentials preserved; HTTP outside mutex; Auto mode sensors/token/arming/status/manual takeover; OTA marker scan/PIN issue-expiry-burn/owner/target refusal/drop/write error/success\n";
 }
