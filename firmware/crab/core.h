@@ -85,6 +85,7 @@ constexpr const char* LOST="Mất Wi-Fi. Vẫn dùng cua";
 constexpr const char* ERASED="Đã xóa Wi-Fi";
 constexpr const char* DRIVER="Kiểm tra dây PCA9685";
 constexpr const char* BROWNOUT="Sụt áp: bấm Bật servo";
+constexpr const char* OTA_PIN="Mã cập nhật: "; // followed by the 6-digit PIN
 }
 enum class NetState {Setup,Connecting,Online};
 // Failure reported by the radio for the current attempt only (from the

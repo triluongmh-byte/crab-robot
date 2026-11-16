@@ -6,7 +6,10 @@
 #include <Preferences.h>
 #include <atomic>
 #include <esp_system.h>
+#include <esp_ota_ops.h>
+#include <Update.h>
 #include "core.h"
+#include "ota.h"
 #include "drivers.h"
 #include "actuator_output.h"
 #include "display.h"
@@ -29,6 +32,18 @@ bool ledOverride=false;uint32_t ledAt=0; // emotion colour active since ledAt
 crab::Mood emoteMood=crab::Mood::Normal;uint32_t moodAt=0;
 uint32_t lastDraw=0;String drawnKey;
 struct Guard{Guard(){xSemaphoreTake(motionLock,portMAX_DELAY);}~Guard(){xSemaphoreGive(motionLock);}};
+// Running app slot ("app0"/"app1"), for /api/status and the USB recovery script.
+String runningSlot(){const esp_partition_t* p=esp_ota_get_running_partition();return p?String(p->label):String("?");}
+// Rollback (the 2.0.14 bootloader has it enabled): a new OTA image boots once
+// as "pending". If it resets before it has served for OTA_CONFIRM_MS, the
+// bootloader returns to the previous slot. USB-flashed images are not pending.
+extern "C" bool verifyRollbackLater(){return true;}
+bool appConfirmed=false;
+void confirmApp(uint32_t now){
+ if(appConfirmed||now<crab::OTA_CONFIRM_MS)return;appConfirmed=true;
+ esp_ota_img_states_t state;const esp_partition_t* p=esp_ota_get_running_partition();
+ if(p&&esp_ota_get_state_partition(p,&state)==ESP_OK&&state==ESP_OTA_IMG_PENDING_VERIFY)esp_ota_mark_app_valid_cancel_rollback();
+}
 #include "network_http.h"
 // Auto mode, from loop(): read the sensors, then let the autopilot steer under
 // the motion lock. Manual commands, STOP and the deadman clear motion.autoMode;
@@ -91,6 +106,8 @@ void loop(){
  }
  serviceNetwork(now);
  serviceAuto(now);
+ confirmApp(now);
+ if(restartAt&&int32_t(now-restartAt)>=0)ESP.restart(); // after an OTA reply was sent
  dns.processNextRequest();server.handleClient();
  // An emotion's lamp colour lasts while the pose runs, then the saved lamp returns.
  if(ledOverride&&now-ledAt>=1500){bool posing;{Guard g;posing=motion.posing;}if(!posing)applyLight();}
@@ -108,8 +125,9 @@ void loop(){
   in.color=crab::eyeColor(lightOn?shownRgb:0);
   const crab::EyeFrame f=eyes.frame(now,in);
   const char* autoLine=autopilot.message(now);
-  const String message=!driverReady?String(crab::msg::DRIVER):autoLine?String(autoLine):motion.brownoutHold?String(crab::msg::BROWNOUT):String(network.message);
-  const String address=!driverReady?String():network.state==crab::NetState::Online?WiFi.localIP().toString():ap+" 192.168.4.1";
+  const bool pin=otaPin.shown(now);
+  const String message=!driverReady?String(crab::msg::DRIVER):pin?String(crab::msg::OTA_PIN)+String(otaPin.pin):autoLine?String(autoLine):motion.brownoutHold?String(crab::msg::BROWNOUT):String(network.message);
+  const String address=!driverReady||pin?String():network.state==crab::NetState::Online?WiFi.localIP().toString():ap+" 192.168.4.1";
   const String line=message+"|"+address;
   if(!faceShown||f!=drawnEyes||line!=drawnKey){if(screen.face(f,message.c_str(),address.c_str())){drawnEyes=f;drawnKey=line;faceShown=true;}}
  }else if(!face&&now-lastDraw>=250){lastDraw=now;if(faceShown){faceShown=false;drawnKey="";}

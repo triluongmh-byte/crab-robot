@@ -296,3 +296,32 @@ Release `positional180-v23`, from the owner's regrouped backlog:
   - **Bật servo** arms as usual and clears the hold. A normal power-on or reset still arms by itself (`cfg::AUTO_ARM`).
 
 Host tests cover the brownout hold and its release, the trot-only gait and tracking, the 404 routes, the page without the selector and the restore plan. The brownout path still needs a real sag on the robot to confirm.
+
+## Firmware update over Wi-Fi (OTA) — 2026-11-16
+
+Release `positional180-v24`. The owner wants the crab on battery without the USB cable, so firmware can now be updated from the control page.
+
+- **How:** ☰ → **Trạng thái** → **Cập nhật firmware qua Wi-Fi**.
+  1. **Hiện mã trên màn hình cua** shows a 6-digit code on the crab's screen for 2 minutes.
+  2. Type the code.
+  3. Pick the `crab.ino.bin` file (LILYGO build) and tap **Nạp firmware**.
+  - The servos switch off and Tự đi ends while it writes. The crab restarts by itself. As after any normal start, the servos then arm by themselves.
+- **Why a code on the screen:** the crab's own Wi-Fi is open and any page can take control. The code means only someone who can see the robot can replace its firmware. A wrong code burns it.
+- **Safety:**
+  - Every image carries `crab-ota-target=lilygo;`. A file without it (the integrated build, another project, or any firmware before v24) is refused before the boot slot switches.
+  - A cut upload, a refused file or a power loss mid-write leaves the old firmware running, because the slot only switches at the end.
+  - **Rollback:** the 2.0.14 bootloader has app rollback on. New firmware marks itself good after 20 s of running. If it resets before then (crash, boot loop), the bootloader goes back to the previous firmware. A brownout in those first 20 s also rolls back; just upload again.
+  - USB flashing still works for recovery.
+- **API:**
+  - `POST /api/ota/begin` (`token`) starts the 2-minute code.
+  - `POST /api/ota?token=…&pin=…` takes the multipart upload.
+  - `/api/status` adds `otaPin`, `slot` (`app0`/`app1`), `target` and `otaMarker`.
+- **USB flashing after an OTA:** the running app may then be in `app1` (`0x310000`), and `otadata` no longer matches `boot_app0.bin`. A USB script that verifies "the current firmware is vN at `0x10000`" will fail safely. Check `slot` in `/api/status` first, and verify the active slot.
+
+Host tests cover:
+- the marker scan across chunks
+- the code: issue, expiry, a wrong guess burning it, and owner-only
+- refusing a file for the wrong target
+- a dropped upload and a write error
+- a successful upload: exact bytes, slot switch, servos off, restart scheduled
+- the page: the code step, input checks, the error shown, status polls paused during the upload, and the reload afterwards
