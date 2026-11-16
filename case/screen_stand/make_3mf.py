@@ -1,7 +1,7 @@
 """Write screen_stand.3mf: an unsliced Bambu Studio project (A1, 0.4 mm, the repo PETG profile) and optionally
 slice it offline with the Bambu Studio CLI. Never contacts a printer.
 
-Print orientation: standing on its flat -Y end face. Every wall, lip, post and the snap barbs are then straight
+Print orientation: standing on its flat mount-local -Y end face. Every wall, lip, post and the snap barbs are then straight
 prisms going up, so only the end shelf and the tab roots need a little tree support.
 
 Usage:  python3 case/screen_stand/make_3mf.py [--slice OUTDIR] [--upright]   (--upright = as on the robot, to compare)
@@ -32,7 +32,7 @@ def main():
     ap.add_argument('--slice', metavar='OUTDIR')
     ap.add_argument('--upright', action='store_true')
     a = ap.parse_args()
-    shape = S.stand()
+    shape = S.stand_local()
     if not a.upright:
         shape = shape.rotate((0, 0, 0), (1, 0, 0), -90)      # -Y end face down onto the bed
     stl = HERE / 'screen_stand_print.stl'

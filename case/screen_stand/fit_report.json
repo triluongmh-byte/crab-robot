@@ -2,10 +2,10 @@
  "robotDir": "/Users/macbookpro/harnesses/crab-robot-v17g/case/robot",
  "checks": {
   "seated stand vs frame_upper overlap mm3": 0.0,
-  "stand to frame_upper min gap mm": 0.2,
+  "stand to frame_upper min gap mm": 0.19,
   "screen vs frame_upper overlap mm3": 0.0,
   "seated stand vs servos overlap mm3": 0.0,
-  "stand to servos min gap mm": 0.95,
+  "stand to servos min gap mm": 1.85,
   "screen vs servos overlap mm3": 0.0,
   "screen vs stand overlap mm3": 0.0,
   "screen drop-in vs stand worst overlap mm3": 0.0,
@@ -22,18 +22,18 @@
   "USB-C plug end1 vs frame_upper overlap mm3": 0.0,
   "USB-C plug end1 vs servos overlap mm3": 0.0,
   "snap-on interference (barbs only) mm3": {
-   "worst": 3.17,
-   "atLiftMm": 2.0,
+   "worst": 3.3,
+   "atLiftMm": 1.5,
    "barbBound": 10.08
   }
  },
  "bbox": [
-  20.37,
-  46.21,
-  -35.5,
-  35.5,
-  33.2,
-  84.89
+  -45.5,
+  25.5,
+  11.17,
+  37.02,
+  42.3,
+  86.89
  ],
  "params": {
   "case_l": 66.0,
@@ -44,23 +44,34 @@
   "tilt": 15.0,
   "wall": 2.0,
   "bar_x": [
-   43.0,
-   46.2
+   33.46,
+   37.02
   ],
   "bar_z": [
-   34.4,
-   39.95
+   43.5,
+   46.52
+  ],
+  "cx": -10.0,
+  "posts_x": [
+   [
+    -46.0,
+    -39.98
+   ],
+   [
+    -1.0,
+    5.02
+   ]
   ],
   "gap": 0.2,
   "leg_t": 1.8,
   "barb": 0.5,
   "tab_w": 9.0,
   "tab_y": [
-   -20.0,
-   20.0
+   -2.0,
+   18.0
   ],
-  "x0": 43.5,
-  "z0": 52.5,
+  "x0": 34.3,
+  "z0": 54.5,
   "shelf_t": 3.0,
   "beam_back": 5.0,
   "lip_l": 2.5,

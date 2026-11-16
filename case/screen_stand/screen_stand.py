@@ -1,12 +1,16 @@
-"""Screen stand: holds the LILYGO T-Display-S3 (in its clear shell) upright on the frame_upper end crossbar.
+"""Screen stand: holds the LILYGO T-Display-S3 (in its clear shell) upright on the frame_upper display rim.
 
 Robot frame of the case model: +X is the old bank mouth end, +Y left, z0 at the frame_lower bottom.
-The stand snaps over the +X end crossbar of frame_upper (x 43.0..46.2, z 34.4..39.95, full width) and holds
-the screen in landscape, facing out (+X) and leaning back `tilt` degrees. The case is gripped only at its two
+The owner's front is +Y (2026-11-16, marked on a render): the stand snaps over the outer wall of the raised
+display rim on the +Y side (y 33.46..37.02, z 43.5..46.52, x -46.5..11.5) and holds the screen in landscape,
+facing +Y and leaning back `tilt` degrees.
+
+Geometry is built in a mount-local frame (bar along local Y, outward local +X) and turned onto the robot by
+`mount()`: local +X -> robot +Y, local +Y -> robot -X, then shifted to x = cx. The case is gripped only at its two
 short ends, so both header rows and their Dupont housings on the back stay free, and both end faces
 (USB-C, buttons) are open. A rubber band over the two back posts keeps it from lifting out.
 
-Print: on its back is not flat, so it prints as modelled (crossbar cap down) with tree supports.
+Print: standing on a flat end face with tree supports (see make_3mf.py).
 """
 import math
 from dataclasses import dataclass
@@ -24,17 +28,20 @@ class Params:
     fit_l: float = 1.0            # total clearance along the length
     tilt: float = 15.0            # lean back, degrees
     wall: float = 2.0
-    # frame_upper +X end crossbar (measured from case/robot/frame_upper.step)
-    bar_x: tuple = (43.0, 46.2)
-    bar_z: tuple = (34.4, 39.95)
-    gap: float = 0.2              # clip clearance to the crossbar
+    # frame_upper +Y display rim outer wall, in the mount-local frame (measured from case/robot/frame_upper.step)
+    bar_x: tuple = (33.46, 37.02)
+    bar_z: tuple = (43.5, 46.52)
+    cx: float = -10.0             # robot x of the screen centre (rim spans x -46.5..11.5)
+    # rim posts under the wall (robot x); the snap tabs must stay off them
+    posts_x: tuple = ((-46.0, -39.98), (-1.0, 5.02))
+    gap: float = 0.2              # clip clearance to the rim wall
     leg_t: float = 1.8            # inner clip leg
-    barb: float = 0.5             # snap barb under the crossbar
+    barb: float = 0.5             # snap barb under the rim wall
     tab_w: float = 9.0            # flexing barb tabs
-    tab_y: tuple = (-20.0, 20.0)
+    tab_y: tuple = (-2.0, 18.0)   # mount-local; robot x = cx - y -> -8 and -28
     # cradle placement: local origin = front-bottom edge of the screen, at x0, z0
-    x0: float = 43.5
-    z0: float = 52.5              # back-bottom header housings clear the deck tower (x 20..33.9, |y|<9.4, top z 46.5)
+    x0: float = 34.3              # front-bottom of the cradle flush with the rim outer face
+    z0: float = 54.5              # end shelves clear the rim corner wall (top z 46.52) and the -X hip servo
     shelf_t: float = 3.0          # under the case
     beam_back: float = 5.0        # how far the full-length beam reaches behind the front face
     lip_l: float = 2.5            # front/back lips overlap of the case ends (case shell wall ~2)
@@ -49,6 +56,11 @@ P = Params()
 
 def box(x0, x1, y0, y1, z0, z1):
     return cq.Workplane('XY').box(x1 - x0, y1 - y0, z1 - z0, centered=False).translate((x0, y0, z0))
+
+
+def mount(w: cq.Workplane, p: Params = P) -> cq.Workplane:
+    """Mount-local -> robot frame."""
+    return w.rotate((0, 0, 0), (0, 0, 1), 90).translate((p.cx, 0, 0))
 
 
 def place(w: cq.Workplane, p: Params = P) -> cq.Workplane:
@@ -96,12 +108,12 @@ def clip(p: Params = P) -> cq.Workplane:
     ylen = (-hl - W, hl + W)
     xi = p.bar_x[0] - p.gap - p.leg_t
     cap_z = p.bar_z[1] + p.gap
-    # cap + riser up into the cradle beam; the outer face stays flush with the crossbar face (servos at x 47.15)
+    # cap + riser up into the cradle beam; the outer face stays flush with the rim wall
     _, zb = to_robot(W, -p.shelf_t, p)
     xr, zr = to_robot(-p.beam_back, -p.shelf_t, p)
     out = box(xi, p.bar_x[1], *ylen, cap_z, max(zb, zr) + 1.0)
-    # two snap tabs down the -X face of the crossbar (the deck ribs at |y| 6.4..9.4 and the side rails at
-    # |y| >= 34 meet the crossbar there, so there is no full-length leg)
+    # two snap tabs down the inner face of the rim wall, placed off the rim posts (validate);
+    # no full-length leg, so the posts under the wall stay clear
     for y in p.tab_y:
         out = out.union(box(xi, p.bar_x[0] - p.gap, y - p.tab_w / 2, y + p.tab_w / 2, p.bar_z[0] - 1.2, cap_z))
         prof = [(p.bar_x[0] - p.gap - 0.01, p.bar_z[0] - p.gap), (p.bar_x[0] + p.barb, p.bar_z[0] - p.gap),
@@ -111,15 +123,20 @@ def clip(p: Params = P) -> cq.Workplane:
     return out
 
 
-def stand(p: Params = P) -> cq.Workplane:
+def stand_local(p: Params = P) -> cq.Workplane:
+    """The stand in its mount-local frame (flat end faces normal to local Y), used for print orientation."""
     validate(p)
     return clip(p).union(place(cradle(p), p))
+
+
+def stand(p: Params = P) -> cq.Workplane:
+    return mount(stand_local(p), p)
 
 
 def screen_envelope(p: Params = P) -> cq.Workplane:
     """The shell in its slot (nominal size), robot frame."""
     t = p.case_t
-    return place(box(-p.fit_t / 2 - t, -p.fit_t / 2, -p.case_l / 2, p.case_l / 2, 0.0, p.case_h), p)
+    return mount(place(box(-p.fit_t / 2 - t, -p.fit_t / 2, -p.case_l / 2, p.case_l / 2, 0.0, p.case_h), p), p)
 
 
 def plug_envelopes(p: Params = P):
@@ -129,7 +146,7 @@ def plug_envelopes(p: Params = P):
     for s in (1, -1):
         y0 = s * (p.case_l / 2)
         y1 = s * (p.case_l / 2 + 25)
-        out.append(place(box(-t / 2 - 3.5, -t / 2 + 3.5, min(y0, y1), max(y0, y1), p.case_h / 2 - 6.25, p.case_h / 2 + 6.25), p))
+        out.append(mount(place(box(-t / 2 - 3.5, -t / 2 + 3.5, min(y0, y1), max(y0, y1), p.case_h / 2 - 6.25, p.case_h / 2 + 6.25), p), p))
     return out
 
 
@@ -137,7 +154,7 @@ def header_envelopes(p: Params = P):
     """Dupont housings on both header rows (GIA DINH: rows 2.5 mm in from each long edge, housings 2.5 wide
     and 14 long straight out of the back, along the case length minus 3 mm at each end)."""
     t = slot_t(p)
-    return [place(box(-t - 14.0, -t, -p.case_l / 2 + 3, p.case_l / 2 - 3, wc - 1.25, wc + 1.25), p)
+    return [mount(place(box(-t - 14.0, -t, -p.case_l / 2 + 3, p.case_l / 2 - 3, wc - 1.25, wc + 1.25), p), p)
             for wc in (2.5, p.case_h - 2.5)]
 
 
@@ -146,9 +163,12 @@ def validate(p: Params = P):
     assert p.back_lip_w[0] >= 5.0 and p.back_lip_w[1] <= p.case_h - 5.0, 'back lip reaches a header row'
     assert -t + p.window_margin < -p.window_margin - 5, 'end window too narrow for a USB-C plug'
     fx, fz = to_robot(p.wall, -p.shelf_t, p)
-    assert fx <= p.bar_x[1] + 0.05, f'cradle front {fx:.2f} past the crossbar face (servos at x 47.15)'
+    assert fx <= p.bar_x[1] + 0.05, f'cradle front {fx:.2f} past the rim face'
     for y in p.tab_y:
-        assert 9.4 + 0.5 <= abs(y) - p.tab_w / 2 and abs(y) + p.tab_w / 2 <= 34.0 - 0.5, 'snap tab on a deck rib or side rail'
+        x0, x1 = p.cx - y - p.tab_w / 2, p.cx - y + p.tab_w / 2
+        assert -46.5 + 0.5 <= x0 and x1 <= 11.5 - 0.5, 'snap tab off the rim wall'
+        for a, b in p.posts_x:
+            assert x1 <= a - 0.5 or x0 >= b + 0.5, 'snap tab on a rim post'
     assert p.leg_t >= 1.6 and p.barb <= 0.6, 'snap tab too stiff / barb too deep for PETG'
 
 
