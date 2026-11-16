@@ -2,7 +2,10 @@
 """Push a firmware image to a running crab over Wi-Fi (firmware v24+).
 
 Usage:
-  python3 tools/firmware/ota_push.py --host 172.168.20.249 --bin build/firmware/esp32/crab.ino.bin [--pin 123456] [--dry-run]
+  python3 tools/firmware/ota_push.py --host 172.168.20.249 --bin build/firmware/esp32/crab.ino.bin [--dry-run]
+  Two steps (when nobody can type at the prompt):
+    ... --show-pin            the crab shows a PIN
+    ... --pin 123456          upload with that PIN
 
 Steps, using the same API as the page's "Cập nhật firmware qua Wi-Fi":
   1. POST /api/session         take control (the open page loses it; the crab stops)
@@ -13,9 +16,9 @@ Steps, using the same API as the page's "Cập nhật firmware qua Wi-Fi":
 
 The image must be a LILYGO build of v24 or later (it carries the OTA marker);
 anything else is refused by the crab before its boot slot switches. Standard
-library only, no third-party packages.
+library plus the system curl, no third-party packages.
 """
-import argparse, hashlib, json, sys, time, urllib.error, urllib.parse, urllib.request
+import argparse, hashlib, json, subprocess, sys, time, urllib.parse
 from pathlib import Path
 
 MARKER_PREFIX = b'crab-ota-target='
@@ -48,7 +51,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--host', required=True)
     ap.add_argument('--bin', required=True, type=Path)
-    ap.add_argument('--pin', help='6-digit PIN from the crab screen (prompted if missing)')
+    ap.add_argument('--pin', help='6-digit PIN already showing on the crab screen; skips asking for a new one')
+    ap.add_argument('--show-pin', action='store_true', help='only ask the crab to show a PIN (2 min), then exit; run again with --pin')
     ap.add_argument('--target', default='lilygo')
     ap.add_argument('--dry-run', action='store_true')
     a = ap.parse_args()
@@ -62,20 +66,31 @@ def main():
     print('Image %s: %d bytes, sha256 %s, target %s' % (a.bin.name, len(data), hashlib.sha256(data).hexdigest()[:16], target))
 
     def call(path, params=None, body=None, headers=None, timeout=10):
-        req = urllib.request.Request(path if '://' in path else base + path, data=body if body is not None else
-                                     (urllib.parse.urlencode(params).encode() if params is not None else None), headers=headers or {})
+        """HTTP through the system curl: on macOS 15 a Homebrew Python gets
+        "No route to host" on the LAN (Local Network privacy), curl does not."""
+        url = path if '://' in path else base + path
+        cmd = ['curl', '-s', '-m', str(timeout), '-w', '\n%{http_code}']
+        for k, v in (headers or {}).items():
+            cmd += ['-H', '%s: %s' % (k, v)]
+        if body is not None:
+            cmd += ['--data-binary', '@-']
+        elif params is not None:
+            cmd += ['-X', 'POST'] + [x for k, v in params.items() for x in ('--data-urlencode', '%s=%s' % (k, v))]
+        p = subprocess.run(cmd + [url], input=body, capture_output=True)
+        out, _, code = p.stdout.rpartition(b'\n')
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                return r.status, json.loads(r.read() or b'{}')
-        except urllib.error.HTTPError as e:
-            try:
-                return e.code, json.loads(e.read() or b'{}')
-            except ValueError:
-                return e.code, {}
-        except (urllib.error.URLError, OSError, ValueError):
-            return 0, {}
+            code = int(code)
+        except ValueError:
+            code = 0
+        try:
+            return code, json.loads(out or b'{}')
+        except ValueError:
+            return code, {}
 
-    code, status = call('status')
+    for _ in range(5):  # a weak Wi-Fi link drops some requests
+        code, status = call('status')
+        if code == 200:
+            break
     if code != 200:
         sys.exit('No crab at %s (HTTP %s)' % (a.host, code))
     print('Running now: %s, slot %s, target %s' % (status.get('firmware'), status.get('slot', '?'), status.get('target', '?')))
@@ -88,10 +103,15 @@ def main():
     token = str(s.get('token', ''))
     if code != 200 or not token:
         sys.exit('Could not take control (HTTP %s)' % code)
-    code, s = call('ota/begin', {'token': token})
-    if code != 200:
-        sys.exit('PIN request refused (HTTP %s): %s' % (code, s.get('error', '')))
-    pin = a.pin or input('PIN on the crab screen: ').strip()
+    pin = a.pin
+    if not pin:
+        code, s = call('ota/begin', {'token': token})
+        if code != 200:
+            sys.exit('PIN request refused (HTTP %s): %s' % (code, s.get('error', '')))
+        if a.show_pin:
+            print('The crab shows a 6-digit PIN for 2 minutes. Run again with --pin <PIN>.')
+            return
+        pin = input('PIN on the crab screen: ').strip()
     body, ctype = multipart(data, a.bin.name)
     print('Uploading…')
     code, s = call(upload_url(base, token, pin), body=body, headers={'Content-Type': ctype}, timeout=120)
