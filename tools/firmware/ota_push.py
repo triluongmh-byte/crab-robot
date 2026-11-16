@@ -43,6 +43,13 @@ def multipart(data, filename='crab.ino.bin', boundary=None):
     return head + data + tail, 'multipart/form-data; boundary=' + boundary
 
 
+def upload_args(path, filename='crab.ino.bin'):
+    """curl arguments that stream the image as one multipart file part.
+    On a weak link (-75 dBm) piping the whole body through --data-binary @-
+    failed every time while curl -F streaming the file worked (2026-11-16)."""
+    return ['-F', 'firmware=@%s;filename=%s;type=application/octet-stream' % (path, filename)]
+
+
 def upload_url(base, token, pin):
     return base + 'ota?' + urllib.parse.urlencode({'token': token, 'pin': pin})
 
@@ -65,14 +72,16 @@ def main():
     base = 'http://%s/api/' % a.host
     print('Image %s: %d bytes, sha256 %s, target %s' % (a.bin.name, len(data), hashlib.sha256(data).hexdigest()[:16], target))
 
-    def call(path, params=None, body=None, headers=None, timeout=10):
+    def call(path, params=None, body=None, headers=None, timeout=10, form=None):
         """HTTP through the system curl: on macOS 15 a Homebrew Python gets
         "No route to host" on the LAN (Local Network privacy), curl does not."""
         url = path if '://' in path else base + path
         cmd = ['curl', '-s', '-m', str(timeout), '-w', '\n%{http_code}']
         for k, v in (headers or {}).items():
             cmd += ['-H', '%s: %s' % (k, v)]
-        if body is not None:
+        if form is not None:
+            cmd += form
+        elif body is not None:
             cmd += ['--data-binary', '@-']
         elif params is not None:
             cmd += ['-X', 'POST'] + [x for k, v in params.items() for x in ('--data-urlencode', '%s=%s' % (k, v))]
@@ -117,9 +126,8 @@ def main():
             return
         else:
             pin = input('PIN on the crab screen: ').strip()
-    body, ctype = multipart(data, a.bin.name)
-    print('Uploading…')
-    code, s = call(upload_url(base, token, pin), body=body, headers={'Content-Type': ctype}, timeout=120)
+    print('Uploading… (about 30 s on a weak link)')
+    code, s = call(upload_url(base, token, pin), form=upload_args(str(a.bin.resolve()), a.bin.name), timeout=180)
     if code != 200:
         sys.exit('Upload refused (HTTP %s): %s' % (code, s.get('error', '')))
     print('Written. Waiting for the restart…')
