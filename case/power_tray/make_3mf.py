@@ -35,11 +35,11 @@ def centred(T, dx, dy):
     return T
 
 
-def write_3mf(path, objects):
+def write_3mf(path, objects, plate_name=PLATE_NAME, title='power_tray', support=False):
     settings = json.loads(SETTINGS.read_text())['settings']
     # Nothing on these parts needs support: the tie grooves have 45 deg sides and a 2.6 mm bridge, and tree
     # supports placed inside them would block the zip ties.
-    settings['enable_support'] = '0'
+    settings['enable_support'] = '1' if support else '0'
     res = ''.join(mesh_xml(i + 1, T) for i, (_, T) in enumerate(objects))
     items = ''.join(f'<item objectid="{i + 1}" transform="1 0 0 0 1 0 0 0 1 {BED_CENTRE[0]} {BED_CENTRE[1]} 0" printable="1"/>'
                     for i in range(len(objects)))
@@ -47,14 +47,14 @@ def write_3mf(path, objects):
              'xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" '
              'xmlns:BambuStudio="http://schemas.bambulab.com/package/2021">'
              '<metadata name="Application">BambuStudio-02.07.01.62</metadata><metadata name="BambuStudio:3mfVersion">1</metadata>'
-             f'<metadata name="Title">power_tray</metadata><resources>{res}</resources><build>{items}</build></model>')
+             f'<metadata name="Title">{title}</metadata><resources>{res}</resources><build>{items}</build></model>')
     objs = ''.join(f'<object id="{i + 1}"><metadata key="name" value="{n}.stl"/><metadata key="extruder" value="1"/>'
                    f'<part id="{i + 1}" subtype="normal_part"><metadata key="name" value="{n}"/></part></object>'
                    for i, (n, _) in enumerate(objects))
     inst = ''.join(f'<model_instance><metadata key="object_id" value="{i + 1}"/><metadata key="instance_id" value="0"/>'
                    f'<metadata key="identify_id" value="{101 + i}"/></model_instance>' for i in range(len(objects)))
     cfg = (f'<?xml version="1.0" encoding="UTF-8"?>\n<config>{objs}<plate><metadata key="plater_id" value="1"/>'
-           f'<metadata key="plater_name" value="{PLATE_NAME}"/><metadata key="locked" value="false"/>{inst}</plate></config>')
+           f'<metadata key="plater_name" value="{plate_name}"/><metadata key="locked" value="false"/>{inst}</plate></config>')
     ct = ('<?xml version="1.0" encoding="UTF-8"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
           '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
           '<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>'
