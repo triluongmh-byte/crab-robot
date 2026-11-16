@@ -27,10 +27,12 @@ async function advance(ms){const end=now+ms;for(;;){await flush();timers.sort((a
  assert.equal(E.toCommand([99,-99,0,0,0,0,0,0]),'-30,30,0,0,0,0,0,0');
  assert.deepEqual({...E.hexRgb('#ff4000')},{r:255,g:64,b:0});
  // Every preset frame is 8 bounded angles, a colour, move and hold times; ends standing.
- // Chào (v29): CH3's knee lifts all the way (60) and waves; it maps to CH3 in the command.
-{const hi=E.PRESETS.find(p=>p.n==='👋 Chào');assert(hi&&hi.f.some(f=>f[3]===60)&&hi.f.some(f=>f[3]===30));const c=vm.runInContext("toCommand(PRESETS.find(p=>p.n==='👋 Chào').f[0])",ctx).split(',').map(Number);assert.equal(c[3],-60);assert(c.every((v,i)=>i===3||Math.abs(v)<=30));
- assert.equal(vm.runInContext('clampKnee(99)',ctx),60);assert.equal(vm.runInContext('clampKnee(-99)',ctx),-30);assert.equal(vm.runInContext('clampDeg(99)',ctx),30);}
-for(const p of E.PRESETS){assert(p.f.length>=2);for(const f of p.f){assert.equal(f.length,11);for(let i=0;i<8;i++)assert(i%2?f[i]>=-30&&f[i]<=60:Math.abs(f[i])<=30);assert(/^#[0-9a-f]{6}$/i.test(f[8]));assert(f[9]>=0&&f[9]<=3000&&f[10]>=0&&f[10]<=5000);}
+ // Owner, 2026-11-16: each slider moves only its own joint unless Đối xứng is ticked.
+assert(!/id="mirror"[^>]*checked/.test(html));
+// Chào (v29): CH3's knee lifts all the way (60) and waves; it maps to CH3 in the command.
+{const hi=E.PRESETS.find(p=>p.n==='👋 Chào');assert(hi&&hi.f.some(f=>f[3]===100)&&hi.f.some(f=>f[3]===60));const c=vm.runInContext("toCommand(PRESETS.find(p=>p.n==='👋 Chào').f[0])",ctx).split(',').map(Number);assert.equal(c[3],-100);assert(c.every((v,i)=>i===3||Math.abs(v)<=30));
+ assert.equal(vm.runInContext('clampKnee(199)',ctx),100);assert.equal(vm.runInContext('clampKnee(-99)',ctx),-30);assert.equal(vm.runInContext('clampDeg(99)',ctx),30);}
+for(const p of E.PRESETS){assert(p.f.length>=2);for(const f of p.f){assert.equal(f.length,11);for(let i=0;i<8;i++)assert(i%2?f[i]>=-30&&f[i]<=100:Math.abs(f[i])<=30);assert(/^#[0-9a-f]{6}$/i.test(f[8]));assert(f[9]>=0&&f[9]<=3000&&f[10]>=0&&f[10]<=5000);}
   assert(p.f.at(-1).slice(0,8).every(v=>v===0));}
  assert.equal(elements.presets.children.length,E.PRESETS.length);
  assert.equal(elements.legs.children.length,4);

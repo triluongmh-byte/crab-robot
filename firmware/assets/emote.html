@@ -32,7 +32,7 @@ main{max-width:1100px;margin:auto;padding:14px;display:grid;gap:14px;grid-templa
 <p class="dim">Hông: + là đưa bàn chân ra trước. Gối: + là nhấc chân lên, − là đạp xuống (thân cao lên). Mỗi khung có thời gian chuyển và thời gian giữ. Kéo thanh là cua cử động theo ngay.</p>
 <div class="legs" id="legs"></div>
 <div class="row"><label>Màu đèn <input type="color" id="color" value="#ffc400"></label><label>Chuyển (ms) <input type="number" id="ms" min="0" max="3000" step="10" value="300"></label><label>Giữ (ms) <input type="number" id="hold" min="0" max="5000" step="10" value="0"></label><label>Mắt <select id="mood"></select></label></div>
-<div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="mirror" style="width:auto;min-height:0" checked> Đối xứng trái/phải</label><button id="live">Xem trực tiếp: tắt</button><button id="zero">Về đứng</button></div>
+<div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="mirror" style="width:auto;min-height:0"> Đối xứng trái/phải</label><button id="live">Xem trực tiếp: tắt</button><button id="zero">Về đứng</button></div>
 <div class="row"><button id="addFrame">+ Thêm khung</button><button id="updateFrame">Cập nhật khung</button><button id="deleteFrame">Xóa khung</button></div>
 <ul id="frames"></ul>
 <div class="row"><button id="playOnce">▶ Chạy</button><button id="playLoop">🔁 Lặp</button></div>
@@ -44,7 +44,7 @@ main{max-width:1100px;margin:auto;padding:14px;display:grid;gap:14px;grid-templa
 const $=id=>document.getElementById(id);
 // Leg order FL, FR, RL, RR. Page units: hip + = foot forwards, knee + = lift.
 // Firmware command frame: knee negative lifts; left hips move forwards when negative.
-const LEGS=['Trước trái','Trước phải','Sau trái','Sau phải'],HIP_FORWARD=[-1,1,-1,1],LIMIT=30,KNEE_UP=60,TICK=150,MAX_LIST=3800;
+const LEGS=['Trước trái','Trước phải','Sau trái','Sau phải'],HIP_FORWARD=[-1,1,-1,1],LIMIT=30,KNEE_UP=100,TICK=150,MAX_LIST=3800;
 const clampDeg=v=>Math.max(-LIMIT,Math.min(LIMIT,Math.round(Number(v)||0)));
 // Knees (positive = lift) may go up to KNEE_UP; pressing down stays at LIMIT.
 const clampKnee=v=>Math.max(-LIMIT,Math.min(KNEE_UP,Math.round(Number(v)||0)));
@@ -63,8 +63,8 @@ const PRESETS=[
  {n:'😄 Vui',e:'happy',f:[F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(STAND,'#ffc400',200)]},
  {n:'😢 Buồn',e:'sad',f:[F(P([-10,-10,0,0],[28,28,15,15]),'#2050ff',1200,1500),F(P([-10,-10,0,0],[22,22,12,12]),'#102890',900,600),F(STAND,'#2050ff',900)]},
  {n:'😡 Giận',e:'angry',f:[F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(P([15,15,0,0],[0,30,0,0]),'#ff0000',120),F(P([15,15,0,0],[0,-25,0,0]),'#600000',100),F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(STAND,'#ff0000',250)]},
- // Owner, 2026-11-16: CH3's knee lifts all the way and waves down/up.
- {n:'👋 Chào',e:'wink',f:[F(P([0,15,0,0],[-10,60,-10,-10]),'#00d0ff',400),F(P([0,15,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,15,0,0],[-10,60,-10,-10]),'#80f0ff',200),F(P([0,15,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,15,0,0],[-10,60,-10,-10]),'#80f0ff',200),F(P([0,15,0,0],[-10,30,-10,-10]),'#00d0ff',200),F(P([0,15,0,0],[-10,60,-10,-10]),'#80f0ff',200,300),F(STAND,'#00d0ff',400)]},
+ // Owner, 2026-11-16: CH3's knee lifts all the way (100) and waves down/up.
+ {n:'👋 Chào',e:'wink',f:[F(P([0,15,0,0],[-10,100,-10,-10]),'#00d0ff',500),F(P([0,15,0,0],[-10,60,-10,-10]),'#00d0ff',250),F(P([0,15,0,0],[-10,100,-10,-10]),'#80f0ff',250),F(P([0,15,0,0],[-10,60,-10,-10]),'#00d0ff',250),F(P([0,15,0,0],[-10,100,-10,-10]),'#80f0ff',250),F(P([0,15,0,0],[-10,60,-10,-10]),'#00d0ff',250),F(P([0,15,0,0],[-10,100,-10,-10]),'#80f0ff',250,300),F(STAND,'#00d0ff',500)]},
  {n:'💃 Nhảy',e:'love',f:[F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(STAND,'#c040ff',250)]},
  {n:'😴 Ngủ',e:'asleep',f:[F(P([0,0,0,0],[30,30,30,30]),'#301060',2000,2500),F(STAND,'#301060',1500)]},
  {n:'😲 Ngạc nhiên',e:'surprised',f:[F(P([0,0,0,0],[-30,-30,-30,-30]),'#ffffff',100,700),F(STAND,'#ffffff',400)]}
