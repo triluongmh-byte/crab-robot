@@ -8,7 +8,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v27")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v28")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -37,9 +37,9 @@ int main(){
  // Speed slider: decimal fraction .2-1, default .9; malformed or out-of-range refused.
  assert(std::fabs(crab::Motion{}.speed-.9f)<1e-6f);
  server.request("/api/speed",{{"token","42"},{"value","0.55"}});assert(server.code==200&&std::fabs(motion.speed-.55f)<1e-4f);
- server.request("/api/speed",{{"token","42"},{"value","1"}});assert(server.code==200&&motion.speed==1.f);
- server.request("/api/speed",{{"token","42"},{"value",".2"}});assert(server.code==200&&std::fabs(motion.speed-.2f)<1e-4f);
- for(const char* bad:{"0.1","1.5","","abc","0.5.5","-0.5","0.900001","nan"}){server.request("/api/speed",{{"token","42"},{"value",bad}});assert(server.code==400&&std::fabs(motion.speed-.2f)<1e-4f);}
+ server.request("/api/speed",{{"token","42"},{"value","1"}});assert(server.code==200&&motion.speed==1.f&&trimStore.getInt("speed",0)==100);
+ server.request("/api/speed",{{"token","42"},{"value",".2"}});assert(server.code==200&&std::fabs(motion.speed-.2f)<1e-4f&&trimStore.getInt("speed",0)==20);
+ for(const char* bad:{"0.1","1.5","","abc","0.5.5","-0.5","0.900001","nan"}){server.request("/api/speed",{{"token","42"},{"value",bad}});assert(server.code==400&&std::fabs(motion.speed-.2f)<1e-4f&&trimStore.getInt("speed",0)==20);}
  server.request("/api/speed",{{"token","7"},{"value","0.9"}});assert(server.code==409);
  // Heading trim: signed percent -30..30, persisted, in status.
  server.request("/api/balance",{{"token","42"},{"value","-12"}});assert(server.code==200&&motion.balance==-12&&trimStore.getInt("balance",0)==-12);

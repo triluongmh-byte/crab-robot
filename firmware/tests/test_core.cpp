@@ -190,6 +190,9 @@ static void test_trims(){
  {Motion m;assert(!m.bootArm(true,0,false,true)&&!m.positional()&&m.updateHold&&!m.brownoutHold);
   assert(m.selectActuator(true,10)&&!m.updateHold);
   Motion b;assert(!b.bootArm(true,0,true,true)&&b.brownoutHold&&!b.updateHold);} // brownout wins the message
+ // Saved speed (percent) survives restarts; junk falls back to the default.
+ assert(crab::savedSpeed(100)==1.f&&std::fabs(crab::savedSpeed(55)-.55f)<1e-4f&&std::fabs(crab::savedSpeed(20)-.2f)<1e-4f);
+ for(int bad:{-1,0,19,101,5000})assert(crab::savedSpeed(bad)==cfg::SPEED_DEFAULT);
  // A missing PCA9685 is probed again every 2 s (plug it back in, no reset).
  {uint32_t last=1000;assert(!crab::driverProbeDue(last,2999)&&last==1000);assert(crab::driverProbeDue(last,3000)&&last==3000);
   assert(!crab::driverProbeDue(last,4999)&&crab::driverProbeDue(last,5000));uint32_t wrap=0xFFFFF000u;assert(crab::driverProbeDue(wrap,0x00000800u));}

@@ -186,7 +186,7 @@ Building doesn't flash a board, run motors, print or order anything.
 ## Known issues
 
 - **Weak Wi-Fi makes the page spin.** Check **Sóng Wi-Fi** in ☰ → Trạng thái. Below about −75 dBm, move the crab nearer the router. Also keep the 18650 cell and the servo wires away from the LILYGO's antenna end.
-- **Speed isn't saved on the crab.** A reboot brings back 90%.
+- **Speed is saved on the crab** (since v28), like Nhấc gối and Bù lệch. Before that a reboot or firmware update brought back 90%.
 - **After a brownout reset the servos stay off.** The screen and page show **Sụt áp: bấm Bật servo**. Check the power (cable, power bank), then tap **Bật servo**. Before v23 the crab re-armed straight away, sagged again and kept resetting.
 - **Walking direction and leg names are set separately** (see the warning under [servo channels](#which-servo-goes-where)). Built-in emotions and the heading trim may feel "back to front" relative to Tiến.
 - **A USB cable dragging behind** can pull the crab off course. A power bank mounted on the body walks straighter.

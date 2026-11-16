@@ -360,3 +360,7 @@ Release `positional180-v27`. Unplugging and re-plugging the PCA9685 used to leav
 
 - While the driver is missing, the motion task probes it again every 2 s (`crab::driverProbeDue`, `DRIVER_PROBE_MS`).
 - When the probe succeeds, the PCA comes back with the servos **off**. Tap **Bật servo** to move again.
+
+## Speed is saved — 2026-11-16
+
+Release `positional180-v28`. Every firmware update restarts the crab, and the walking speed came back at 90% each time. `/api/speed` now saves the value as a percent (`speed` in the `cua-180-v1` store), and boot restores it through `crab::savedSpeed`. A missing or out-of-range value gives the default.

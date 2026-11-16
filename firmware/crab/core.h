@@ -162,6 +162,8 @@ struct ServoTest {
   counts=neutral+step;last=now;active=true;return true;
  }
 };
+// Walking speed saved as a percent (v28); missing or out of range gives the default.
+inline float savedSpeed(int32_t percent){const float v=percent*.01f;return percent>=0&&v>=cfg::SPEED_MIN-1e-4f&&v<=cfg::SPEED_MAX+1e-4f?clamp(v,cfg::SPEED_MIN,cfg::SPEED_MAX):cfg::SPEED_DEFAULT;}
 // Missing PCA9685 is probed again every DRIVER_PROBE_MS (v27).
 constexpr uint32_t DRIVER_PROBE_MS=2000;
 inline bool driverProbeDue(uint32_t& last,uint32_t now){if(now-last<DRIVER_PROBE_MS)return false;last=now;return true;}
