@@ -15,11 +15,12 @@ constexpr int TRIM_FINE=1, TRIM_COARSE=3;
 // Knee lift is owner-adjustable KNEE_LIFT_MIN..KNEE_LIFT_MAX (saved); owner,
 // 2026-11-13: feet dragged on the table while the hips returned, pushing the
 // crab backwards, so the default rose from 30 to 45 deg nominal.
-// Owner, 2026-11-16: the knees can lift much higher, so knee pulses now get
-// the same +/-90 deg nominal (1000-2000 us) as the hips (was 65). That also
-// lets CH3/CH5 (trims +/-30) reach the full lift. Emotion poses may lift a
-// knee up to KNEE_LIFT_MAX; pressing down stays at JOINT_LIMIT.
-constexpr float KNEE_LIFT_MIN=20, KNEE_LIFT_MAX=60, HIP_LIMIT=90, KNEE_PULSE_LIMIT=90;
+// Owner, 2026-11-16: the knees can lift much higher. Walking still lifts at
+// most KNEE_LIFT_MAX; emotion poses may lift a knee up to POSE_KNEE_LIFT (60
+// tested without binding, owner asked for 100). Pressing down stays at
+// JOINT_LIMIT. KNEE_PULSE_LIMIT leaves room for the +/-30 trims:
+// 130 deg nominal = 1500 +/- 722 us, inside the SG90's 500-2500 us.
+constexpr float KNEE_LIFT_MIN=20, KNEE_LIFT_MAX=60, POSE_KNEE_LIFT=100, HIP_LIMIT=90, KNEE_PULSE_LIMIT=130;
 // Owner, 2026-11-13: CH0 actually sits at the REAR RIGHT. The firmware CAD
 // frame (CH0 = front left) is therefore rotated 180 deg from the real robot.
 // Drive commands are rotated into the CAD frame so Forward goes to CH4/CH6.

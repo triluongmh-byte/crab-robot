@@ -375,3 +375,13 @@ Release `positional180-v29`. The owner found that the knees can lift much higher
 - **Emotion poses:** a knee may lift up to `KNEE_LIFT_MAX` (60°). Pressing a knee down stays at 30°, and hips stay at ±30°.
   - The emotion editor's knee sliders go to 60.
 - **👋 Chào:** CH3's knee lifts all the way and waves 60° ↔ 30° three times, then the crab stands again.
+
+## Knee lift 100° in emotions, independent sliders — 2026-11-16
+
+Release `positional180-v30`. The owner tested 60° in the emotion editor and nothing bound, then asked for 100°.
+
+- **Higher lift in poses.** Poses may lift a knee up to `POSE_KNEE_LIFT` = 100° nominal.
+  - The knee pulse limit is 130° nominal (1500 ± 722 µs), which leaves room for the ±30° trims and stays inside the SG90's 500–2500 µs.
+  - Walking still lifts at most `KNEE_LIFT_MAX` (60°). Hips and knee press-down are unchanged.
+- **👋 Chào:** CH3's knee goes to 100° and waves 100° ↔ 60°.
+- **Sliders:** one slider now moves only its own joint. **Đối xứng trái/phải** starts unticked; before, it was ticked, so every slider also moved the opposite leg.
