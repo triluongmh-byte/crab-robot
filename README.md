@@ -157,6 +157,14 @@ No USB cable needed (since v24): ☰ → **Trạng thái** → **Cập nhật fi
 2. Type the code, pick the **lilygo** `crab.ino.bin` and tap **Nạp firmware**.
 3. The servos switch off, the firmware is written, and the crab restarts by itself.
 
+From a computer on the same Wi-Fi as the crab:
+
+```sh
+python3 tools/firmware/ota_push.py --host <crab-ip> --bin build/firmware/esp32/crab.ino.bin
+```
+
+It takes control, asks the crab to show the PIN, then asks you for it. Run `python3 tools/firmware/test_ota_push.py` for its unit test.
+
 A wrong file or a cut upload leaves the old firmware running. If new firmware crashes in its first 20 s, the crab goes back to the previous one. Details are in [firmware/README.md](firmware/README.md).
 
 ## Firmware
