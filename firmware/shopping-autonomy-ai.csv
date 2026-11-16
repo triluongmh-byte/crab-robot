@@ -1,10 +1,11 @@
-﻿uu_tien,mon,shop,so_luong,don_gia_usd,thanh_tien_usd,de_lam_gi,ghi_chu,link
-1,XIAO ESP32S3 Sense (camera + mic),Seeed,1,18.90,18.90,"Mắt + tai AI: stream camera lên điện thoại, nhận diện vật/người, nghe giọng nói","21×18 mm, 8MB PSRAM, cấp 5V từ nhánh logic. Có thể ship OV3660 thay OV5640",https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html
-1,Grove VL53L0X ToF,Seeed,2,7.90,15.80,"Chĩa xuống đất: chống té khỏi bàn khi Tự đi; con thứ 2 dự phòng hoặc chĩa phía sau lúc lùi","I²C chung bus PCA, không tốn GPIO. Hai con cùng địa chỉ nên cần thêm chân XSHUT để đổi địa chỉ",https://www.seeedstudio.com/Grove-Time-of-Flight-Distance-Sensor-VL53L0X.html
-2,SC09 bus servo,Waveshare,10,8.99,89.90,"Thay 8 SG90: servo tự báo góc/lực/nhiệt → biết chân chạm đất, tự cân trim, đi ổn định hơn","8 con + 2 dự phòng. 23.2×12×25.5 mm (cao hơn SG90 ~3 mm), 2.3 kg·cm @6V, 4–6V. CHECK CAD chỗ gắn servo TRƯỚC KHI MUA. Phải viết lại firmware, bỏ PCA9685",https://www.waveshare.com/sc09-servo.htm
-2,Bus Servo Adapter (A),Waveshare,1,4.99,4.99,"Cắm USB để đặt ID cho từng con SC09 (bắt buộc với bus servo) và test servo","Trang ghi nguồn vào 9–12.6V: kiểm lại có cấp được 5–6V cho SC09 không trước khi mua",https://www.waveshare.com/bus-servo-adapter-a.htm
-3,ESP32-S3-Touch-AMOLED-1.32 (màn tròn),Waveshare,1,21.99,21.99,"Làm mặt/mắt cua bằng AMOLED tròn cho có hồn","Tuỳ thích. Là nguyên board ESP32-S3 riêng, phải chế thêm firmware + giá gắn",https://www.waveshare.com/product/esp32-related/boards-kits/esp32-s3/esp32-s3-touch-amoled-1.32.htm
-2,MAX98357A I2S amp,mua ngoài,1,,,"Loa cho robot kêu/nói (TTS từ điện thoại)","GPIO16/43/44 như kế hoạch. Check giá ở tiệm",
-2,Loa 8Ω 1–2W nhỏ (~20–28 mm),mua ngoài,1,,,"Đi với MAX98357A",Check giá ở tiệm,
-2,IMU QMI8658 hoặc MPU6050,mua ngoài,1,,,"Biết bị té/lật, nghiêng → tự dừng; giúp đi thẳng","I²C chung bus. 10-DOF của Waveshare đã ngừng bán",
-1,Vít M2×6 tự ren,mua ngoài,8,,,"Bắt 2 cảm biến siêu âm vào giá in 3D","Cần 4, mua dư",
+﻿mon,shop,so_luong,don_gia_usd,thanh_tien_usd,de_lam_gi,ghi_chu,link
+XIAO ESP32S3 Sense (camera + mic),Seeed,1,18.90,18.90,"Mắt + tai AI: stream camera lên điện thoại, nhận diện vật/người, nghe giọng nói","21×18 mm, 8MB PSRAM, cấp 5V từ nhánh logic. Có thể ship OV3660 thay OV5640",https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html
+Grove VL53L0X ToF,Seeed,2,7.90,15.80,Chĩa xuống đất: chống té khỏi bàn khi Tự đi; con thứ 2 dự phòng hoặc chĩa phía sau lúc lùi,"I²C chung bus PCA, không tốn GPIO. Hai con cùng địa chỉ nên cần thêm chân XSHUT để đổi địa chỉ",https://www.seeedstudio.com/Grove-Time-of-Flight-Distance-Sensor-VL53L0X.html
+SC09 bus servo,Waveshare,10,8.99,89.90,"Thay 8 SG90: servo tự báo góc/lực/nhiệt → biết chân chạm đất, tự cân trim, đi ổn định hơn","8 con + 2 dự phòng. 23.2×12×25.5 mm (cao hơn SG90 ~3 mm), 2.3 kg·cm @6V, 4–6V. CHECK CAD chỗ gắn servo TRƯỚC KHI MUA. Phải viết lại firmware, bỏ PCA9685",https://www.waveshare.com/sc09-servo.htm
+Bus Servo Adapter (A),Waveshare,1,4.99,4.99,Cắm USB để đặt ID cho từng con SC09 (bắt buộc với bus servo) và test servo,Trang ghi nguồn vào 9–12.6V: kiểm lại có cấp được 5–6V cho SC09 không trước khi mua,https://www.waveshare.com/bus-servo-adapter-a.htm
+ESP32-S3-Touch-AMOLED-1.32 (màn tròn),Waveshare,1,21.99,21.99,Làm mặt/mắt cua bằng AMOLED tròn cho có hồn,"Là nguyên board ESP32-S3 riêng, phải chế thêm firmware + giá gắn",https://www.waveshare.com/product/esp32-related/boards-kits/esp32-s3/esp32-s3-touch-amoled-1.32.htm
+MAX98357A I2S amp,mua ngoài,1,,,Loa cho robot kêu/nói (TTS từ điện thoại),GPIO16/43/44 như kế hoạch. Check giá ở tiệm,
+Loa 8Ω 1–2W nhỏ (~20–28 mm),mua ngoài,1,,,Đi với MAX98357A,Check giá ở tiệm,
+IMU QMI8658 hoặc MPU6050,mua ngoài,1,,,"Biết bị té/lật, nghiêng → tự dừng; giúp đi thẳng",I²C chung bus. 10-DOF của Waveshare đã ngừng bán,
+Vít M2×6 tự ren,mua ngoài,8,,,Bắt 2 cảm biến siêu âm vào giá in 3D,"Cần 4, mua dư",
+"TỔNG 2 shop (chưa ship, chưa tính đồ mua ngoài)",,,,151.58,,,
