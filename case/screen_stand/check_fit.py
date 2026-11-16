@@ -4,7 +4,7 @@
   2. Screen: the shell envelope sits in the slots with no overlap with the stand, frame or servos, and it can
      slide in along the screen's own height from above without touching the stand.
   3. USB-C: a plug path at either end clears the stand, the frame and the servos.
-  4. Snap: lowering the stand straight down onto the crossbar only meets it at the barbs, and by no more
+  4. Snap: lowering the stand straight down onto the rim only meets it at the barbs, and by no more
      than the barb depth.
 
 Writes fit_report.json and screen_stand_fit_preview.step next to this file.
@@ -78,7 +78,10 @@ def main():
     check('screen vs stand overlap mm3', round(v, 3), 0 <= v <= TOL)
     # screen slides in along its own height from 40 mm above
     a_ = math.radians(S.P.tilt)
-    wdir = cq.Vector(-math.sin(a_), 0, math.cos(a_))
+    # the screen's own 'up' direction, turned onto the robot like the stand
+    o0, o1 = S.mount(cq.Workplane().add(cq.Vertex.makeVertex(0, 0, 0))).val(), \
+        S.mount(cq.Workplane().add(cq.Vertex.makeVertex(-math.sin(a_), 0, math.cos(a_)))).val()
+    wdir = cq.Vector(o1.X - o0.X, o1.Y - o0.Y, o1.Z - o0.Z)
     worst = 0.0
     for i in range(1, 81):
         worst = max(worst, overlap(scr.translate(wdir * (0.5 * i)), st))
@@ -91,7 +94,7 @@ def main():
         for n, f in (('stand', st), ('frame_upper', up), ('servos', sv)):
             v = overlap(pl, f)
             check(f'USB-C plug end{i} vs {n} overlap mm3', round(v, 3), 0 <= v <= TOL)
-    # snap: lower the stand onto the crossbar; contact only at the barbs
+    # snap: lower the stand onto the rim wall; contact only at the barbs
     worst, at = 0.0, None
     for i in range(1, 41):
         dz = 0.25 * i

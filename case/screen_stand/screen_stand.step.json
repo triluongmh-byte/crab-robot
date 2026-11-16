@@ -1,17 +1,17 @@
 {
   "stem": "screen_stand",
   "is_solid": true,
-  "volume_mm3": 6781.772,
+  "volume_mm3": 5117.198,
   "bbox": {
     "min": [
-      20.3735,
-      -35.5,
-      33.2
+      -45.5,
+      11.1735,
+      42.3
     ],
     "max": [
-      46.2083,
-      35.5,
-      84.8932
+      25.5,
+      37.02,
+      86.8932
     ]
   },
   "mesh_tolerance": 0.05,
@@ -19,7 +19,7 @@
   "validation": {
     "warnings": [],
     "is_solid": true,
-    "volume_mm3": 6781.772
+    "volume_mm3": 5117.198
   },
   "parts": []
 }
