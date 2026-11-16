@@ -338,3 +338,18 @@ Release `positional180-v25`. On the office Wi-Fi the page kept spinning: pings t
   - down to −70: khá
   - down to −80: yếu
   - below that: rất yếu, with a hint to move the battery and wires away from the antenna
+
+## Hands-free updates from a computer — 2026-11-16
+
+Release `positional180-v26`. The owner wants updates pushed straight from the computer, without anyone reading the screen.
+
+- **PIN over the home Wi-Fi.** When `/api/ota/begin` arrives over the home or office Wi-Fi, the reply carries the PIN, so `tools/firmware/ota_push.py --host <ip> --bin …` runs with no human step.
+  - That Wi-Fi has a password; the crab tells the two apart by which of its own addresses the request came in on.
+  - Over the crab's own open Wi-Fi the PIN still only shows on the screen.
+  - Anyone already on the home or office Wi-Fi who opens the page can therefore update the crab. The owner accepted that.
+- **Servos stay off after an update.** A pushed update may come with nobody watching, so after the post-OTA restart the servos do not arm. The screen shows **Đã cập nhật: bấm Bật servo** and `/api/status` has `"updateHold":true`. **Bật servo** clears it.
+  - An `RTC_NOINIT` flag set just before `ESP.restart()` tells this restart apart. A power-on, a reset or a crash rollback still arms as before; a brownout still holds.
+- **`ota_push.py`:**
+  - It uses the system `curl`, because on macOS 15 a Homebrew Python gets "No route to host" on the LAN (Local Network privacy).
+  - It takes the PIN from the reply when it is there.
+  - Otherwise it asks for it, or works in two steps with `--show-pin` and then `--pin`.

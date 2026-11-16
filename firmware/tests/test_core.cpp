@@ -186,6 +186,10 @@ static void test_trims(){
   for(uint32_t t=0;t<3000;t+=10)assert(m.tick(t)==-1);assert(m.enabled==0&&m.brownoutHold);
   assert(m.selectActuator(true,3000)&&m.positional()&&!m.brownoutHold);
   for(uint32_t t=3000;t<6000;t+=10)m.tick(t);assert(m.enabled==8);}
+ // After an OTA restart too (unattended push): servos off until Bật servo.
+ {Motion m;assert(!m.bootArm(true,0,false,true)&&!m.positional()&&m.updateHold&&!m.brownoutHold);
+  assert(m.selectActuator(true,10)&&!m.updateHold);
+  Motion b;assert(!b.bootArm(true,0,true,true)&&b.brownoutHold&&!b.updateHold);} // brownout wins the message
  // Knee lift: default raised to 45 (feet dragged), owner range 20-60.
  {assert(cfg::KNEE_LIFT==45);Motion m;assert(m.kneeLift==cfg::KNEE_LIFT&&m.setKneeLift(60)&&!m.setKneeLift(61)&&!m.setKneeLift(19)&&m.kneeLift==60);
   for(int d:{1,3}){double lo=0;for(int k=0;k<200;k++){float o[8];gait(k*.0314f,bodyDirection(d),1,o,55);for(int leg=0;leg<4;leg++)lo=std::min(lo,double(o[2*leg+1]));}assert(std::fabs(lo+55)<.01);}}

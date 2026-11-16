@@ -163,13 +163,13 @@ From a computer on the same Wi-Fi as the crab:
 python3 tools/firmware/ota_push.py --host <crab-ip> --bin build/firmware/esp32/crab.ino.bin
 ```
 
-It takes control, asks the crab to show the PIN, then asks you for it. Run `python3 tools/firmware/test_ota_push.py` for its unit test.
+It takes control and gets the PIN. Over the home/office Wi-Fi (v26+) the crab returns the PIN itself, so nobody has to read the screen; over the crab's own Wi-Fi it asks you for it. After an update the servos stay off until you tap **Bật servo**. Run `python3 tools/firmware/test_ota_push.py` for its unit test.
 
 A wrong file or a cut upload leaves the old firmware running. If new firmware crashes in its first 20 s, the crab goes back to the previous one. Details are in [firmware/README.md](firmware/README.md).
 
 ## Firmware
 
-- **Running now:** `positional180-v25`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
+- **Running now:** `positional180-v26`, target **`lilygo`**. The **`integrated`** target is for the future integrated board.
 - **Build, flash and version history:** [firmware/README.md](firmware/README.md). See also [gaits](firmware/CRAWL.md), [web controls](firmware/WEB-CONTROL.md) and [emotions](firmware/EMOTIONS.md).
 
 ```sh

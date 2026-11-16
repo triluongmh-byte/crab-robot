@@ -108,10 +108,14 @@ def main():
         code, s = call('ota/begin', {'token': token})
         if code != 200:
             sys.exit('PIN request refused (HTTP %s): %s' % (code, s.get('error', '')))
-        if a.show_pin:
+        if s.get('pin'):  # v26+ over the home/office Wi-Fi: no one needs to read the screen
+            pin = str(s['pin'])
+            print('PIN received over the home Wi-Fi.')
+        elif a.show_pin:
             print('The crab shows a 6-digit PIN for 2 minutes. Run again with --pin <PIN>.')
             return
-        pin = input('PIN on the crab screen: ').strip()
+        else:
+            pin = input('PIN on the crab screen: ').strip()
     body, ctype = multipart(data, a.bin.name)
     print('Uploading…')
     code, s = call(upload_url(base, token, pin), body=body, headers={'Content-Type': ctype}, timeout=120)

@@ -42,6 +42,9 @@ struct FakeUpdate{
  void abort(){running=false;aborts++;}
 } Update;
 String runningSlot(){return "app0";}
+struct StubIP{String s;String toString()const{return s;}bool operator==(const StubIP& o)const{return s==o.s;}};
+// Address of the crab's interface the request came in on: station (home Wi-Fi) or its own AP.
+struct StubClient{StubIP local{"192.168.4.1"};StubIP localIP()const{return local;}};
 struct Server{
  std::map<std::string,std::function<void()>> handlers;
  std::map<std::string,String> args;
@@ -51,6 +54,7 @@ struct Server{
  void on(const char* path,int,std::function<void()> fn){handlers[path]=fn;}
  void on(const char* path,int,std::function<void()> fn,std::function<void()> upload){handlers[path]=fn;uploads[path]=upload;}
  HTTPUpload& upload(){return up;}
+ StubClient cl;StubClient& client(){return cl;}
  void onNotFound(std::function<void()> fn){fallback=fn;}
  void begin(){}
  String arg(const char* name){return args[name];}
@@ -80,8 +84,7 @@ struct Server{
 struct Wifi{
  int state=0,apClients=1,beginCalls=0,disconnectCalls=0,scanCalls=0,scanState=WIFI_SCAN_FAILED;
  String ssid;std::vector<String> networks={"Nhà tôi","Nhà tôi","", "Other"};
- struct IP{String toString(){return "192.168.1.2";}};
- IP localIP(){return {};}
+ StubIP localIP(){return {"192.168.1.2"};}
  int status(){return state;}
  int rssi=-67;int RSSI(){return rssi;}
  int softAPgetStationNum(){return apClients;}
