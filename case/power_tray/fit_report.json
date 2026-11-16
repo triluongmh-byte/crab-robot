@@ -1,0 +1,112 @@
+{
+ "robotDir": "/Users/macbookpro/harnesses/crab-robot-v17g/case/robot",
+ "params": {
+  "holder": [
+   79.0,
+   21.0,
+   25.0
+  ],
+  "module": [
+   25.0,
+   20.0,
+   25.0
+  ],
+  "lipo": [
+   30.0,
+   8.0,
+   26.0
+  ],
+  "switch": [
+   20.0,
+   14.0,
+   22.0
+  ],
+  "fit": 0.6,
+  "switch_fit": 0.3,
+  "floor_z": 3.0,
+  "floor_t": 2.4,
+  "wall": 1.6,
+  "holder_y0": -19.0,
+  "holder_wall_h": 10.0,
+  "plus_wall_y0": 7.0,
+  "module_x0": 6.4,
+  "module_wall_h": 6.0,
+  "lipo_x0": -31.5,
+  "lipo_wall_h": 12.0,
+  "band_x": 33.5,
+  "end_x": 41.8,
+  "plate_y": [
+   -24.3,
+   30.9
+  ],
+  "tie_w": 4.0,
+  "tie_t": 2.0,
+  "groove_d": 1.4,
+  "groove_w": 5.4,
+  "holder_tie_x": [
+   -12.0,
+   12.0
+  ],
+  "lipo_tie_x": -21.5,
+  "tiedown_x": 5.5,
+  "tiedown_slot_y": 2.8,
+  "wire_notch": [
+   6.0,
+   5.0
+  ],
+  "sw_plate": [
+   40.0,
+   24.0,
+   2.0
+  ],
+  "sw_tie_x": 15.5
+ },
+ "checks": {
+  "seated tray vs frame_lower overlap mm3": 0.0,
+  "seated holder (+0.75) vs frame_lower overlap mm3": 0.0,
+  "seated module (+0.75) vs frame_lower overlap mm3": 0.0,
+  "seated lipo (+0.75) vs frame_lower overlap mm3": 0.0,
+  "seated tray vs frame_upper overlap mm3": 0.0,
+  "seated holder (+0.75) vs frame_upper overlap mm3": 0.0,
+  "seated module (+0.75) vs frame_upper overlap mm3": 0.0,
+  "seated lipo (+0.75) vs frame_upper overlap mm3": 0.0,
+  "seated tray vs servos overlap mm3": 0.0,
+  "seated holder (+0.75) vs servos overlap mm3": 0.0,
+  "seated module (+0.75) vs servos overlap mm3": 0.0,
+  "seated lipo (+0.75) vs servos overlap mm3": 0.0,
+  "tray rests on frame_lower floor bars (gap mm)": 0.0,
+  "holder vs tray overlap mm3": 0.0,
+  "module vs tray overlap mm3": 0.0,
+  "lipo vs tray overlap mm3": 0.0,
+  "tallest part top z": 31.4,
+  "drop-in tray vs frame_lower worst overlap mm3": {
+   "mm3": 0.0,
+   "atZ": null
+  },
+  "drop-in holder (+0.75) vs frame_lower worst overlap mm3": {
+   "mm3": 0.0,
+   "atZ": null
+  },
+  "drop-in module (+0.75) vs frame_lower worst overlap mm3": {
+   "mm3": 0.0,
+   "atZ": null
+  },
+  "drop-in lipo (+0.75) vs frame_lower worst overlap mm3": {
+   "mm3": 0.0,
+   "atZ": null
+  },
+  "USB-C plug path vs frame_lower overlap mm3": 0.0,
+  "USB-C plug path vs frame_upper overlap mm3": 0.0,
+  "USB-C plug path vs servos overlap mm3": 0.0,
+  "USB-C plug path vs tray overlap mm3": 0.0
+ },
+ "ok": true,
+ "bbox": {
+  "xmin": -41.8,
+  "xmax": 41.8,
+  "ymin": -24.3,
+  "ymax": 30.9,
+  "zmin": 3.0,
+  "zmax": 17.4
+ }
+}

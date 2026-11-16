@@ -54,3 +54,7 @@ firmware/flash-result.json
 
 # Source-built candidate metadata; regenerated before interface checks
 firmware/FLASH-CANDIDATE.json
+
+# power tray: generated review renders
+case/power_tray/power_tray_review/
+case/power_tray/__pycache__/
