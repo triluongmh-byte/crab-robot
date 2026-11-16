@@ -8,7 +8,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v24")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v25")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -55,13 +55,14 @@ int main(){
  server.request("/api/move",{{"token","42"},{"seq","2"},{"dir","1"},{"fresh","1"}});assert(server.code==409); // not enabled8 yet
  for(int ch=0;ch<8;ch++)motion.tick(clockMs+20+300*ch);
  motion.newSession(42);assert(motion.enabled==8);
- server.request("/api/status");assert(server.code==200&&server.body.find("\"online\":false")!=String::npos);
+ server.request("/api/status");assert(server.code==200&&server.body.find("\"online\":false")!=String::npos&&server.body.find("\"rssi\":null")!=String::npos); // no station: no signal reading
  driverReady=false;server.request("/api/status");assert(server.code==200&&server.body.find("\"driver\":false")!=String::npos);driverReady=true;
  for(const char* path:{"/","/generate_204","/hotspot-detect.html","/connecttest.txt"}){
-  server.request(path);assert(server.code==200&&server.body==WEB_UI);
+  server.request(path);assert(server.code==200&&server.body==String((const char*)WEB_UI_GZ,WEB_UI_GZ_LEN)&&server.headers["Content-Encoding"]=="gzip"&&server.headers["Cache-Control"]=="no-store");
+  assert(WEB_UI_GZ_LEN<sizeof(WEB_UI)/2&&WEB_UI_GZ[0]==0x1f&&WEB_UI_GZ[1]==0x8b); // gzip, well under half the page
  }
  // Emotion studio: page, pose validation/lease, LED colour, saved list.
- server.request("/emo");assert(server.code==200&&server.body==EMOTE_UI);
+ server.request("/emo");assert(server.code==200&&server.body==String((const char*)EMOTE_UI_GZ,EMOTE_UI_GZ_LEN)&&server.headers["Content-Encoding"]=="gzip"&&EMOTE_UI_GZ_LEN<sizeof(EMOTE_UI)/2);
  const char* poseA="10,-20,-10,-20,10,-20,-10,-20";
  server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a","1,2,3"}});assert(server.code==400&&!motion.posing);
  server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a","1,2,3,4,5,6,7,99"}});assert(server.code==400);
@@ -135,6 +136,7 @@ int main(){
  // Loss of STA changes status only; AP command lease survives until the real watchdog expires.
  storedSsid="Saved";network.begin(true,clockMs);WiFi.ssid=storedSsid;WiFi.state=WL_CONNECTED;stationHasIp=true;
  serviceNetwork(clockMs);assert(network.state==crab::NetState::Online);
+ server.request("/api/status");assert(server.body.find("\"rssi\":-67")!=String::npos);
  stationHasIp=false;WiFi.state=0;serviceNetwork(++clockMs);assert(motion.lease&&motion.velocity.x==crab::bodyDirection(1).x);
  for(int i=0;i<200;i++){serviceNetwork(clockMs+=1000);assert(WiFi.beginCalls==0);}
  // Renew over AP even though saved network is unreachable.
@@ -215,5 +217,5 @@ int main(){
   server.request("/api/ota/begin",{{"token","42"}});server.uploadFile("/api/ota",{{"token","42"},{"pin",std::to_string(otaPin.pin)}},img,1000);
   assert(server.code==200&&server.body.find("\"restarting\":true")!=String::npos&&Update.switched&&Update.written==img&&!motion.positional()&&restartAt&&!otaPin.shown(clockMs));
   (void)t0;}
- std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<":180-only HTTP/status/arm/disarm/assembly/centre; removed360 endpoints; sequence release; saved Wi-Fi/AP/QR/scan/errors and credentials preserved; HTTP outside mutex; Auto mode sensors/token/arming/status/manual takeover; OTA marker scan/PIN issue-expiry-burn/owner/target refusal/drop/write error/success\n";
+ std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<":180-only HTTP/status/arm/disarm/assembly/centre; removed360 endpoints; sequence release; saved Wi-Fi/AP/QR/scan/errors and credentials preserved; HTTP outside mutex; Auto mode sensors/token/arming/status/manual takeover; gzip pages, RSSI; OTA marker scan/PIN issue-expiry-burn/owner/target refusal/drop/write error/success\n";
 }

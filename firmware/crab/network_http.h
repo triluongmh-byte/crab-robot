@@ -99,10 +99,13 @@ void otaDone(){
  json(why==crab::otamsg::OWNER?409:why==crab::otamsg::PIN?403:why==crab::otamsg::WRITE?500:400,"{\"error\":"+jsonString(why)+"}");
  ota=crab::OtaUpload{};
 }
+// Pages go out gzip-compressed (every phone browser accepts it): ~10 KB
+// instead of 27 KB, so they still load over a weak Wi-Fi link.
+void sendPage(const uint8_t* gz,size_t len){server.sendHeader("Cache-Control","no-store");server.sendHeader("Content-Encoding","gzip");server.send_P(200,"text/html; charset=utf-8",(const char*)gz,len);}
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v24\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"brownoutHold\":"+(state.brownoutHold?"true":"false")+",\"otaPin\":"+(otaPin.shown(millis())?"true":"false")+",\"slot\":"+jsonString(runningSlot())+",\"target\":"+jsonString(cfg::HARDWARE_TARGET)+",\"otaMarker\":"+jsonString(crab::OTA_MARKER)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+","+autoJson()+"}");});
+  json(200,String("{\"firmware\":\"positional180-v25\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"brownoutHold\":"+(state.brownoutHold?"true":"false")+",\"rssi\":"+(network.state==crab::NetState::Online?String(int(WiFi.RSSI())):String("null"))+",\"otaPin\":"+(otaPin.shown(millis())?"true":"false")+",\"slot\":"+jsonString(runningSlot())+",\"target\":"+jsonString(cfg::HARDWARE_TARGET)+",\"otaMarker\":"+jsonString(crab::OTA_MARKER)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+","+autoJson()+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -146,7 +149,7 @@ void configureHttp(){
  server.on("/api/eyes",HTTP_POST,[]{if(!owns()){error(409);return;}crab::Mood m;String s=server.arg("mood");if(s.length()>12||!crab::moodFromName(s.c_str(),m)){error();return;}emoteMood=m;moodAt=millis();ok();});
  server.on("/api/emotions",HTTP_GET,[]{String list=emoteStore.getString("list","[]");json(200,list.length()?list:String("[]"));});
  server.on("/api/emotions/save",HTTP_POST,[]{if(!owns()){error(409);return;}String data=server.arg("data");if(!emotionListValid(data)){error();return;}if(emoteStore.putString("list",data)!=data.length()){error(500);return;}ok();});
- server.on("/emo",HTTP_GET,[]{server.sendHeader("Cache-Control","no-store");server.send_P(200,"text/html; charset=utf-8",EMOTE_UI);});
+ server.on("/emo",HTTP_GET,[]{sendPage(EMOTE_UI_GZ,EMOTE_UI_GZ_LEN);});
  server.on("/api/speed",HTTP_POST,[]{if(!owns()){error(409);return;}float v;if(!speedArg(v)){error();return;}{Guard g;offForChangeLocked();motion.speed=v;}ok();});
  // Walking knee lift, whole degrees; persisted with the trims.
  server.on("/api/knee",HTTP_POST,[]{if(!owns()){error(409);return;}int32_t v;if(!intArg("value",v)){error();return;}bool accepted;{Guard g;accepted=motion.setKneeLift(v);}if(!accepted){error();return;}trimStore.putInt("knee",v);ok();});
@@ -180,7 +183,7 @@ void configureHttp(){
  });
  // The former /api/test and /api/360 routes are intentionally not registered.
  // Captive portal probes (Android/iOS/Windows) all land on our embedded page.
- server.onNotFound([]{if(server.uri().startsWith("/api/")){error(404);return;}server.sendHeader("Cache-Control","no-store");server.send_P(200,"text/html; charset=utf-8",WEB_UI);});
+ server.onNotFound([]{if(server.uri().startsWith("/api/")){error(404);return;}sendPage(WEB_UI_GZ,WEB_UI_GZ_LEN);});
  // Firmware update: PIN on the screen first, then the upload (see otaChunk).
  server.on("/api/ota/begin",HTTP_POST,[]{if(!owns()){error(409);return;}otaPin.issue(millis(),esp_random());json(200,"{\"ok\":true,\"seconds\":"+String(crab::OTA_PIN_MS/1000)+"}");});
  server.on("/api/ota",HTTP_POST,otaDone,otaChunk);

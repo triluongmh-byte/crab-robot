@@ -325,3 +325,16 @@ Host tests cover:
 - a dropped upload and a write error
 - a successful upload: exact bytes, slot switch, servos off, restart scheduled
 - the page: the code step, input checks, the error shown, status polls paused during the upload, and the reload afterwards
+
+## Lighter page and Wi-Fi signal — 2026-11-16
+
+Release `positional180-v25`. On the office Wi-Fi the page kept spinning: pings to the crab lost 35–75% of packets while the router lost none, so its link was weak.
+
+- **Gzip pages.** `/` and `/emo` are sent gzip-compressed: the control page goes from 27 KB to 10 KB, the emotion page from 16 KB to 6.5 KB.
+  - `embed_assets.py` writes deterministic `*_GZ` arrays; `tools/firmware/test_embed_assets.py` checks that they decompress to the sources.
+  - The app shrank by 26 KB.
+- **Signal strength.** `/api/status` has `rssi` (dBm; `null` without home Wi-Fi). The page lists **Sóng Wi-Fi**:
+  - −60 and above: mạnh
+  - down to −70: khá
+  - down to −80: yếu
+  - below that: rất yếu, with a hint to move the battery and wires away from the antenna

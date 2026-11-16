@@ -46,6 +46,9 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  // Armed state is spelled out on the disabled arm button, and Trạng thái lists details.
  assert(el('arm').disabled&&/Servo đang bật/.test(el('arm').textContent));
  const detail=el('statusDetail').children.map(x=>x.textContent);assert(detail.includes('Bật đủ 8/8')&&detail.includes('75%')&&detail.includes('Bình thường'));
+ // Station signal strength row (v25).
+ state.rssi=-58;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='-58 dBm · mạnh'));state.rssi=-84;await poll();assert(el('statusDetail').children.some(x=>/-84 dBm · rất yếu/.test(x.textContent)));
+ state.rssi=null;await poll();assert(vm.runInContext("rssiText(-65)",ctx)==='-65 dBm · khá'&&vm.runInContext("rssiText(-75)",ctx)==='-75 dBm · yếu');
  // Only the trot is left (v23): no gait picker or flick-hip slider.
  assert(!elements.gait&&!elements.flickHip&&!elements.flickHipBox&&/id="gaitHint">Hai cặp chân chéo/.test(html));
  // Brownout reset: servos stayed off, the page says why.
@@ -127,5 +130,5 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  vm.runInContext('otaBusy=false',ctx);
  failStatus=true;await poll();assert(dirs.every(b=>b.disabled));assert.equal(vm.runInContext('held',ctx),0);
  assert(!calls.some(c=>c.path.includes('/360')||c.path.includes('/test')));assert(!html.includes('id="show360"'));
- console.log('PASS: OTA PIN/file/6-digit checks/upload error shown/polls paused/reload after success, Tự đi toggle (sensors/armed gating, DỪNG ends it, blur/sleep/menu do not), actual180-only UI, auto-arm/explicit arm, enable8 readiness, 8-direction (4 straight + 4 turning arcs) split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
+ console.log('PASS: Wi-Fi signal row, OTA PIN/file/6-digit checks/upload error shown/polls paused/reload after success, Tự đi toggle (sensors/armed gating, DỪNG ends it, blur/sleep/menu do not), actual180-only UI, auto-arm/explicit arm, enable8 readiness, 8-direction (4 straight + 4 turning arcs) split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

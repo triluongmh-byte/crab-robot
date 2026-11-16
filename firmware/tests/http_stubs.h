@@ -55,11 +55,13 @@ struct Server{
  void begin(){}
  String arg(const char* name){return args[name];}
  String uri(){return currentUri;}
- void sendHeader(const char*,const char*){}
+ std::map<std::string,std::string> headers;
+ void sendHeader(const char* k,const char* v){headers[k]=v;}
  void send(int c,const char*,const String& s){assert(lockDepth==0);code=c;body=s;}
  void send_P(int c,const char* mime,const char* s){send(c,mime,s);}
+ void send_P(int c,const char* mime,const char* s,size_t n){send(c,mime,String(s,n));}
  void request(const char* path,std::map<std::string,String> a={}){
-  args=a;currentUri=path;body="";code=0;
+  args=a;currentUri=path;body="";code=0;headers.clear();
   auto it=handlers.find(path);if(it==handlers.end())fallback();else it->second();
   assert(code!=0);
  }
@@ -81,6 +83,7 @@ struct Wifi{
  struct IP{String toString(){return "192.168.1.2";}};
  IP localIP(){return {};}
  int status(){return state;}
+ int rssi=-67;int RSSI(){return rssi;}
  int softAPgetStationNum(){return apClients;}
  void disconnect(bool off,bool erase){assert(!off&&!erase);disconnectCalls++;state=0;}
  void begin(const char* s,const char*){ssid=s;beginCalls++;state=0;}

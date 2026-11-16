@@ -8,7 +8,13 @@ def put(p,data):
  if not p.exists() or p.read_bytes()!=data:p.write_bytes(data)
 ui=(ROOT/'firmware/assets/ui.html').read_text()
 emote=(ROOT/'firmware/assets/emote.html').read_text()
-put(Path('firmware/crab/web_ui.h'),('#pragma once\n#include <pgmspace.h>\nstatic const char WEB_UI[] PROGMEM=R"CRABHTML('+ui+')CRABHTML";\nstatic const char EMOTE_UI[] PROGMEM=R"CRABHTML('+emote+')CRABHTML";\n').encode())
+import gzip
+# Served gzip-compressed (v25): about a third of the bytes, so the page still
+# loads over a weak Wi-Fi link. mtime=0 keeps the output deterministic.
+def gz(name,text):
+ data=gzip.compress(text.encode(),compresslevel=9,mtime=0)
+ return 'static const uint8_t %s_GZ[] PROGMEM={%s};\nstatic const size_t %s_GZ_LEN=%d;\n'%(name,','.join(str(b) for b in data),name,len(data))
+put(Path('firmware/crab/web_ui.h'),('#pragma once\n#include <pgmspace.h>\n#include <stdint.h>\n#include <stddef.h>\n// Plain copies are for host tests and reference; the firmware serves the _GZ arrays.\nstatic const char WEB_UI[] PROGMEM=R"CRABHTML('+ui+')CRABHTML";\nstatic const char EMOTE_UI[] PROGMEM=R"CRABHTML('+emote+')CRABHTML";\n'+gz('WEB_UI',ui)+gz('EMOTE_UI',emote)).encode())
 # SIL Open Font License, pinned Noto Sans source; font is data, not an SDK.
 font=ROOT/'firmware/assets/NotoSans-Regular.ttf'
 if not font.exists():
