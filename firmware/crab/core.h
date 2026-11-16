@@ -162,6 +162,9 @@ struct ServoTest {
   counts=neutral+step;last=now;active=true;return true;
  }
 };
+// Missing PCA9685 is probed again every DRIVER_PROBE_MS (v27).
+constexpr uint32_t DRIVER_PROBE_MS=2000;
+inline bool driverProbeDue(uint32_t& last,uint32_t now){if(now-last<DRIVER_PROBE_MS)return false;last=now;return true;}
 } // namespace crab
 #include "drive360.h"
 namespace crab {

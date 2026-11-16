@@ -64,11 +64,16 @@ void serviceAuto(uint32_t now){
 void motionTask(void*){
  ActuatorOutput outputs;
  TickType_t wake=xTaskGetTickCount();
+ uint32_t lastProbe=millis();
  for(;;){
   {
    Guard g;motion.inhibit=eraseHold.load()||!driverReady.load();
    if(driverReady.load()&&!outputs.service(motion,servos,millis()))driverReady=false;
-   else if(!driverReady.load()){motion.stop();motion.tick(millis());}
+   else if(!driverReady.load()){motion.stop();motion.tick(millis());
+    // PCA unplugged or not powered: retry every 2 s so plugging it back in
+    // needs no reset (owner, 2026-11-16). It comes back with the servos off.
+    if(crab::driverProbeDue(lastProbe,millis())&&servos.begin()){motion.selectActuator(false,millis());driverReady=true;}
+   }
   }
   vTaskDelayUntil(&wake,pdMS_TO_TICKS(10));
  }

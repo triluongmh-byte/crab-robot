@@ -353,3 +353,10 @@ Release `positional180-v26`. The owner wants updates pushed straight from the co
   - It uses the system `curl`, because on macOS 15 a Homebrew Python gets "No route to host" on the LAN (Local Network privacy).
   - It takes the PIN from the reply when it is there.
   - Otherwise it asks for it, or works in two steps with `--show-pin` and then `--pin`.
+
+## PCA reconnect without reset — 2026-11-16
+
+Release `positional180-v27`. Unplugging and re-plugging the PCA9685 used to leave **Lỗi dây** until a reset, because the driver was only probed at boot.
+
+- While the driver is missing, the motion task probes it again every 2 s (`crab::driverProbeDue`, `DRIVER_PROBE_MS`).
+- When the probe succeeds, the PCA comes back with the servos **off**. Tap **Bật servo** to move again.
