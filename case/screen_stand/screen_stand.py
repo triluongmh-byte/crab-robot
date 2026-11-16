@@ -1,0 +1,163 @@
+"""Screen stand: holds the LILYGO T-Display-S3 (in its clear shell) upright on the frame_upper end crossbar.
+
+Robot frame of the case model: +X is the old bank mouth end, +Y left, z0 at the frame_lower bottom.
+The stand snaps over the +X end crossbar of frame_upper (x 43.0..46.2, z 34.4..39.95, full width) and holds
+the screen in landscape, facing out (+X) and leaning back `tilt` degrees. The case is gripped only at its two
+short ends, so both header rows and their Dupont housings on the back stay free, and both end faces
+(USB-C, buttons) are open. A rubber band over the two back posts keeps it from lifting out.
+
+Print: on its back is not flat, so it prints as modelled (crossbar cap down) with tree supports.
+"""
+import math
+from dataclasses import dataclass
+
+import cadquery as cq
+
+
+@dataclass(frozen=True)
+class Params:
+    # LILYGO T-Display-S3 in the clear shell (GIA DINH: bare board 62 x 26 x 10 per vendor; shell adds ~2 each side)
+    case_l: float = 66.0          # along Y (landscape)
+    case_h: float = 30.0          # screen height
+    case_t: float = 12.5          # thickness front glass to back of shell (pins excluded)
+    fit_t: float = 0.6            # total clearance across the thickness
+    fit_l: float = 1.0            # total clearance along the length
+    tilt: float = 15.0            # lean back, degrees
+    wall: float = 2.0
+    # frame_upper +X end crossbar (measured from case/robot/frame_upper.step)
+    bar_x: tuple = (43.0, 46.2)
+    bar_z: tuple = (34.4, 39.95)
+    gap: float = 0.2              # clip clearance to the crossbar
+    leg_t: float = 1.8            # inner clip leg
+    barb: float = 0.5             # snap barb under the crossbar
+    tab_w: float = 9.0            # flexing barb tabs
+    tab_y: tuple = (-20.0, 20.0)
+    # cradle placement: local origin = front-bottom edge of the screen, at x0, z0
+    x0: float = 43.5
+    z0: float = 52.5              # back-bottom header housings clear the deck tower (x 20..33.9, |y|<9.4, top z 46.5)
+    shelf_t: float = 3.0          # under the case
+    beam_back: float = 5.0        # how far the full-length beam reaches behind the front face
+    lip_l: float = 2.5            # front/back lips overlap of the case ends (case shell wall ~2)
+    back_lip_w: tuple = (7.0, 23.0)   # back lip height band: clear of both header rows (long edges)
+    post_over: float = 3.0        # back posts stand above the case top for the band
+    band_notch: float = 1.6
+    window_margin: float = 1.0    # end window inset from the case faces
+
+
+P = Params()
+
+
+def box(x0, x1, y0, y1, z0, z1):
+    return cq.Workplane('XY').box(x1 - x0, y1 - y0, z1 - z0, centered=False).translate((x0, y0, z0))
+
+
+def place(w: cq.Workplane, p: Params = P) -> cq.Workplane:
+    """Cradle-local (u out of the screen, v along it, w up the screen) -> robot frame."""
+    return w.rotate((0, 0, 0), (0, 1, 0), -p.tilt).translate((p.x0, 0, p.z0))
+
+
+def to_robot(u, w, p: Params = P):
+    a = math.radians(p.tilt)
+    return p.x0 + u * math.cos(a) - w * math.sin(a), p.z0 + u * math.sin(a) + w * math.cos(a)
+
+
+def slot_t(p: Params = P):
+    return p.case_t + p.fit_t
+
+
+def half_l(p: Params = P):
+    return (p.case_l + p.fit_l) / 2
+
+
+def cradle(p: Params = P) -> cq.Workplane:
+    t, hl, W = slot_t(p), half_l(p), p.wall
+    ub = -t - W                                      # back of the back posts
+    out = box(-p.beam_back, W, -hl - W, hl + W, -p.shelf_t, 0)          # full-length beam under the front
+    for s in (1, -1):
+        def yb(a, b):
+            return (min(s * a, s * b), max(s * a, s * b))
+        y_in, y_end = yb(hl - p.lip_l, hl), yb(hl, hl + W)
+        y_all = yb(hl - p.lip_l, hl + W)
+        out = out.union(box(ub, W, *y_all, -p.shelf_t, 0))                                    # end shelf
+        out = out.union(box(ub, W, *y_end, 0, p.case_h + p.post_over))                        # end wall
+        out = out.union(box(0, W, *y_in, 0, p.case_h - 2))                                    # front lip
+        out = out.union(box(ub, -t, *y_in, *p.back_lip_w))                                    # back lip
+        out = out.union(box(ub, -t, *y_end, 0, p.case_h + p.post_over))                       # back post
+        # end window: USB-C plug / buttons, open to the top
+        out = out.cut(box(-t + p.window_margin, -p.window_margin, *(yb(hl - 0.1, hl + W + 1)), 3.0, p.case_h + 10))
+        # rubber-band notch across the top of the back post
+        out = out.cut(box(ub - 1, -t + 0.01, *(yb(hl + W / 2 - p.band_notch / 2, hl + W / 2 + p.band_notch / 2)),
+                          p.case_h + p.post_over - p.band_notch, p.case_h + p.post_over + 1))
+    return out
+
+
+def clip(p: Params = P) -> cq.Workplane:
+    hl, W = half_l(p), p.wall
+    ylen = (-hl - W, hl + W)
+    xi = p.bar_x[0] - p.gap - p.leg_t
+    cap_z = p.bar_z[1] + p.gap
+    # cap + riser up into the cradle beam; the outer face stays flush with the crossbar face (servos at x 47.15)
+    _, zb = to_robot(W, -p.shelf_t, p)
+    xr, zr = to_robot(-p.beam_back, -p.shelf_t, p)
+    out = box(xi, p.bar_x[1], *ylen, cap_z, max(zb, zr) + 1.0)
+    # two snap tabs down the -X face of the crossbar (the deck ribs at |y| 6.4..9.4 and the side rails at
+    # |y| >= 34 meet the crossbar there, so there is no full-length leg)
+    for y in p.tab_y:
+        out = out.union(box(xi, p.bar_x[0] - p.gap, y - p.tab_w / 2, y + p.tab_w / 2, p.bar_z[0] - 1.2, cap_z))
+        prof = [(p.bar_x[0] - p.gap - 0.01, p.bar_z[0] - p.gap), (p.bar_x[0] + p.barb, p.bar_z[0] - p.gap),
+                (p.bar_x[0] - p.gap - 0.01, p.bar_z[0] - 1.2)]
+        out = out.union(cq.Workplane('XZ').polyline(prof).close().extrude(p.tab_w / 2).translate((0, y, 0))
+                        .union(cq.Workplane('XZ').polyline(prof).close().extrude(-p.tab_w / 2).translate((0, y, 0))))
+    return out
+
+
+def stand(p: Params = P) -> cq.Workplane:
+    validate(p)
+    return clip(p).union(place(cradle(p), p))
+
+
+def screen_envelope(p: Params = P) -> cq.Workplane:
+    """The shell in its slot (nominal size), robot frame."""
+    t = p.case_t
+    return place(box(-p.fit_t / 2 - t, -p.fit_t / 2, -p.case_l / 2, p.case_l / 2, 0.0, p.case_h), p)
+
+
+def plug_envelopes(p: Params = P):
+    """USB-C plug path at either end (GIA DINH: overmould 12.5 along the height x 7 thick, 25 long)."""
+    t = slot_t(p)
+    out = []
+    for s in (1, -1):
+        y0 = s * (p.case_l / 2)
+        y1 = s * (p.case_l / 2 + 25)
+        out.append(place(box(-t / 2 - 3.5, -t / 2 + 3.5, min(y0, y1), max(y0, y1), p.case_h / 2 - 6.25, p.case_h / 2 + 6.25), p))
+    return out
+
+
+def header_envelopes(p: Params = P):
+    """Dupont housings on both header rows (GIA DINH: rows 2.5 mm in from each long edge, housings 2.5 wide
+    and 14 long straight out of the back, along the case length minus 3 mm at each end)."""
+    t = slot_t(p)
+    return [place(box(-t - 14.0, -t, -p.case_l / 2 + 3, p.case_l / 2 - 3, wc - 1.25, wc + 1.25), p)
+            for wc in (2.5, p.case_h - 2.5)]
+
+
+def validate(p: Params = P):
+    t = slot_t(p)
+    assert p.back_lip_w[0] >= 5.0 and p.back_lip_w[1] <= p.case_h - 5.0, 'back lip reaches a header row'
+    assert -t + p.window_margin < -p.window_margin - 5, 'end window too narrow for a USB-C plug'
+    fx, fz = to_robot(p.wall, -p.shelf_t, p)
+    assert fx <= p.bar_x[1] + 0.05, f'cradle front {fx:.2f} past the crossbar face (servos at x 47.15)'
+    for y in p.tab_y:
+        assert 9.4 + 0.5 <= abs(y) - p.tab_w / 2 and abs(y) + p.tab_w / 2 <= 34.0 - 0.5, 'snap tab on a deck rib or side rail'
+    assert p.leg_t >= 1.6 and p.barb <= 0.6, 'snap tab too stiff / barb too deep for PETG'
+
+
+def gen_step():
+    return stand(P)
+
+
+if __name__ == '__main__':
+    s = stand(P).val()
+    bb = s.BoundingBox()
+    print('ok', s.isValid(), round(s.Volume(), 1), [round(v, 2) for v in (bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax)])
+    print('front-bottom', [round(v, 2) for v in to_robot(P.wall, -P.shelf_t)], 'back-bottom', [round(v, 2) for v in to_robot(-slot_t() - P.wall, -P.shelf_t)])

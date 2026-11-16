@@ -58,3 +58,6 @@ firmware/FLASH-CANDIDATE.json
 # power tray: generated review renders
 case/power_tray/power_tray_review/
 case/power_tray/__pycache__/
+case/screen_stand/screen_stand_review/
+case/*/__pycache__/
+case/*/.*.glb
