@@ -13,6 +13,7 @@ This is one printed PETG part. It holds the two HC-SR04P modules for Auto mode (
 | `sonar_bracket.3mf` | Unsliced Bambu Studio project. It uses the repo's A1 / 0.4 mm / calibrated PETG profile (`case/print-settings.json`). |
 | `sonar_bracket_fit_preview.step` | Robot-frame preview: bracket, both module envelopes, ties, USB cable, both frames, and the front hip servos and legs at neutral. |
 | `check_fit.py` → `fit_report.json` | Static fit, leg-sweep, wide-hip, beam-cone and cable checks. |
+| `make_preview.py` | Writes `sonar_bracket_with_sensors.step`: the bracket with both HC-SR04P modules fitted, no robot body, for review. The 3MF holds only the printed bracket. |
 | `make_3mf.py` | Writes the 3MF. Add `--slice DIR` to slice offline with the Bambu Studio CLI. It never contacts a printer. |
 
 The repo `.gitignore` ignores `*.step`, `*.stl` and `*.3mf`, so the generated files will not show up in `git status`. Use `git add -f` if you want to commit them.
