@@ -8,7 +8,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v25")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v26")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -195,7 +195,11 @@ int main(){
   // Upload without a PIN, or with a non-owner token: refused before flash is touched.
   server.uploadFile("/api/ota",{{"token","42"},{"pin","123456"}},img);assert(server.code==403&&!Update.switched&&Update.written.empty());
   server.request("/api/ota/begin",{{"token","7"}});assert(server.code==409&&!otaPin.shown(clockMs));
-  server.request("/api/ota/begin",{{"token","42"}});assert(server.code==200&&otaPin.shown(clockMs)&&server.body.find("\"seconds\":120")!=String::npos);
+  server.request("/api/ota/begin",{{"token","42"}});assert(server.code==200&&otaPin.shown(clockMs)&&server.body.find("\"seconds\":120")!=String::npos&&server.body.find("\"pin\"")==String::npos); // own open AP: screen only
+  {const auto keep=network.state;network.state=crab::NetState::Online;server.cl.local={"192.168.1.2"};
+   server.request("/api/ota/begin",{{"token","42"}});assert(server.code==200&&server.body.find("\"pin\":\""+std::to_string(otaPin.pin)+"\"")!=String::npos); // home Wi-Fi: returned
+   server.cl.local={"192.168.4.1"};server.request("/api/ota/begin",{{"token","42"}});assert(server.body.find("\"pin\"")==String::npos); // AP client while online: still screen only
+   network.state=keep;server.request("/api/status");assert(server.body.find("\"updateHold\":false")!=String::npos);}
   server.request("/api/status");assert(server.body.find("\"otaPin\":true")!=String::npos&&server.body.find(std::to_string(otaPin.pin))==String::npos&&server.body.find("\"slot\":\"app0\"")!=String::npos&&server.body.find(crab::OTA_MARKER)!=String::npos);
   const std::string pin=std::to_string(otaPin.pin);
   server.uploadFile("/api/ota",{{"token","7"},{"pin",pin}},img);assert(server.code==409&&!Update.switched&&otaPin.shown(clockMs)); // wrong owner does not burn the PIN
@@ -217,5 +221,5 @@ int main(){
   server.request("/api/ota/begin",{{"token","42"}});server.uploadFile("/api/ota",{{"token","42"},{"pin",std::to_string(otaPin.pin)}},img,1000);
   assert(server.code==200&&server.body.find("\"restarting\":true")!=String::npos&&Update.switched&&Update.written==img&&!motion.positional()&&restartAt&&!otaPin.shown(clockMs));
   (void)t0;}
- std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<":180-only HTTP/status/arm/disarm/assembly/centre; removed360 endpoints; sequence release; saved Wi-Fi/AP/QR/scan/errors and credentials preserved; HTTP outside mutex; Auto mode sensors/token/arming/status/manual takeover; gzip pages, RSSI; OTA marker scan/PIN issue-expiry-burn/owner/target refusal/drop/write error/success\n";
+ std::cout<<"PASS "<<cfg::HARDWARE_TARGET<<":180-only HTTP/status/arm/disarm/assembly/centre; removed360 endpoints; sequence release; saved Wi-Fi/AP/QR/scan/errors and credentials preserved; HTTP outside mutex; Auto mode sensors/token/arming/status/manual takeover; gzip pages, RSSI; OTA PIN returned only over station Wi-Fi; OTA marker scan/PIN issue-expiry-burn/owner/target refusal/drop/write error/success\n";
 }

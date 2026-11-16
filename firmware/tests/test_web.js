@@ -53,7 +53,8 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  assert(!elements.gait&&!elements.flickHip&&!elements.flickHipBox&&/id="gaitHint">Hai cặp chân chéo/.test(html));
  // Brownout reset: servos stayed off, the page says why.
  state.brownoutHold=true;state.positional=false;state.enabled=0;await poll();assert.equal(el('readiness').textContent,'Sụt áp');assert(/sụt áp/.test(el('status').textContent)&&el('statusDetail').children.some(x=>x.textContent==='Sụt áp — servo chưa bật'));
- state.brownoutHold=false;state.positional=true;state.enabled=8;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='Bình thường'));
+ state.brownoutHold=false;state.updateHold=true;await poll();assert.equal(el('readiness').textContent,'Đã cập nhật');assert(/cập nhật firmware/.test(el('status').textContent)&&el('statusDetail').children.some(x=>x.textContent==='Vừa cập nhật — servo chưa bật'));
+ state.updateHold=false;state.positional=true;state.enabled=8;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='Bình thường'));
  // Heading trim slider posts signed whole percent; poll does not fight a drag.
  state.balance=0;await poll();assert.equal(el('balance').value,'0');el('balance').value='12';el('balance').oninput();assert.equal(el('balanceValue').textContent,'+12% phải');await poll();assert.equal(el('balance').value,'12');
  el('balance').onchange();await flush();assert(calls.some(c=>c.path==='/api/balance'&&c.data.value==='12'));state.balance=12;await poll();assert(el('statusDetail').children.some(x=>x.textContent==='+12% phải'));

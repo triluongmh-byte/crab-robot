@@ -86,6 +86,7 @@ constexpr const char* ERASED="Đã xóa Wi-Fi";
 constexpr const char* DRIVER="Kiểm tra dây PCA9685";
 constexpr const char* BROWNOUT="Sụt áp: bấm Bật servo";
 constexpr const char* OTA_PIN="Mã cập nhật: "; // followed by the 6-digit PIN
+constexpr const char* UPDATED="Đã cập nhật: bấm Bật servo";
 }
 enum class NetState {Setup,Connecting,Online};
 // Failure reported by the radio for the current attempt only (from the
@@ -173,7 +174,7 @@ struct Motion {
  bool sequence(uint32_t id,uint32_t seq){if(!id||id!=session||seq<=lastSeq)return false;lastSeq=seq;return true;}
  bool selectActuator(bool positionalMode,uint32_t now){
   if(positionalMode&&(test.opened||continuous.opened))return false;
-  brownoutHold=false; // any explicit choice ends the brownout hold
+  brownoutHold=updateHold=false; // any explicit choice ends a boot hold
   const bool keepAssembly=assembly; // disarming must not silently exit the setup page
   stop();test=ServoTest{};continuous=Continuous360{};assembly=keepAssembly;raw=false;actuator=positionalMode?Actuator::Positional:Actuator::Unknown;
   amplitude=phase=0;for(auto& p:position)p=0;begin(now);return true;
@@ -212,8 +213,11 @@ struct Motion {
  // pulled the supply down again, so it reset, re-armed and looped). The owner
  // arms them with Bật servo; brownoutHold shows why until then.
  bool brownoutHold=false;
- bool bootArm(bool driver,uint32_t now,bool brownout=false){
-  if(brownout){brownoutHold=true;return false;}
+ // After a firmware update over Wi-Fi the servos also stay off: the push may
+ // come from a computer with nobody watching the crab (owner, 2026-11-16).
+ bool updateHold=false;
+ bool bootArm(bool driver,uint32_t now,bool brownout=false,bool updated=false){
+  if(brownout||updated){brownoutHold=brownout;updateHold=updated&&!brownout;return false;}
   return cfg::AUTO_ARM&&driver&&selectActuator(true,now);
  }
  bool setKneeLift(int deg){if(deg<cfg::KNEE_LIFT_MIN||deg>cfg::KNEE_LIFT_MAX)return false;kneeLift=float(deg);return true;}

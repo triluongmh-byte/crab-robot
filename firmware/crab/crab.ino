@@ -39,6 +39,11 @@ String runningSlot(){const esp_partition_t* p=esp_ota_get_running_partition();re
 // bootloader returns to the previous slot. USB-flashed images are not pending.
 extern "C" bool verifyRollbackLater(){return true;}
 bool appConfirmed=false;
+// Survives ESP.restart() (not power loss): set just before the post-OTA restart
+// so the next boot keeps the servos off (Motion::updateHold).
+constexpr uint32_t OTA_RESTART_MAGIC=0xC0DEB007;
+RTC_NOINIT_ATTR uint32_t otaRestartFlag;
+void restartAfterOta(){otaRestartFlag=OTA_RESTART_MAGIC;ESP.restart();}
 void confirmApp(uint32_t now){
  if(appConfirmed||now<crab::OTA_CONFIRM_MS)return;appConfirmed=true;
  esp_ota_img_states_t state;const esp_partition_t* p=esp_ota_get_running_partition();
@@ -79,7 +84,8 @@ void setup(){
   if(!motion.setBalance(trimStore.getInt("balance",0)))motion.balance=0;
   lightRgb=uint32_t(trimStore.getInt("led",0xffffff))&0xffffff;
   if(!motion.setKneeLift(trimStore.getInt("knee",int(cfg::KNEE_LIFT))))motion.kneeLift=cfg::KNEE_LIFT;
-  motion.begin(millis());motion.bootArm(driverReady.load(),millis(),esp_reset_reason()==ESP_RST_BROWNOUT);}
+  motion.begin(millis());const esp_reset_reason_t why=esp_reset_reason();const bool updated=why==ESP_RST_SW&&otaRestartFlag==OTA_RESTART_MAGIC;otaRestartFlag=0;
+  motion.bootArm(driverReady.load(),millis(),why==ESP_RST_BROWNOUT,updated);}
  applyLight();
  xTaskCreatePinnedToCore(motionTask,"cua-motion",4096,nullptr,3,nullptr,1);
  WiFi.onEvent([](WiFiEvent_t event,WiFiEventInfo_t info){
@@ -107,7 +113,7 @@ void loop(){
  serviceNetwork(now);
  serviceAuto(now);
  confirmApp(now);
- if(restartAt&&int32_t(now-restartAt)>=0)ESP.restart(); // after an OTA reply was sent
+ if(restartAt&&int32_t(now-restartAt)>=0)restartAfterOta(); // after an OTA reply was sent
  dns.processNextRequest();server.handleClient();
  // An emotion's lamp colour lasts while the pose runs, then the saved lamp returns.
  if(ledOverride&&now-ledAt>=1500){bool posing;{Guard g;posing=motion.posing;}if(!posing)applyLight();}
@@ -126,7 +132,7 @@ void loop(){
   const crab::EyeFrame f=eyes.frame(now,in);
   const char* autoLine=autopilot.message(now);
   const bool pin=otaPin.shown(now);
-  const String message=!driverReady?String(crab::msg::DRIVER):pin?String(crab::msg::OTA_PIN)+String(otaPin.pin):autoLine?String(autoLine):motion.brownoutHold?String(crab::msg::BROWNOUT):String(network.message);
+  const String message=!driverReady?String(crab::msg::DRIVER):pin?String(crab::msg::OTA_PIN)+String(otaPin.pin):autoLine?String(autoLine):motion.brownoutHold?String(crab::msg::BROWNOUT):motion.updateHold?String(crab::msg::UPDATED):String(network.message);
   const String address=!driverReady||pin?String():network.state==crab::NetState::Online?WiFi.localIP().toString():ap+" 192.168.4.1";
   const String line=message+"|"+address;
   if(!faceShown||f!=drawnEyes||line!=drawnKey){if(screen.face(f,message.c_str(),address.c_str())){drawnEyes=f;drawnKey=line;faceShown=true;}}

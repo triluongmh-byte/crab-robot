@@ -105,7 +105,7 @@ void sendPage(const uint8_t* gz,size_t len){server.sendHeader("Cache-Control","n
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v25\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"brownoutHold\":"+(state.brownoutHold?"true":"false")+",\"rssi\":"+(network.state==crab::NetState::Online?String(int(WiFi.RSSI())):String("null"))+",\"otaPin\":"+(otaPin.shown(millis())?"true":"false")+",\"slot\":"+jsonString(runningSlot())+",\"target\":"+jsonString(cfg::HARDWARE_TARGET)+",\"otaMarker\":"+jsonString(crab::OTA_MARKER)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+","+autoJson()+"}");});
+  json(200,String("{\"firmware\":\"positional180-v26\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"brownoutHold\":"+(state.brownoutHold?"true":"false")+",\"updateHold\":"+(state.updateHold?"true":"false")+",\"rssi\":"+(network.state==crab::NetState::Online?String(int(WiFi.RSSI())):String("null"))+",\"otaPin\":"+(otaPin.shown(millis())?"true":"false")+",\"slot\":"+jsonString(runningSlot())+",\"target\":"+jsonString(cfg::HARDWARE_TARGET)+",\"otaMarker\":"+jsonString(crab::OTA_MARKER)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+","+autoJson()+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -185,7 +185,12 @@ void configureHttp(){
  // Captive portal probes (Android/iOS/Windows) all land on our embedded page.
  server.onNotFound([]{if(server.uri().startsWith("/api/")){error(404);return;}sendPage(WEB_UI_GZ,WEB_UI_GZ_LEN);});
  // Firmware update: PIN on the screen first, then the upload (see otaChunk).
- server.on("/api/ota/begin",HTTP_POST,[]{if(!owns()){error(409);return;}otaPin.issue(millis(),esp_random());json(200,"{\"ok\":true,\"seconds\":"+String(crab::OTA_PIN_MS/1000)+"}");});
+ // Over the home Wi-Fi (WPA2) the owner's tools get the PIN back and can push
+ // unattended (owner, 2026-11-16). Over the crab's own open Wi-Fi it only
+ // shows on the screen: anyone nearby can join that one.
+ server.on("/api/ota/begin",HTTP_POST,[]{if(!owns()){error(409);return;}const uint32_t pin=otaPin.issue(millis(),esp_random());
+  const bool station=network.state==crab::NetState::Online&&server.client().localIP()==WiFi.localIP();
+  json(200,"{\"ok\":true,\"seconds\":"+String(crab::OTA_PIN_MS/1000)+(station?",\"pin\":"+jsonString(String(pin)):String())+"}");});
  server.on("/api/ota",HTTP_POST,otaDone,otaChunk);
  server.begin();
 }
