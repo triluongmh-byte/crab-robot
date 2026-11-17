@@ -1,0 +1,212 @@
+{
+ "robotExports": "/Users/macbookpro/harnesses/crab-robot-v17g/case/robot",
+ "frame": "robot (CAD) frame; +Y = the owner's front (Tiến)",
+ "checks": {
+  "static overlaps (ties wrap the rail with zero overlap)": [],
+  "static closest non-tie gap mm (>= 0.15)": [
+   {
+    "ours": "head",
+    "body": "screen stand",
+    "minDistanceMm": 0.23,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "head",
+    "body": "frame_upper",
+    "minDistanceMm": 0.25,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "zip tie x-12",
+    "body": "screen stand",
+    "minDistanceMm": 1.15,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "HC-SR04P right back parts",
+    "body": "frame_upper",
+    "minDistanceMm": 4.67,
+    "overlapMm3": 0.0
+   }
+  ],
+  "zip ties touch the rail (wrap it)": [
+   {
+    "ours": "zip tie x-12",
+    "body": "frame_upper",
+    "minDistanceMm": 0.0,
+    "overlapMm3": 0.0
+   },
+   {
+    "ours": "zip tie x+12",
+    "body": "frame_upper",
+    "minDistanceMm": 0.0,
+    "overlapMm3": 0.0
+   }
+  ],
+  "zip ties pass through the plate slots (overlap with head mm3)": [
+   0.0,
+   0.0
+  ],
+  "plate to frame_upper gap mm (rests on the rail face)": 0.25,
+  "modules in holder: no overlap": [],
+  "left and right module envelopes apart (max overlap mm3)": 0.0,
+  "screwdriver access on the bench (5 mm shaft, 60 mm, along each screw axis)": [
+   {
+    "driver": "screwdriver right top",
+    "vsHeadMm3": 0.0,
+    "vsModulesMm3": 0.0,
+    "vsFrameOnRobotMm3": 0.0
+   },
+   {
+    "driver": "screwdriver right bottom",
+    "vsHeadMm3": 0.0,
+    "vsModulesMm3": 0.0,
+    "vsFrameOnRobotMm3": 0.0
+   },
+   {
+    "driver": "screwdriver left top",
+    "vsHeadMm3": 0.0,
+    "vsModulesMm3": 0.0,
+    "vsFrameOnRobotMm3": 38.7
+   },
+   {
+    "driver": "screwdriver left bottom",
+    "vsHeadMm3": 0.0,
+    "vsModulesMm3": 0.0,
+    "vsFrameOnRobotMm3": 0.0
+   }
+  ],
+  "wall between each tie slot and the screwdriver channels mm (>= 1.2)": {
+   "slot": "slot x-12 upper",
+   "channel": "channel left",
+   "wallMm": 1.96
+  },
+  "leg sweep: head, modules, ties >= 2 mm": {
+   "poses": 478,
+   "worstMm": 8.72,
+   "at": [
+    30,
+    30
+   ],
+   "closest": "FL foot vs HC-SR04P right header"
+  },
+  "leg sweep: Dupont plug envelope >= 0.5 mm": {
+   "worstMm": 1.05,
+   "at": [
+    30,
+    30
+   ],
+   "closest": "FL foot vs HC-SR04P right dupont plug"
+  },
+  "beams never see the own feet while walking at balance 0 (hip <= 25)": {
+   "hits": []
+  },
+  "beams clear of the head, frame and stand": [
+   {
+    "beam": "right upper can",
+    "heightAboveFloorMm": 56.3,
+    "yawDeg": 15.0,
+    "pitchDeg": 10.0,
+    "floorHitRangeMm": 643,
+    "coneOverlapMm3": {
+     "head": 0.0,
+     "frame_upper": 0.0,
+     "screen stand": 0.0
+    }
+   },
+   {
+    "beam": "right lower can",
+    "heightAboveFloorMm": 30.7,
+    "yawDeg": 15.0,
+    "pitchDeg": 10.0,
+    "floorHitRangeMm": 350,
+    "coneOverlapMm3": {
+     "head": 0.0,
+     "frame_upper": 0.0,
+     "screen stand": 0.0
+    }
+   },
+   {
+    "beam": "left upper can",
+    "heightAboveFloorMm": 56.3,
+    "yawDeg": -15.0,
+    "pitchDeg": 10.0,
+    "floorHitRangeMm": 643,
+    "coneOverlapMm3": {
+     "head": 0.0,
+     "frame_upper": 0.0,
+     "screen stand": 0.0
+    }
+   },
+   {
+    "beam": "left lower can",
+    "heightAboveFloorMm": 30.7,
+    "yawDeg": -15.0,
+    "pitchDeg": 10.0,
+    "floorHitRangeMm": 350,
+    "coneOverlapMm3": {
+     "head": 0.0,
+     "frame_upper": 0.0,
+     "screen stand": 0.0
+    }
+   }
+  ],
+  "lowest beam reaches the floor beyond mm (AUTO_SLOW_CM 45 -> >= 300)": 350,
+  "Ngủ pose (all knees lift 30): head and modules above the floor mm (>= 1.5)": {
+   "floorInBodyFrameZ": -0.35,
+   "headClearanceMm": 2.52,
+   "moduleClearanceMm": 2.79
+  },
+  "head top below the screen (z <= 49.1; cradle front-bottom edge z 52.1)": 48.5
+ },
+ "beamLegHitsAboveBalance0": {
+  "hipsDeg": [
+   30,
+   32.5
+  ],
+  "maxRangeMm": 37.0,
+  "note": "only with Bù lệch above about +-20 % (hip > 25 deg); a near-range echo filter in the firmware would cover it"
+ },
+ "headBbox": [
+  -25.77,
+  25.77,
+  37.25,
+  59.75,
+  2.18,
+  48.5
+ ],
+ "headVolumeMm3": 5710.0,
+ "groundClearanceMm": 18.7,
+ "params": {
+  "yaw_deg": 15.0,
+  "pitch_deg": 10.0,
+  "inner_x": 3.2,
+  "y_apex": 52.0,
+  "z_mid": 24.6,
+  "win_lo": 7.0,
+  "win_hi": 16.5,
+  "rail_y": [
+   34.0,
+   37.05
+  ],
+  "rail_z": [
+   34.4,
+   39.95
+  ],
+  "plate_y0": 37.25,
+  "plate_t": 2.4,
+  "plate_x": 19.0,
+  "plate_z0": 30.5,
+  "tie_x": [
+   -12.0,
+   12.0
+  ],
+  "tie_w": 3.0,
+  "tie_h": 1.6,
+  "rib_half": 1.2,
+  "driver_d": 6.0,
+  "web_t": 2.5,
+  "z_cut": 48.5
+ },
+ "ok": true
+}

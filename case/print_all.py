@@ -7,7 +7,8 @@ Status of each part (2026-11-17):
   screen_stand       current: holds the bare LILYGO on the +Y (Tiến) display rim
   switch_holder      usable: zip-ties a rocker switch to a frame bar
   power_tray         shelved: frame_lower is not fitted any more
-  sonar_bracket_OLD  obsolete: made for the -X end; the sonars now go on the +Y (Tiến) face
+  sonar_front        current: both HC-SR04P on the +Y (Tiến) face, under the screen stand
+  (sonar_bracket, made for the -X end, is obsolete and no longer on the plate)
 
 Usage:  python3 case/print_all.py [--slice OUTDIR]
 """
@@ -20,11 +21,11 @@ from pathlib import Path
 import cadquery as cq
 
 HERE = Path(__file__).resolve().parent
-for d in ('screen_stand', 'power_tray', 'sonar_bracket'):
+for d in ('screen_stand', 'power_tray', 'sonar_front'):
     sys.path.insert(0, str(HERE / d))
 import screen_stand as SS  # noqa: E402
 import power_tray as PT  # noqa: E402
-import sonar_bracket as SB  # noqa: E402
+import sonar_front as SF  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location('power_tray_3mf', HERE / 'power_tray' / 'make_3mf.py')
 PT3 = importlib.util.module_from_spec(_spec)
@@ -45,7 +46,7 @@ def parts():
         ('screen_stand', stand, True, (0.95, 0.8, 0.1)),
         ('switch_holder', PT.switch_holder(), False, (0.3, 0.7, 0.3)),
         ('power_tray', PT.gen_step(), False, (0.6, 0.6, 0.65)),
-        ('sonar_bracket_OLD', SB.to_print(SB.bracket_local()), False, (0.85, 0.25, 0.25)),
+        ('sonar_front', SF.to_print(SF.head_robot()), False, (0.15, 0.75, 0.75)),
     ]]
 
 

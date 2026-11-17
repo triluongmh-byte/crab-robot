@@ -1,5 +1,7 @@
 # Twin HC-SR04P sonar head (A1V4-r5 open frame)
 
+> **OBSOLETE (2026-11-17).** This part was made for the −X end. The crab now walks toward +Y (Tiến), so the sonars sit on that face: use [`../sonar_front`](../sonar_front/README.md) instead.
+
 This is one printed PETG part. It holds the two HC-SR04P modules for Auto mode (`positional180-v22`) on the robot's walking front. You do not reprint the body or drill it. You need **two 2.5 mm zip ties** and **four M2×6 self-tapping screws** (two per module). M2 is **not** in the owner's kit, so buy them.
 
 **Status:** not printed and not tested on hardware. All the evidence comes from CAD and the slicer.
