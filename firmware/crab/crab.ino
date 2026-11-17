@@ -90,6 +90,7 @@ void setup(){
   lightRgb=uint32_t(trimStore.getInt("led",0xffffff))&0xffffff;
   if(!motion.setKneeLift(trimStore.getInt("knee",int(cfg::KNEE_LIFT))))motion.kneeLift=cfg::KNEE_LIFT;
   motion.speed=crab::savedSpeed(trimStore.getInt("speed",-1));
+  if(!autopilot.setTune(trimStore.getInt("aStop",cfg::AUTO_STOP_CM),trimStore.getInt("aSlow",cfg::AUTO_SLOW_CM)))autopilot.setTune(cfg::AUTO_STOP_CM,cfg::AUTO_SLOW_CM);
   motion.begin(millis());const esp_reset_reason_t why=esp_reset_reason();const bool updated=why==ESP_RST_SW&&otaRestartFlag==OTA_RESTART_MAGIC;otaRestartFlag=0;
   motion.bootArm(driverReady.load(),millis(),why==ESP_RST_BROWNOUT,updated);}
  applyLight();

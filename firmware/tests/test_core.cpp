@@ -296,6 +296,20 @@ static void test_autopilot(){
  Autopilot l;feed(s,200,200,0);l.start(0);l.nextWander=1000000;assert(l.tick(100,s)==1);
  assert(l.tick(cfg::SONAR_STALE_MS,s)==0&&!l.active()&&l.note==automsg::LOST&&l.mood(cfg::SONAR_STALE_MS)==Mood::Sad);
  l.stop(1000,automsg::MANUAL);assert(l.mood(1000)==Mood::Normal);
+ {
+ // Thresholds tuned from the radar page apply on the next frame; bad pairs are refused.
+ Autopilot tk;assert(tk.stopCm==cfg::AUTO_STOP_CM&&tk.slowCm==cfg::AUTO_SLOW_CM);
+ assert(!tk.setTune(9,40)&&!tk.setTune(81,120)&&!tk.setTune(30,34)&&!tk.setTune(30,151)&&tk.stopCm==cfg::AUTO_STOP_CM);
+ feed(s,200,200,0);tk.start(0);tk.nextWander=1000000;feed(s,35,200,0);assert(tk.tick(0,s)==6);
+ assert(tk.setTune(40,60));assert(tk.tick(0,s)==0&&tk.state==AutoState::Halt);
+ // Transitions are kept with the readings that caused them (ring of AUTO_EVENTS).
+ {const AutoEvent& e=tk.events[(tk.eventCount-1)%AUTO_EVENTS];assert(e.seq==tk.eventCount&&e.state==AutoState::Halt&&e.left==35&&e.right==200&&e.note==nullptr);}
+ tk.stop(5,automsg::MANUAL);{const AutoEvent& e=tk.events[(tk.eventCount-1)%AUTO_EVENTS];assert(e.state==AutoState::Off&&e.note==automsg::MANUAL&&e.at==5);}
+ for(int i=0;i<3*AUTO_EVENTS;i++)tk.enter(AutoState::Look,uint32_t(10+i));
+ assert(tk.eventCount==uint32_t(3+3*AUTO_EVENTS)); // start, halt, stop, then the looks
+ for(int i=0;i<AUTO_EVENTS;i++)assert(tk.events[i].seq>tk.eventCount-AUTO_EVENTS);
+ {SonarSide q;assert(q.last()==0);q.add(10,0);q.add(90,0);q.add(20,0);assert(q.last()==20&&q.cm()==20);q.add(15,0);assert(q.last()==15&&q.cm()==20);}
+ }
  // Motion: Auto needs the same readiness as manual driving and never starts itself.
  Motion m;m.newSession(5);assert(!m.startAuto(0)&&!m.autoMode);ready(m);m.setAssembly(true);assert(!m.startAuto(2200));m.setAssembly(false);
  assert(!m.autoDrive(1,2200));assert(m.startAuto(2200)&&m.autoMode&&m.lease);

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Actual HTTP handlers and station servicing, also exercised by host tests.
 #pragma once
+constexpr const char* FIRMWARE_PROFILE="positional180-v32";
 String jsonString(const String& s){String out="\"";for(size_t i=0;i<s.length();i++){unsigned char c=s[i];if(c=='"'||c=='\\'){out+='\\';out+=char(c);}else if(c<32){char b[7];snprintf(b,sizeof(b),"\\u%04x",c);out+=b;}else out+=char(c);}return out+"\"";}
 void json(int code,const String& s){server.sendHeader("Cache-Control","no-store");server.sendHeader("X-Content-Type-Options","nosniff");server.send(code,"application/json; charset=utf-8",s);}
 void ok(){json(200,"{\"ok\":true}");}
@@ -64,6 +65,23 @@ String autoJson(){
  for(int i=0;i<2;i++){if(i)s+=",";s+=sonar.side[i].fresh(now)?String(int(sonar.side[i].cm())):String("null");}
  return s+"]";
 }
+// Radar page (/radar): everything one poll needs, no token (read only). Sides
+// are the robot's own left/right; cm is the 3-sample median the autopilot uses,
+// raw the newest echo, both null once a side is stale. events are the latest
+// Auto transitions with the readings that caused them: [seq,ms,state,left,right,note].
+String radarJson(){
+ const uint32_t now=millis();crab::Motion m;{Guard g;m=motion;}
+ String s="{\"t\":"+String(now)+",\"firmware\":\""+String(FIRMWARE_PROFILE)+"\",\"driver\":"+(driverReady?"true":"false")+",\"positional\":"+(m.positional()?"true":"false")+",\"enabled\":"+String(m.enabled)+",\"assembly\":"+(m.assembly?"true":"false")
+  +",\"autoSupported\":"+(cfg::SONAR_TRIG[0]>=0?"true":"false")+",\"auto\":"+(autopilot.active()?"true":"false")+",\"state\":"+jsonString(crab::autoStateName(autopilot.state))+",\"dir\":"+String(m.dir)+",\"avoids\":"+String(autopilot.avoids)
+  +",\"stopCm\":"+String(autopilot.stopCm)+",\"slowCm\":"+String(autopilot.slowCm)+",\"maxCm\":"+String(cfg::SONAR_MAX_CM)+",\"farCm\":"+String(crab::SONAR_FAR_CM)+",\"yawDeg\":"+String(cfg::SONAR_YAW_DEG)+",\"beamDeg\":"+String(cfg::SONAR_BEAM_HALF_DEG)+",\"sides\":[";
+ for(int i=0;i<2;i++){const crab::SonarSide& x=sonar.side[i];const bool f=x.fresh(now);if(i)s+=",";
+  s+="{\"cm\":"+(f?String(int(x.cm())):String("null"))+",\"raw\":"+(f?String(int(x.last())):String("null"))+",\"age\":"+(x.count?String(now-x.seenAt):String("null"))+"}";}
+ s+="],\"events\":[";
+ const uint32_t n=autopilot.eventCount,first=n>uint32_t(crab::AUTO_EVENTS)?n-crab::AUTO_EVENTS:0;
+ for(uint32_t k=first;k<n;k++){const crab::AutoEvent& e=autopilot.events[k%crab::AUTO_EVENTS];if(k>first)s+=",";
+  s+="["+String(e.seq)+","+String(e.at)+","+jsonString(crab::autoStateName(e.state))+","+String(int(e.left))+","+String(int(e.right))+","+(e.note?jsonString(e.note):String("null"))+"]";}
+ return s+"]}";
+}
 void actuatorError(){json(409,"{\"error\":\"Bản180°: bấm Bật servo180° trước, chờ bật đủ8 kênh và thoát Ráp để lái.\"}");}
 // Firmware update over Wi-Fi: /api/ota/begin shows a PIN on the screen, the
 // upload must carry it (query string: token, pin). Loop task only.
@@ -105,7 +123,7 @@ void sendPage(const uint8_t* gz,size_t len){server.sendHeader("Cache-Control","n
 void configureHttp(){
  server.on("/api/status",HTTP_GET,[]{crab::Motion state;{Guard g;state=motion;}String url=network.state==crab::NetState::Online?String("http://")+WiFi.localIP().toString()+"/":"http://192.168.4.1/";
   String offsets="[";for(int ch=0;ch<8;ch++){if(ch)offsets+=",";offsets+=String(state.offsets[ch],0);}offsets+="]";
-  json(200,String("{\"firmware\":\"positional180-v31\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":")+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"brownoutHold\":"+(state.brownoutHold?"true":"false")+",\"updateHold\":"+(state.updateHold?"true":"false")+",\"rssi\":"+(network.state==crab::NetState::Online?String(int(WiFi.RSSI())):String("null"))+",\"otaPin\":"+(otaPin.shown(millis())?"true":"false")+",\"slot\":"+jsonString(runningSlot())+",\"target\":"+jsonString(cfg::HARDWARE_TARGET)+",\"otaMarker\":"+jsonString(crab::OTA_MARKER)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+","+autoJson()+"}");});
+  json(200,String("{\"firmware\":\"")+FIRMWARE_PROFILE+"\",\"servoType\":\"positional180\",\"drive360\":false,\"lightOn\":"+(lightOn?"true":"false")+",\"lightColor\":\""+lightHex()+"\",\"message\":"+jsonString(network.message)+",\"url\":"+jsonString(url)+",\"online\":"+(network.state==crab::NetState::Online?"true":"false")+",\"driver\":"+(driverReady?"true":"false")+",\"assembly\":"+(state.assembly?"true":"false")+",\"positional\":"+(state.positional()?"true":"false")+",\"enabled\":"+String(state.enabled)+",\"speed\":"+String(state.speed,2)+",\"brownoutHold\":"+(state.brownoutHold?"true":"false")+",\"updateHold\":"+(state.updateHold?"true":"false")+",\"rssi\":"+(network.state==crab::NetState::Online?String(int(WiFi.RSSI())):String("null"))+",\"otaPin\":"+(otaPin.shown(millis())?"true":"false")+",\"slot\":"+jsonString(runningSlot())+",\"target\":"+jsonString(cfg::HARDWARE_TARGET)+",\"otaMarker\":"+jsonString(crab::OTA_MARKER)+",\"balance\":"+String(state.balance)+",\"knee\":"+String(state.kneeLift,0)+",\"offsets\":"+offsets+","+autoJson()+"}");});
  // Read-only view of last acknowledged output commands. No writes or arming.
  server.on("/api/servos",HTTP_GET,[]{
   crab::ServoTelemetry samples[8];bool driver;uint32_t sampledAt;
@@ -150,6 +168,12 @@ void configureHttp(){
  server.on("/api/emotions",HTTP_GET,[]{String list=emoteStore.getString("list","[]");json(200,list.length()?list:String("[]"));});
  server.on("/api/emotions/save",HTTP_POST,[]{if(!owns()){error(409);return;}String data=server.arg("data");if(!emotionListValid(data)){error();return;}if(emoteStore.putString("list",data)!=data.length()){error(500);return;}ok();});
  server.on("/emo",HTTP_GET,[]{sendPage(EMOTE_UI_GZ,EMOTE_UI_GZ_LEN);});
+ // Radar page for Tự đi: live sonar picture, thresholds, a log to tune from.
+ server.on("/radar",HTTP_GET,[]{sendPage(RADAR_UI_GZ,RADAR_UI_GZ_LEN);});
+ server.on("/api/radar",HTTP_GET,[]{json(200,radarJson());});
+ // Stop/veer distances (cm), saved; take effect on the next autopilot frame, also while running.
+ server.on("/api/autotune",HTTP_POST,[]{if(!owns()){error(409);return;}int32_t stop,slow;if(!intArg("stop",stop)||!intArg("slow",slow)||!autopilot.setTune(stop,slow)){error();return;}
+  trimStore.putInt("aStop",stop);trimStore.putInt("aSlow",slow);ok();});
  server.on("/api/speed",HTTP_POST,[]{if(!owns()){error(409);return;}float v;if(!speedArg(v)){error();return;}{Guard g;offForChangeLocked();motion.speed=v;}trimStore.putInt("speed",int(std::lround(v*100)));ok();}); // saved since v28: an OTA restart kept dropping it to 90%
  // Walking knee lift, whole degrees; persisted with the trims.
  server.on("/api/knee",HTTP_POST,[]{if(!owns()){error(409);return;}int32_t v;if(!intArg("value",v)){error();return;}bool accepted;{Guard g;accepted=motion.setKneeLift(v);}if(!accepted){error();return;}trimStore.putInt("knee",v);ok();});

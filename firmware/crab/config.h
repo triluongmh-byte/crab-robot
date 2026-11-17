@@ -74,7 +74,13 @@ constexpr uint32_t SONAR_PERIOD_MS=50, SONAR_STALE_MS=700, SONAR_MIN_US=116;
 constexpr int SONAR_MAX_CM=250;
 // Stop under AUTO_STOP_CM, veer away under AUTO_SLOW_CM. The crab walks a few
 // cm/s, so 25 cm leaves several seconds of margin. Owner tunes on the floor.
+// These two are defaults: the radar page (/radar) changes them at run time and
+// they are saved (aStop/aSlow), within the AUTO_TUNE_* bounds.
 constexpr int AUTO_STOP_CM=25, AUTO_SLOW_CM=45, AUTO_STUCK_AVOIDS=5;
+constexpr int AUTO_TUNE_STOP_MIN=10, AUTO_TUNE_STOP_MAX=80, AUTO_TUNE_SLOW_GAP=5, AUTO_TUNE_SLOW_MAX=150;
+// Front sonar head (case/sonar_front, Params.yaw_deg): each module turned this
+// far outwards; HC-SR04 beam half-angle. Only the radar page draws with them.
+constexpr int SONAR_YAW_DEG=12, SONAR_BEAM_HALF_DEG=15;
 constexpr uint32_t AUTO_HALT_MS=600, AUTO_BACK_MS=1500, AUTO_TURN_MS=1400, AUTO_CLEAR_MS=4000;
 constexpr uint32_t AUTO_WANDER_MIN_MS=8000, AUTO_WANDER_MAX_MS=16000;
 }
