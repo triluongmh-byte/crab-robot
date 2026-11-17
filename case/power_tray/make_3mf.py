@@ -40,7 +40,9 @@ def write_3mf(path, objects, plate_name=PLATE_NAME, title='power_tray', support=
     # Nothing on these parts needs support: the tie grooves have 45 deg sides and a 2.6 mm bridge, and tree
     # supports placed inside them would block the zip ties.
     settings['enable_support'] = '1' if support else '0'
-    res = ''.join(mesh_xml(i + 1, T) for i, (_, T) in enumerate(objects))
+    # objects: (name, triangles) or (name, triangles, {per-object Bambu setting: value}), e.g. {'enable_support': '0'}
+    objects = [o if len(o) == 3 else (o[0], o[1], {}) for o in objects]
+    res = ''.join(mesh_xml(i + 1, T) for i, (_, T, _) in enumerate(objects))
     items = ''.join(f'<item objectid="{i + 1}" transform="1 0 0 0 1 0 0 0 1 {BED_CENTRE[0]} {BED_CENTRE[1]} 0" printable="1"/>'
                     for i in range(len(objects)))
     model = ('<?xml version="1.0" encoding="UTF-8"?>\n<model unit="millimeter" xml:lang="en-US" '
@@ -49,8 +51,9 @@ def write_3mf(path, objects, plate_name=PLATE_NAME, title='power_tray', support=
              '<metadata name="Application">BambuStudio-02.07.01.62</metadata><metadata name="BambuStudio:3mfVersion">1</metadata>'
              f'<metadata name="Title">{title}</metadata><resources>{res}</resources><build>{items}</build></model>')
     objs = ''.join(f'<object id="{i + 1}"><metadata key="name" value="{n}.stl"/><metadata key="extruder" value="1"/>'
-                   f'<part id="{i + 1}" subtype="normal_part"><metadata key="name" value="{n}"/></part></object>'
-                   for i, (n, _) in enumerate(objects))
+                   + ''.join(f'<metadata key="{k}" value="{v}"/>' for k, v in extra.items())
+                   + f'<part id="{i + 1}" subtype="normal_part"><metadata key="name" value="{n}"/></part></object>'
+                   for i, (n, _, extra) in enumerate(objects))
     inst = ''.join(f'<model_instance><metadata key="object_id" value="{i + 1}"/><metadata key="instance_id" value="0"/>'
                    f'<metadata key="identify_id" value="{101 + i}"/></model_instance>' for i in range(len(objects)))
     cfg = (f'<?xml version="1.0" encoding="UTF-8"?>\n<config>{objs}<plate><metadata key="plater_id" value="1"/>'
