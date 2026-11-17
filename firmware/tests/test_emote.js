@@ -29,8 +29,8 @@ async function advance(ms){const end=now+ms;for(;;){await flush();timers.sort((a
  // Every preset frame is 8 bounded angles, a colour, move and hold times; ends standing.
  // Owner, 2026-11-16: each slider moves only its own joint unless Đối xứng is ticked.
 assert(!/id="mirror"[^>]*checked/.test(html));
-// Chào (v29): CH3's knee lifts all the way (60) and waves; it maps to CH3 in the command.
-{const hi=E.PRESETS.find(p=>p.n==='👋 Chào');assert(hi&&hi.f.some(f=>f[3]===100)&&hi.f.some(f=>f[3]===60));const c=vm.runInContext("toCommand(PRESETS.find(p=>p.n==='👋 Chào').f[0])",ctx).split(',').map(Number);assert.equal(c[3],-100);assert(c.every((v,i)=>i===3||Math.abs(v)<=30));
+// Chào (v34): CH3's knee lifts high (150) and waves down to 95; it maps to CH3 in the command, the others hold.
+{const hi=E.PRESETS.find(p=>p.n==='👋 Chào');assert(hi&&hi.f.some(f=>f[3]===150)&&hi.f.some(f=>f[3]===95));const c=vm.runInContext("toCommand(PRESETS.find(p=>p.n==='👋 Chào').f[0])",ctx).split(',').map(Number);assert.equal(c[3],-150);assert(c.every((v,i)=>i===3||Math.abs(v)<=35));
  assert.equal(vm.runInContext('clampKnee(199)',ctx),170);assert.equal(vm.runInContext('clampKnee(-199)',ctx),-170);assert.equal(vm.runInContext('clampDeg(99)',ctx),99);}
 // v33 "Mở hết biên": sliders start at hips +-30 / knees -30..100, open to +-170, and close back clamping values.
 assert.equal(elements.j0.max,30);assert.equal(elements.j1.max,100);assert.equal(elements.j1.min,-30);assert(!elements.wide.checked);
@@ -39,8 +39,15 @@ elements.j1.value='150';E.setWide(false);assert.equal(Number(elements.j1.value),
 // Opening a frame with big angles turns it on so they are not cut.
 E.writeEditor([0,150,0,0,-120,0,0,0,'#ffffff',300,0]);assert(elements.wide.checked);assert.equal(elements.j1.max,170);
 E.setWide(false);E.writeEditor([0,0,0,0,0,0,0,0,'#ffffff',300,0]);
-for(const p of E.PRESETS){assert(p.f.length>=2);for(const f of p.f){assert.equal(f.length,11);for(let i=0;i<8;i++)assert(i%2?f[i]>=-30&&f[i]<=100:Math.abs(f[i])<=30);assert(/^#[0-9a-f]{6}$/i.test(f[8]));assert(f[9]>=0&&f[9]<=3000&&f[10]>=0&&f[10]<=5000);}
+// v34 bounds: hips +-40, knees -55..150; never more than one leg lifted past 80 (it would fall);
+// front and rear hips of one side never converge by more than 20 deg each; big moves get time.
+let widest=0;
+for(const p of E.PRESETS){assert(p.f.length>=2);let prev=Array(8).fill(0);for(const f of p.f){assert.equal(f.length,11);for(let i=0;i<8;i++)assert(i%2?f[i]>=-55&&f[i]<=150:Math.abs(f[i])<=40,p.n);
+  assert([1,3,5,7].filter(i=>f[i]>80).length<=1,p.n);assert(f[0]-f[4]>=-40&&f[2]-f[6]>=-40,p.n);
+  const step=Math.max(...f.slice(0,8).map((v,i)=>Math.abs(v-prev[i])));assert(step<50||f[9]>=150,p.n+' '+step);prev=f.slice(0,8);
+  widest=Math.max(widest,...f.slice(0,8).map(Math.abs));assert(/^#[0-9a-f]{6}$/i.test(f[8]));assert(f[9]>=0&&f[9]<=3000&&f[10]>=0&&f[10]<=5000);}
   assert(p.f.at(-1).slice(0,8).every(v=>v===0));}
+assert(widest>=150);for(const p of E.PRESETS)assert(p.f.some(f=>f.slice(0,8).some(v=>Math.abs(v)>30)),p.n+' should use the wider range');
  assert.equal(elements.presets.children.length,E.PRESETS.length);
  assert.equal(elements.legs.children.length,4);
  // Saved list ignores malformed entries.

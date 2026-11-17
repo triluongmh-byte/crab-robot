@@ -62,15 +62,27 @@ function hexRgb(c){const m=/^#([0-9a-f]{6})$/i.exec(c||'');const n=m?parseInt(m[
 const F=(p,c,ms,hold=0)=>[...p,c,ms,hold];
 const P=(h,k)=>[h[0],k[0],h[1],k[1],h[2],k[2],h[3],k[3]];
 const STAND=P([0,0,0,0],[0,0,0,0]);
+// v34 (owner, 2026-11-17: "biên độ nhiều nhiều xí nữa cho nó có hình dạng"):
+// built-in emotions use the wider v33 range. Kept inside hips +-40 and knees
+// -55..150 so the body stays on its feet: only Chào lifts one leg very high,
+// the others press down to hold it. Hips never swing front and rear legs of
+// one side towards each other by more than 20 deg each. Moves of 50+ deg get
+// 250 ms or more (servo slew 600 deg/s). Not tested on hardware yet.
 const PRESETS=[
- {n:'😄 Vui',e:'happy',f:[F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(P([10,10,-10,-10],[-20,-20,-20,-20]),'#ffc400',150),F(P([-10,-10,10,10],[10,10,10,10]),'#ffe066',150),F(STAND,'#ffc400',200)]},
- {n:'😢 Buồn',e:'sad',f:[F(P([-10,-10,0,0],[28,28,15,15]),'#2050ff',1200,1500),F(P([-10,-10,0,0],[22,22,12,12]),'#102890',900,600),F(STAND,'#2050ff',900)]},
- {n:'😡 Giận',e:'angry',f:[F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(P([15,15,0,0],[0,30,0,0]),'#ff0000',120),F(P([15,15,0,0],[0,-25,0,0]),'#600000',100),F(P([15,15,0,0],[30,0,0,0]),'#ff0000',120),F(P([15,15,0,0],[-25,0,0,0]),'#600000',100),F(STAND,'#ff0000',250)]},
- // Owner, 2026-11-16: CH3's knee lifts all the way (100) and waves down/up.
- {n:'👋 Chào',e:'wink',f:[F(P([0,15,0,0],[-10,100,-10,-10]),'#00d0ff',500),F(P([0,15,0,0],[-10,60,-10,-10]),'#00d0ff',250),F(P([0,15,0,0],[-10,100,-10,-10]),'#80f0ff',250),F(P([0,15,0,0],[-10,60,-10,-10]),'#00d0ff',250),F(P([0,15,0,0],[-10,100,-10,-10]),'#80f0ff',250),F(P([0,15,0,0],[-10,60,-10,-10]),'#00d0ff',250),F(P([0,15,0,0],[-10,100,-10,-10]),'#80f0ff',250,300),F(STAND,'#00d0ff',500)]},
- {n:'💃 Nhảy',e:'love',f:[F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(P([15,-15,15,-15],[-20,15,-20,15]),'#c040ff',250),F(P([-15,15,-15,15],[15,-20,15,-20]),'#ff40c0',250),F(STAND,'#c040ff',250)]},
- {n:'😴 Ngủ',e:'asleep',f:[F(P([0,0,0,0],[30,30,30,30]),'#301060',2000,2500),F(STAND,'#301060',1500)]},
- {n:'😲 Ngạc nhiên',e:'surprised',f:[F(P([0,0,0,0],[-30,-30,-30,-30]),'#ffffff',100,700),F(STAND,'#ffffff',400)]}
+ // Bounce: everything pushes up tall, then sinks, feet spreading and gathering.
+ {n:'😄 Vui',e:'happy',f:[F(P([25,25,-25,-25],[-45,-45,-45,-45]),'#ffc400',250),F(P([-15,-15,15,15],[30,30,30,30]),'#ffe066',250),F(P([25,25,-25,-25],[-45,-45,-45,-45]),'#ffc400',250),F(P([-15,-15,15,15],[30,30,30,30]),'#ffe066',250),F(P([25,25,-25,-25],[-45,-45,-45,-45]),'#ffc400',250),F(STAND,'#ffc400',300)]},
+ // Head down: the front sinks low, the rear stays up, front feet draw in.
+ {n:'😢 Buồn',e:'sad',f:[F(P([-20,-20,0,0],[70,70,-20,-20]),'#2050ff',1500,1500),F(P([-20,-20,0,0],[55,55,-15,-15]),'#102890',1000,800),F(P([-20,-20,0,0],[70,70,-20,-20]),'#2050ff',1000,600),F(STAND,'#2050ff',1000)]},
+ // Lean in and stomp: rear legs push tall, front feet forward, front knees stamp in turn.
+ {n:'😡 Giận',e:'angry',f:[F(P([30,30,0,0],[-20,-20,-50,-50]),'#ff0000',300),F(P([30,30,0,0],[70,-30,-50,-50]),'#600000',200),F(P([30,30,0,0],[-40,-30,-50,-50]),'#ff0000',180),F(P([30,30,0,0],[-30,70,-50,-50]),'#600000',200),F(P([30,30,0,0],[-30,-40,-50,-50]),'#ff0000',180),F(P([30,30,0,0],[70,-30,-50,-50]),'#600000',200),F(P([30,30,0,0],[-40,-30,-50,-50]),'#ff0000',180,200),F(STAND,'#ff0000',400)]},
+ // Front-right (CH3) knee lifts the leg high overhead and waves; the other three press down to hold the body.
+ {n:'👋 Chào',e:'wink',f:[F(P([0,35,0,0],[-25,150,-30,-30]),'#00d0ff',600),F(P([0,35,0,0],[-25,95,-30,-30]),'#00d0ff',300),F(P([0,35,0,0],[-25,150,-30,-30]),'#80f0ff',300),F(P([0,35,0,0],[-25,95,-30,-30]),'#00d0ff',300),F(P([0,35,0,0],[-25,150,-30,-30]),'#80f0ff',300),F(P([0,35,0,0],[-25,95,-30,-30]),'#00d0ff',300),F(P([0,35,0,0],[-25,150,-30,-30]),'#80f0ff',300,400),F(STAND,'#00d0ff',600)]},
+ // Diagonal sway: each diagonal pair pushes up while the other sinks, hips swinging together.
+ {n:'💃 Nhảy',e:'love',f:[F(P([35,-35,35,-35],[-45,35,35,-45]),'#c040ff',300),F(P([-35,35,-35,35],[35,-45,-45,35]),'#ff40c0',300),F(P([35,-35,35,-35],[-45,35,35,-45]),'#c040ff',300),F(P([-35,35,-35,35],[35,-45,-45,35]),'#ff40c0',300),F(P([35,-35,35,-35],[-45,35,35,-45]),'#c040ff',300),F(P([-35,35,-35,35],[35,-45,-45,35]),'#ff40c0',300),F(STAND,'#c040ff',350)]},
+ // Lie down: all knees fold up so the belly rests on the table, legs splayed.
+ {n:'😴 Ngủ',e:'asleep',f:[F(P([15,15,-15,-15],[75,75,75,75]),'#301060',2500,3000),F(P([15,15,-15,-15],[65,65,65,65]),'#200a40',1200,1200),F(P([15,15,-15,-15],[75,75,75,75]),'#301060',1200,800),F(STAND,'#301060',1800)]},
+ // Jump up tall, feet spreading out, hold, then settle.
+ {n:'😲 Ngạc nhiên',e:'surprised',f:[F(P([20,20,-20,-20],[-55,-55,-55,-55]),'#ffffff',150,900),F(P([20,20,-20,-20],[-40,-40,-40,-40]),'#ffffff',300,300),F(STAND,'#ffffff',500)]}
 ];
 let token='',seq=0,ready=false,run=0,frames=[],selected=-1,saved=[],liveOn=false,liveBusy=false,lastColor='',lastMood='';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
