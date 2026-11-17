@@ -2,7 +2,8 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const html=fs.readFileSync('firmware/assets/ui.html','utf8'),code=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const elements={};class Element{
- constructor(){this.value='';this.textContent='';this.id='';this.listeners={};this.children=[];this.dataset={};this.disabledWrites=0;this._disabled=false;this.capture=null;this.classList={toggle:(n,v)=>{if(n==='hidden')this.hidden=v;if(n==='holding')this.holding=v;}};}
+ constructor(){this.value='';this.textContent='';this.id='';this.listeners={};this.children=[];this.dataset={};this.disabledWrites=0;this._disabled=false;this.capture=null;this.style={};this.cls=new Set();this.classList={toggle:(n,v)=>{v=v===undefined?!this.cls.has(n):!!v;if(v)this.cls.add(n);else this.cls.delete(n);if(n==='hidden')this.hidden=v;if(n==='holding')this.holding=v;},contains:n=>this.cls.has(n)};}
+ getBoundingClientRect(){return {left:0,top:0,width:200,height:200};}
  focus(options){this.focusOptions=options;}
  setAttribute(k,v){(this.attributes??={})[k]=v;}
  appendChild(e){this.children.push(e);if(e.id)elements[e.id]=e;return e;}replaceChildren(){this.children=[];}
@@ -13,11 +14,10 @@ const elements={};class Element{
 }
 for(const m of html.matchAll(/id="([^"]+)"/g)){const e=new Element();e.id=m[1];elements[e.id]=e;}
 const el=id=>{assert(elements[id],id+' must actually exist');return elements[id];};
-const dirs=[...html.matchAll(/data-dir="(\d+)"/g)].map(m=>{let e=new Element();e.dataset.dir=m[1];e.disabled=true;return e;});
 const events={},timers=[],calls=[],beacons=[];let failMove=false,failStatus=false,failTelemetry=false,mobile=false,deferred=null;
 const state={message:'Đã vào Wi-Fi',online:true,url:'http://192.168.4.1/',driver:true,positional:false,enabled:0,assembly:false,speed:0.65,offsets:Array(8).fill(0)};
 const samples=Array.from({length:8},(_,ch)=>({ch,known:true,active:false,angleDeg:null,pulseUs:null,counts:null}));
-const document={body:new Element(),hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:s=>s==='[data-dir]'?dirs:[],addEventListener:(n,f)=>events[n]=f};
+const document={body:new Element(),hidden:false,getElementById:id=>elements[id]||null,createElement:()=>new Element(),querySelectorAll:()=>[],addEventListener:(n,f)=>events[n]=f};
 class FormData{constructor(){this.items=[];}append(k,v,name){this.items.push([k,name||v]);}[Symbol.iterator](){return this.items[Symbol.iterator]();}}
 const location={reloads:0,reload(){this.reloads++;}};const timeouts=[];let otaReply={ok:true,d:{ok:true,restarting:true}};
 const fetch=async(path,opt={})=>{const data=Object.fromEntries(opt.body||[]);calls.push({path,data});let d={};
@@ -36,10 +36,17 @@ const ctx=vm.createContext({document,window:{matchMedia:()=>({matches:mobile}),a
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 (async()=>{
  await flush();const poll=async()=>{await timers.find(t=>t.ms===1000).f();await flush();};const hold=()=>timers.find(t=>t.ms===150).f();
- assert(dirs.length===8&&dirs.every(b=>b.disabled));assert.equal(el('speed').value,'65');assert.equal(el('speedValue').textContent,'65%');assert.equal(vm.runInContext('page',ctx),'control');
- const before=calls.length;dirs[0].fire('pointerdown');await flush();assert.equal(calls.length,before);await el('light').onclick();assert(calls.some(c=>c.path==='/api/light'));
- await el('arm').onclick();await flush();assert(state.positional&&dirs.every(b=>b.disabled));assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
- state.enabled=8;await poll();assert(dirs.every(b=>!b.disabled));state.speed=1;el('speed').value='40';await poll();assert.equal(el('speed').value,'100');state.speed=0.4;await poll();assert.equal(el('speed').value,'40');
+ // Joystick pad is 200 px; these points sit on each of the 8 direction rays near the rim.
+ const joy=el('joy'),P={1:[100,10],6:[164,36],4:[190,100],8:[164,164],2:[100,190],7:[36,164],3:[10,100],5:[36,36]};
+ const press=(d,props={})=>joy.fire('pointerdown',{clientX:P[d][0],clientY:P[d][1],...props}),drag=(x,y,props={})=>joy.fire('pointermove',{clientX:x,clientY:y,...props});
+ const off=()=>joy.classList.contains('off'),held=()=>vm.runInContext('held',ctx),lastMove=()=>calls.filter(c=>c.path==='/api/move').at(-1);
+ assert(off()&&!/data-dir=/.test(html)&&el('joyKnob'));assert.equal(el('speed').value,'65');assert.equal(el('speedValue').textContent,'65%');assert.equal(vm.runInContext('page',ctx),'control');
+ const before=calls.length;press(1);await flush();assert.equal(calls.length,before);assert(!joy.holding);await el('light').onclick();assert(calls.some(c=>c.path==='/api/light'));
+ // Lamp button sits under the joystick and shows its state.
+ state.lightOn=true;await poll();assert.equal(el('light').textContent,'💡 Đèn: bật');assert.equal(el('light').attributes['aria-pressed'],'true');state.lightOn=false;await poll();assert.equal(el('light').textContent,'💡 Đèn: tắt');
+ assert.equal(el('power').textContent,'⚡ Servo: TẮT');assert(!el('power').disabled);
+ await el('arm').onclick();await flush();assert(state.positional&&off());assert.equal(el('power').textContent,'⚡ Đang bật 0/8');assert(calls.some(c=>c.path==='/api/actuator'&&c.data.confirm==='1'));
+ state.enabled=8;await poll();assert(!off());assert.equal(el('power').textContent,'⚡ Servo: BẬT');assert.equal(el('power').attributes['aria-pressed'],'true');state.speed=1;el('speed').value='40';await poll();assert.equal(el('speed').value,'100');state.speed=0.4;await poll();assert.equal(el('speed').value,'40');
  // Slider: dragging is not overwritten by polls; release sends a decimal fraction.
  el('speed').value='75';el('speed').oninput();assert.equal(el('speedValue').textContent,'75%');state.speed=0.4;await poll();assert.equal(el('speed').value,'75');
  el('speed').onchange();await flush();assert(calls.some(c=>c.path==='/api/speed'&&c.data.value==='0.75'&&c.data.token==='42'));state.speed=.75;await poll();assert.equal(el('speed').value,'75');
@@ -64,7 +71,22 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  state.knee=45;await poll();assert.equal(el('knee').value,'45');el('knee').value='55';el('knee').oninput();assert.equal(el('kneeValue').textContent,'55°');await poll();assert.equal(el('knee').value,'55');
  el('knee').onchange();await flush();assert(calls.some(c=>c.path==='/api/knee'&&c.data.value==='55'));
  assert(/CH0 · Hông trước trái/.test(el('trim0').textContent)&&/CH6 · Hông sau phải/.test(el('trim6').textContent));
- for(const b of dirs){b.fire('pointerdown');await flush();let cmd=calls.filter(c=>c.path==='/api/move').at(-1);assert.equal(cmd.data.dir,b.dataset.dir);assert.equal(cmd.data.fresh,'1');await hold();await flush();assert.equal(calls.filter(c=>c.path==='/api/move').at(-1).data.fresh,'0');b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');}
+ // Joystick: each of the 8 rays drives that direction; holding keeps it alive; release stops.
+ for(const d of [1,2,3,4,5,6,7,8]){press(d);await flush();assert.equal(lastMove().data.dir,String(d));assert.equal(lastMove().data.fresh,'1');assert(joy.holding&&joy.capture===1&&el('joyKnob').style.transform);await hold();await flush();assert.equal(lastMove().data.fresh,'0');assert.equal(lastMove().data.dir,String(d));joy.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');assert(!joy.holding&&el('joyKnob').style.transform==='');assert.equal(el('joyDir').textContent,'Đứng yên');}
+ // Pressing the centre (dead zone) does not walk; dragging out picks a direction, swinging round changes it in place.
+ let moves=calls.filter(c=>c.path==='/api/move').length;joy.fire('pointerdown',{clientX:105,clientY:95});await flush();assert(joy.holding&&held()===0);assert.equal(calls.filter(c=>c.path==='/api/move').length,moves);
+ drag(100,20);await flush();assert.equal(lastMove().data.dir,'1');assert.equal(el('joyDir').textContent,'↑ Tiến');drag(185,100);await flush();assert.equal(lastMove().data.dir,'4');assert.equal(lastMove().data.fresh,'1');assert(joy.holding);
+ // back to the centre: the crab stands, but the finger is still on the knob
+ let bc=beacons.length;drag(102,100);assert.equal(beacons.length,bc+1);assert.equal(beacons.at(-1).data.dir,'0');assert(held()===0&&joy.holding);drag(100,15);await flush();assert.equal(lastMove().data.dir,'1');
+ // a finger on the 22.5 deg boundary does not flicker: it stays in its sector until 8 deg past it
+ const ray=deg=>{const r=deg*Math.PI/180;return [100+80*Math.sin(r),100-80*Math.cos(r)];};drag(...ray(28));await flush();assert.equal(held(),1);drag(...ray(33));await flush();assert.equal(held(),6);drag(...ray(15));await flush();assert.equal(held(),6);drag(...ray(10));await flush();assert.equal(held(),1);
+ // the knob stops at the rim however far the finger goes
+ drag(600,100);await flush();assert.equal(el('joyKnob').style.transform,'translate(66.0px,0.0px)');assert.equal(held(),4);joy.fire('pointerup');assert(held()===0&&el('joyKnob').style.transform==='');
+ // a second finger cannot steal the stick
+ press(1,{pointerId:3});await flush();press(2,{pointerId:4});drag(100,190,{pointerId:4});await flush();assert.equal(held(),1);joy.fire('pointerup',{pointerId:4});assert.equal(held(),1);joy.fire('pointerup',{pointerId:3});assert.equal(held(),0);
+ // Arrow keys: one key = straight, two keys = diagonal, releasing all stops.
+ joy.fire('keydown',{key:'ArrowUp'});await flush();assert.equal(lastMove().data.dir,'1');joy.fire('keydown',{key:'ArrowRight'});await flush();assert.equal(lastMove().data.dir,'6');joy.fire('keyup',{key:'ArrowUp'});await flush();assert.equal(lastMove().data.dir,'4');bc=beacons.length;joy.fire('keyup',{key:'ArrowRight'});assert(held()===0&&beacons.length===bc+1&&!joy.holding);
+ assert.equal(vm.runInContext('joyDir(0.1,-0.1,0)',ctx),0);assert.equal(vm.runInContext('joyDir(-0.7,0.7,0)',ctx),7);assert.equal(vm.runInContext('joyDir(-0.7,-0.7,0)',ctx),5);
 
  // Tự đi: needs both sensors and armed servos; toggles /api/auto. Only DỪNG (or a
  // drive button) ends it: blur, sleep and the menu must not stop the robot.
@@ -80,39 +102,41 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  state.auto=true;await poll();await el('auto').onclick();await flush();assert.equal(calls.filter(c=>c.path==='/api/auto').at(-1).data.active,'0');assert(!state.auto);
  state.autoNote=null;state.sonarOk=false;state.sonar=[null,null];await poll();assert(el('auto').disabled);
  // Polls and unrelated touches must not interrupt the captured finger.
- const first=dirs[0];assert(first.fire('pointerdown',{pointerId:7}));await flush();assert(first.holding&&first.capture===7);
- const writes=dirs.map(b=>b.disabledWrites);state.message='Đã vào Wi-Fi — trạng thái thay đổi';await poll();
- assert.deepEqual(dirs.map(b=>b.disabledWrites),writes);assert.equal(vm.runInContext('held',ctx),Number(first.dataset.dir));
- first.fire('pointerup',{pointerId:8});events.pointerup({pointerId:8,preventDefault(){}});assert(first.holding);
+ assert(press(1,{pointerId:7}));await flush();assert(joy.holding&&joy.capture===7);
+ state.message='Đã vào Wi-Fi — trạng thái thay đổi';await poll();
+ assert(!off()&&joy.holding);assert.equal(held(),1);
+ joy.fire('pointerup',{pointerId:8});events.pointerup({pointerId:8,preventDefault(){}});assert(joy.holding);
  assert(el('driveDeck').fire('contextmenu'));assert(el('driveDeck').fire('touchmove'));await hold();await flush();
- events.pointerup({pointerId:7,preventDefault(){}});assert(!first.holding&&first.capture===null);assert.equal(vm.runInContext('held',ctx),0);
+ events.pointerup({pointerId:7,preventDefault(){}});assert(!joy.holding&&joy.capture===null);assert.equal(vm.runInContext('held',ctx),0);
  // Losing capture or readiness still stops immediately, never silently resumes.
- first.fire('pointerdown');await flush();first.fire('lostpointercapture');assert.equal(vm.runInContext('held',ctx),0);
- first.fire('pointerdown');await flush();state.assembly=true;await poll();assert.equal(vm.runInContext('held',ctx),0);state.assembly=false;await poll();
- first.fire('pointerdown',{pointerType:'mouse',button:2});assert.equal(vm.runInContext('held',ctx),0);
+ press(1);await flush();joy.fire('lostpointercapture');assert.equal(vm.runInContext('held',ctx),0);
+ press(1);await flush();state.assembly=true;await poll();assert.equal(vm.runInContext('held',ctx),0);state.assembly=false;await poll();
+ press(1,{pointerType:'mouse',button:2});assert.equal(vm.runInContext('held',ctx),0);
  assert(html.includes('grid-template-columns:minmax(300px,1fr) minmax(340px,430px)')&&html.includes('position:fixed')&&html.includes('overscroll-behavior:none')&&html.includes('-webkit-touch-callout:none'));
- assert.deepEqual(dirs.map(x=>Number(x.dataset.dir)).sort(),[1,2,3,4,5,6,7,8]);
+ assert.deepEqual(vm.runInContext('SECTORS',ctx).slice().sort(),[1,2,3,4,5,6,7,8]);
 
  // The mobile settings drawer owns its own scroll; opening it cancels hold.
  mobile=true;const telemetry=()=>timers.find(t=>t.ms===500).f();
  const countTelemetry=()=>calls.filter(c=>c.path==='/api/servos').length;
  let previousTelemetry=countTelemetry();await telemetry();assert.equal(countTelemetry(),previousTelemetry);
- first.fire('pointerdown');await flush();el('menuButton').onclick();await flush();assert.equal(vm.runInContext('held',ctx),0);assert.equal(document.body.dataset.panel,'open');assert.equal(el('menuButton').attributes['aria-expanded'],'true');assert(countTelemetry()>previousTelemetry);
+ press(1);await flush();el('menuButton').onclick();await flush();assert.equal(vm.runInContext('held',ctx),0);assert.equal(document.body.dataset.panel,'open');assert.equal(el('menuButton').attributes['aria-expanded'],'true');assert(countTelemetry()>previousTelemetry);
  samples[0]={ch:0,known:true,active:true,angleDeg:100.1,pulseUs:1556,counts:319};await telemetry();await flush();assert.equal(el('angle0').textContent,'100.1°');assert.equal(el('pulse0').textContent,'1556');assert.equal(el('counts0').textContent,'319');
  samples[0].active=false;await telemetry();await flush();assert.equal(el('angle0').textContent,'—');assert.equal(el('servoState0').textContent,'Tắt xung');
- first.fire('pointerdown');await flush();failTelemetry=true;await telemetry();await flush();assert.equal(vm.runInContext('held',ctx),Number(first.dataset.dir));assert.equal(el('angle0').textContent,'—');failTelemetry=false;first.fire('pointerup');
+ press(1);await flush();failTelemetry=true;await telemetry();await flush();assert.equal(held(),1);assert.equal(el('angle0').textContent,'—');failTelemetry=false;joy.fire('pointerup');
  events.keydown({key:'Escape'});assert.equal(document.body.dataset.panel,'closed');assert.equal(el('menuButton').attributes['aria-expanded'],'false');previousTelemetry=countTelemetry();await telemetry();assert.equal(countTelemetry(),previousTelemetry);
  el('menuButton').onclick();el('backdrop').onclick();assert.equal(document.body.dataset.panel,'closed');mobile=false;
- for(const event of ['blur','pagehide']){dirs[0].fire('pointerdown');await flush();events[event]();assert.equal(vm.runInContext('held',ctx),0);}
- dirs[0].fire('pointerdown');await flush();document.hidden=true;events.visibilitychange();assert.equal(vm.runInContext('held',ctx),0);document.hidden=false;
- dirs[1].fire('pointerdown');await flush();dirs[1].fire('pointercancel');assert.equal(beacons.at(-1).data.dir,'0');
- failMove=true;dirs[0].fire('pointerdown');await flush();assert.equal(vm.runInContext('held',ctx),0);failMove=false;
- await el('showAssembly').onclick();assert(state.assembly&&dirs.every(b=>b.disabled));assert.equal(document.body.dataset.page,'assembly');assert.equal(el('trims').children.length,8);
+ for(const event of ['blur','pagehide']){press(1);await flush();events[event]();assert.equal(vm.runInContext('held',ctx),0);}
+ press(1);await flush();document.hidden=true;events.visibilitychange();assert.equal(vm.runInContext('held',ctx),0);document.hidden=false;
+ press(2);await flush();joy.fire('pointercancel');assert.equal(beacons.at(-1).data.dir,'0');
+ failMove=true;press(1);await flush();assert.equal(vm.runInContext('held',ctx),0);failMove=false;
+ await el('showAssembly').onclick();assert(state.assembly&&off());assert.equal(document.body.dataset.page,'assembly');assert.equal(el('trims').children.length,8);
  await el('centre').onclick();await el('stand').onclick();assert.deepEqual(el('trims').children[0].children.slice(1).map(b=>b.textContent),['−3','−1','+1','+3']);await el('trims').children[0].children[3].onclick();assert.equal(state.offsets[0],1);assert(el('trim0').textContent.includes('(1°)'));await el('trims').children[0].children[4].onclick();assert.equal(state.offsets[0],4);await el('trims').children[0].children[1].onclick();assert.equal(state.offsets[0],1);
  await el('save').onclick();await el('showSetup').onclick();assert.equal(vm.runInContext('page',ctx),'assembly');await el('done').onclick();assert(!state.assembly&&vm.runInContext('page',ctx)==='control');
- await el('disarm').onclick();assert(!state.positional&&dirs.every(b=>b.disabled));
+ await el('disarm').onclick();assert(!state.positional&&off());
+ // ⚡ beside the joystick: on → off → on
+ state.enabled=0;await poll();assert.equal(el('power').textContent,'⚡ Servo: TẮT');await el('power').onclick();await flush();const lastAct=()=>calls.filter(c=>c.path==='/api/actuator').at(-1);assert(state.positional&&lastAct().data.value==='positional'&&lastAct().data.confirm==='1');state.enabled=8;await poll();await el('power').onclick();await flush();assert(!state.positional&&off());assert.equal(lastAct().data.value,'unknown');
  await el('showAssembly').onclick();await el('arm').onclick();assert(state.assembly&&state.positional);await el('done').onclick();
- state.enabled=8;await poll();let release;deferred=new Promise(r=>release=r);dirs[0].fire('pointerdown');await flush();dirs[0].fire('pointerup');release();deferred=null;await flush();assert.equal(vm.runInContext('held',ctx),0);
+ state.enabled=8;await poll();let release;deferred=new Promise(r=>release=r);press(1);await flush();joy.fire('pointerup');release();deferred=null;await flush();assert.equal(vm.runInContext('held',ctx),0);
  await el('showSetup').onclick();state.online=false;for(let i=0;i<40;i++)await poll();assert.equal(vm.runInContext('page',ctx),'setup');
  await el('scan').onclick();assert.equal(el('networks').children[1].textContent,'<script>bad</script>');
  // Scan fills the SSID with the first network; the password is visible text (owner mistyped hidden ones).
@@ -129,7 +153,7 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  assert(el('otaSend').disabled&&vm.runInContext('otaBusy',ctx));const polls=calls.filter(c=>c.path==='/api/status').length;await poll();assert.equal(calls.filter(c=>c.path==='/api/status').length,polls); // no status poll mid-upload
  otaRelease();deferred=null;await sending;await flush();assert(/Nạp xong/.test(el('otaInfo').textContent));const t=timeouts.find(x=>x.ms===15000);assert(t);t.f();assert.equal(location.reloads,1);
  vm.runInContext('otaBusy=false',ctx);
- failStatus=true;await poll();assert(dirs.every(b=>b.disabled));assert.equal(vm.runInContext('held',ctx),0);
+ failStatus=true;await poll();assert(off()&&el('power').disabled);assert.equal(vm.runInContext('held',ctx),0);
  assert(!calls.some(c=>c.path.includes('/360')||c.path.includes('/test')));assert(!html.includes('id="show360"'));
- console.log('PASS: Wi-Fi signal row, OTA PIN/file/6-digit checks/upload error shown/polls paused/reload after success, Tự đi toggle (sensors/armed gating, DỪNG ends it, blur/sleep/menu do not), actual180-only UI, auto-arm/explicit arm, enable8 readiness, 8-direction (4 straight + 4 turning arcs) split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
+ console.log('PASS: Wi-Fi signal row, OTA PIN/file/6-digit checks/upload error shown/polls paused/reload after success, Tự đi toggle (sensors/armed gating, DỪNG ends it, blur/sleep/menu do not), actual180-only UI, auto-arm/explicit arm, enable8 readiness, joystick 8-direction (dead zone, in-place swing, sticky sectors, rim clamp, one finger, arrow keys) + ⚡/💡 quick buttons, split UI/mobile drawer/read-only commanded telemetry/keepalive/captured hold through status polls/other-finger release/contextmenu/touchmove/global release/capture loss/blur/cancel/hide, disarm, assembly lock/centre/trim/save, delayed-response stop, AP page persistence, Wi-Fi scan/password clearing, legacy pages removed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

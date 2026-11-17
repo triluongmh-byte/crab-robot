@@ -385,3 +385,20 @@ Release `positional180-v30`. The owner tested 60° in the emotion editor and not
   - Walking still lifts at most `KNEE_LIFT_MAX` (60°). Hips and knee press-down are unchanged.
 - **👋 Chào:** CH3's knee goes to 100° and waves 100° ↔ 60°.
 - **Sliders:** one slider now moves only its own joint. **Đối xứng trái/phải** starts unticked; before, it was ticked, so every slider also moved the opposite leg.
+
+## Joystick and quick buttons on the drive screen — 2026-11-17
+
+Release `positional180-v31`. The owner asked for a round stick instead of the 8 drive buttons, and for the servo and lamp controls on the drive screen.
+
+- **Joystick.** Press the knob and drag toward where the crab should go. Let go and it stops.
+  - The firmware still takes the same 8 directions. The drag angle picks one, clockwise from straight up: Tiến, Tới phải, Phải, Lùi phải, Lùi, Lùi trái, Trái, Tới trái.
+  - **Dead zone.** Inside 30 % of the radius the crab stands, and the finger stays on the knob.
+  - **Changing direction.** Swinging round changes direction without lifting the finger.
+  - **Hysteresis.** A sector keeps its direction until the finger is 8° past its edge, so a finger on a boundary does not flicker.
+  - **Other inputs.** One finger owns the stick. Arrow keys work on a computer; two keys give a diagonal.
+- **Quick buttons under the stick.**
+  - **⏹ DỪNG.**
+  - **⚡ Servo.** Turns the servos on or off, and shows their state.
+  - **💡 Đèn.** Turns the lamp on or off, and shows its state.
+  - **🎨 Lamp colour.** These two used to live in the side menu.
+- **No change on the robot side.** Only the page and the version string changed. `/api/move` is the same.
