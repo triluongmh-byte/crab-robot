@@ -1,8 +1,9 @@
 # Battery power and self-driving parts
 
-**Status, 2026-11-14:**
-- **Auto mode (Tự đi) is in the firmware** from `positional180-v22`. It waits for the two ultrasonic sensors from round 1. Without them the button stays greyed out.
-- **The battery (round 2) is a plan.** Nothing in this round has been bought or fitted yet.
+**Status, 2026-11-17:**
+- **Auto mode (Tự đi) is in the firmware** from `positional180-v22`. Since v32 it also has a radar page (`/radar`) with live stop/veer thresholds and a log.
+- **Round 1 is bought:** both HC-SR04P modules and the 1000 µF capacitors. The front sonar head (`case/sonar_front`) is being printed.
+- **Round 2 changed:** the owner reuses **two 18650 cells in series (2S)** instead of buying the LiPo, plus a 2S balancing BMS. Already bought: the LM2596 and the rocker switches. Still to buy: see the table below.
 
 The robot still runs on the [two-port USB power bank wiring](WIRING.md#2-connect-power--two-different-pca-labels).
 
@@ -24,7 +25,7 @@ With round 1 fitted, Auto mode runs on the power bank as it is now. It still has
 
 ### Why two sensors and not four
 
-- **Auto mode mostly walks forward and turns** (↖ ↗ arcs). Two sensors angled about 25° left and right see what is ahead and which side is freer.
+- **Auto mode mostly walks forward and turns** (↖ ↗ arcs). Two sensors turned 12° left and right (the V head in `case/sonar_front`) see what is ahead and which side is freer.
 - **Reversing is short and blind.** The robot backs off for 1.5 s along ground it has just crossed.
 - **Four sensors would take 8 of the 9 free header GPIOs.** That leaves nothing for battery sense or a speaker, and the round of pings gets twice as slow.
 
@@ -67,38 +68,73 @@ Rules that keep it safe:
 
 The distances live in `firmware/crab/config.h` (`AUTO_STOP_CM`, `AUTO_SLOW_CM`, timings). They are first guesses and still need tuning on the floor.
 
-## Round 2: battery power, about 600k VND
+## Round 2: battery power (2× 18650, 2S)
 
-**Buy all of these together.** A LiPo without the balance charger, the UBEC or the battery-sense resistors is useless or unsafe.
+The owner reuses two 18650 cells (owner, 2026-11-17) instead of buying the 2S LiPo. This saves about 150k VND.
+- The pack voltage is the same: 7.4 V nominal, 8.4 V full, so everything downstream is unchanged, including the battery-sense divider.
+- With 2500 mAh cells it holds about 18 Wh, against 11 Wh for the LiPo 1500.
+- It weighs about 90 g, against 80 g for the LiPo.
+- Do not use three cells (3S, 12.6 V). That adds about 45 g for 8 small servos to carry, and the divider would have to change to 100k / 22k.
 
-| Part | Notes |
-|---|---|
-| 2S LiPo 7.4 V 1500 mAh 30C, **15 × 35 × 72 mm**, T-plug | Chosen pack. It fits the power bank's slot (100 × 65 × 15 mm, case D5) with 30 mm spare beside it |
-| B3 balance charger (2S/3S) | Charges through the white balance lead. It stays on the table, not on the crab |
-| UBEC 5 A (2–6S), **jumper on 5 V** | Servo branch. 6 V would overdrive the WS2812 lamp on the same rail |
-| LM2596 adjustable buck | Logic branch. **Set it to 5.0 V with a multimeter before connecting it** |
-| T-plug lead pair (male + female, 16 AWG) | Do not cut the battery leads: cutting both wires at once shorts the pack |
-| Rocker switch 6 A | In the red lead, after the T-plug. Needs a ~21 × 15 mm cut-out in the body |
-| 100k + 33k resistors | Battery-sense divider |
+### Parts
+
+| Part | Status | Notes |
+|---|---|---|
+| 2× 18650 Li-ion cell | **Owner has them** (reused) | Same type and age. Measure each one and discard any below 2.5 V, dented, leaking or getting hot. When full, they should be within 0.05 V of each other |
+| BMS 2S **with balancing**, "7.4V 20A Cân bằng" | To buy (~42k) | **Not the 4A version:** servo peaks would trip it and drop power. Balancing keeps both cells at the same voltage |
+| Li-ion charger **8.4 V 1 A** (CC/CV, red/green LED) | To buy (~50–70k) | Plugs into the BMS P+/P−. A plain 8.4 V adapter does not limit the current, so do not use one |
+| Nickel strip spot-weld, or a 2-cell holder | To do (~10–20k at a shop) | A shop spot-welds the two cells into one block with 3 leads (−, middle, +). **Never solder directly onto an 18650.** Spring holders can lose contact while the crab walks |
+| UBEC 5 A (2–6S), **jumper on 5 V** | To buy (~130k) | Servo branch. 6 V would overdrive the WS2812 lamp on the same rail |
+| LM2596 adjustable buck | **Bought** | Logic branch. **Set it to 5.0 V with a multimeter before connecting it** |
+| T-plug lead pair (male + female, 16 AWG) | To buy (~35k) | The pack comes off for charging without unsoldering |
+| Rocker switch 6 A (3-pin) | **Bought** (5 pcs) | Use the middle pin and one outer pin, in the + lead after the BMS |
+| 1000 µF 16 V capacitor | **Bought** (4 pcs) | Across PCA `V+`/`GND`. Long leg +, striped side − |
+| 100k + 33k resistors | To buy (a few hundred đồng) | Battery-sense divider. Optional: the crab runs without it, but it cannot tell when the pack is low |
+
+No longer needed: the 2S LiPo 1500 mAh and the B3 balance charger.
 
 Do not use a 1S 3.7 V pack or a single 18650 for the servos. SG90 servos need 4.8–6 V; at 3.0–4.2 V they are weak and the brownouts get worse.
+
+### Why both a UBEC and the LM2596
+
+The pack and the switch are shared, and the line splits into two branches after the switch.
+
+| Load | Current | Fed by |
+|---|---|---|
+| 8 servos + lamp | 3–4 A at the peaks | UBEC 5 A |
+| LILYGO + sonars | about 0.5 A | LM2596 |
+
+- The LM2596 is rated 3 A but gets hot above about 2 A, so it cannot carry the servos.
+- Splitting the branches keeps servo current spikes from resetting the board, which is the old brownout.
+- At its peak the whole crab draws about 4 A from the pack. The BMS is rated 20 A and 18650 cells give 5–10 A.
+- Expected run time is about 1.5–2 h, depending on the cells.
 
 ### Planned power wiring
 
 ```text
-2S LiPo 7.4V ─T-plug─ switch ─┬── UBEC 5 V, ≥3 A ───► PCA9685 V+ (8 servos) + LED 5V
-                              │                       └ 1000 µF across V+/GND, at the PCA
-                              ├── LM2596 5.0 V ─────► LILYGO header "5V"
-                              └── 100k / 33k ───────► LILYGO GPIO2 (battery sense, ADC1)
-All GNDs common: battery −, UBEC −, buck −, LILYGO G/GND, PCA GND.
+cell 1 −  ─────────────► BMS B− (0V)
+cell 1 + / cell 2 − ───► BMS BM (4.2V, balance)
+cell 2 +  ─────────────► BMS B+ (8.4V)
+
+BMS P+ ─T-plug─ switch ─┬── UBEC 5 V, 5 A ───► PCA9685 V+ (8 servos) + LED 5V
+                        │                      └ 1000 µF across V+/GND, at the PCA
+                        ├── LM2596 5.0 V ────► LILYGO header "5V"
+                        └── 100k / 33k ──────► LILYGO GPIO2 (battery sense, ADC1)
+BMS P− = common GND: UBEC −, buck −, LILYGO G/GND, PCA GND.
+Charger 8.4 V Li-ion ──► BMS P+ / P− (switch off while charging).
 ```
 
-**Fitting it in the body:**
-- The pack slides into the power bank slot, held by the existing strap.
-- A piece of foam behind it stops it sliding, because it is 28 mm shorter than the slot.
-- The UBEC and LM2596 sit in the 30 mm gap beside the pack. The LM2596 is about 14 mm tall in a 15 mm slot, so set its voltage before fitting it.
-- Leave the T-plug and the balance lead at the front so the pack can come out for charging.
-- Never squeeze the pack. If it swells, stop using it.
+The PCA's other supply pin, **VCC** (3.3 V logic), stays wired to the LILYGO as it is now.
+
+Pad names vary between BMS boards. Check the back of the board before soldering.
+
+### Fitting it in the body (to design)
+
+The two cells side by side make a block of about 37 × 65 × 18.5 mm.
+- That is thicker than the old power bank slot (15 mm), and the owner runs frame_upper only.
+- Where the pack goes, and a holder for it, still has to be designed once the cells are welded.
+- The UBEC and LM2596 go next to it. Set the LM2596 to 5.0 V before fitting it.
+- Leave the T-plug reachable so the pack can come off for charging.
 
 ### Powering the LILYGO without USB
 
