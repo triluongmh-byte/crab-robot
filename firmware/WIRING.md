@@ -28,20 +28,42 @@ Use female-to-female Dupont leads. **`U1RXD` / `U1TXD` beside LILYGO 18/17 are a
 
 **First check:** connect A–D only, with servo plugs and servo power still disconnected. Power LILYGO by USB. Open the web controller and check that it does not report **Kiểm tra dây PCA9685**. After correcting a PCA connection while unpowered, restart LILYGO: an I²C fault remains latched until reboot.
 
-### 2. Connect power — two different PCA labels
+### 2. Connect power: one 5 V supply into the PCA (owner, 2026-11-17)
 
-| Cable or wire | From | To |
+The owner now runs the whole crab from **one 5 V supply into the PCA screw terminal**. A short red lead from that terminal feeds the LILYGO, so there is no USB cable trailing behind the crab.
+
+| Wire | From | To |
 |---|---|---|
-| USB cable | Closed 5 V USB supply, output 1 | LILYGO USB-C |
-| Servo positive | Separate 5 V USB output through a labelled terminal adapter, **`+`** | PCA screw terminal **`V+` / `+`** |
-| Servo negative | The same adapter, **`−` / `GND`** | PCA screw terminal **`GND` / `−`** |
-| Common ground B | LILYGO **`G` / `GND`** | PCA **`GND`** — keep this lead connected |
+| Supply + | 5 V supply (power-bank output, or the LM2596 in [battery power](BATTERY-AUTONOMY.md#battery-now-with-parts-already-owned)) | PCA screw terminal **`V+` / `+`** |
+| Supply − | The same supply | PCA screw terminal **`GND` / `−`** |
+| **F** (new, red) | PCA screw terminal **`V+`** | LILYGO **`5V`**: bottom of the left column, beside USB-C, just below `GND` |
+| Common ground B | LILYGO **`G` / `GND`** | PCA **`GND`**. Keep this lead connected |
+| 1000 µF capacitor | Long leg to the **`V+`** terminal, striped leg to **`GND`** | Across the terminal, legs short, in the same clamps as the supply |
+| Optional second 1000 µF | Long leg to LILYGO **`5V`**, striped leg to the `GND` just above it | Add it if the crab still shows **Sụt áp** |
 
-**PCA `VCC` =3.3 V logic from A. PCA `V+` = 5 V servo/LED power.** Do not bridge them or feed the eight servos through LILYGO's power pins. Read terminal `+`/`−` marks; the apparent left/right positions change when you rotate the board. Clamp bare metal, not insulation, and leave no loose strand between terminals.
+```text
+5 V supply + ──► PCA V+ ──┬── 1000 µF (+ long leg) ──┐
+                          ├── servos, LED 5V          │
+                          └── lead F ──► LILYGO 5V    │
+5 V supply − ──► PCA GND ─┴───────────────────────────┴── lead B ──► LILYGO G
+```
 
-**Planned replacement:** a 2S pack of two reused 18650 cells with a balancing BMS, and separate servo (UBEC 5 A) and logic (LM2596) regulators, feeding the LILYGO header `5V` pin. See [Battery power and self-driving parts](BATTERY-AUTONOMY.md). It is not fitted yet.
+The capacitor is not in the line. It sits **across** `V+` and `GND`: one leg on each, next to the supply wires. When a servo kicks, the capacitor tops up the rail so the board does not reset.
 
-This is the original closed-USB-supply plan, not a claim that the photographed cell/module setup was rated or verified. A suitable output and cable must handle the servo load. If the bank shuts down or the board resets, disconnect servo power, check free movement and use an adequately rated supply before retrying.
+**Rules:**
+- **Unplug the LILYGO's USB-C** while lead F is fitted. Two 5 V sources would fight.
+- **To flash over USB:** switch off or unplug the PCA supply **first**, then plug in the computer. The LILYGO `5V` pin and USB VBUS are joined through a fuse only, so the supply would feed the computer's port. OTA over Wi-Fi needs no change.
+- **PCA `VCC` (3.3 V logic, lead A) and PCA `V+` (5 V) are different.** Never bridge them. Lead F goes to `V+`, never to `VCC`.
+- **LILYGO `5V`, not `3V`.** The other `3V` pin sits at the bottom of the right column, level with `5V`. 5 V on a `3V` pin destroys the board.
+- **The supply must give 5.0–5.5 V**, and now carries the servos and the board together. Use the strongest power-bank port (2.1–3 A).
+- If the screen shows **Sụt áp**:
+  - fit the second capacitor;
+  - lower **Tốc độ** to about 60–70 % and the knee lift a little;
+  - then tap **Bật servo**.
+- Read the terminal `+`/`−` marks; the apparent left/right positions change when you rotate the board. Clamp bare metal, not insulation, and leave no loose strand between terminals. Twist each capacitor leg with its supply wire before clamping.
+- A Schottky diode (1N5819) in lead F, stripe towards the LILYGO, with the second capacitor on the LILYGO side, holds the board up through deeper dips. It is optional. Do not use a 1N4007: it drops about 0.8 V.
+
+**Before 2026-11-17** the crab used two power-bank outputs: one into the LILYGO's USB-C, one into the PCA terminal, with lead B as the common ground. That still works; leave lead F off if you go back to it.
 
 ### 3. Connect the light
 
@@ -52,6 +74,42 @@ This is the original closed-USB-supply plan, not a claim that the photographed c
 | **`GND` / `−`** | PCA **`GND`** |
 
 LED data is separate from the servo channels. Do not connect DIN to a PCA PWM socket. Do not power the stick from LILYGO 3V/5V. Direct 3.3 V LED data is an **ASSUMPTION** for the owned stick; if it flickers, shorten data beside GND, keep configured brightness low and leave it disconnected if unresolved. The firmware caps brightness at 16/255.
+
+### 4. Connect the two ultrasonic sensors (Tự đi)
+
+Use two **HC-SR04P** modules, the 3.3 V version. Each has four pins, printed **`VCC` · `Trig` · `Echo` · `GND`**.
+
+| Sensor pin | **Left** eye | **Right** eye |
+|---|---|---|
+| `Trig` | LILYGO **`10`** | LILYGO **`12`** |
+| `Echo` | LILYGO **`11`** | LILYGO **`13`** |
+| `VCC` | LILYGO **`3V`**, bottom of the right column | The same pin: twist or solder both `VCC` leads together |
+| `GND` | A right-column **`G`** | The other right-column **`G`**, or a `GND` at its top |
+
+```text
+   LEFT COLUMN            RIGHT COLUMN
+   3V   lead A            GND
+   1    lead E (LED)      GND
+   2                      43
+   3                      44
+   10 ◄ left Trig         18  lead C (SDA)
+   11 ◄ left Echo         17  lead D (SCL)
+   12 ◄ right Trig        21
+   13 ◄ right Echo        16
+   NC                     NC
+   NC                     G  ◄ left GND
+   GND  lead B            G  ◄ right GND
+   5V   lead F            3V ◄ both VCC
+        (USB-C end)
+```
+
+- **`VCC` on `3V`, never `5V`.** A sensor powered from 5 V answers with a 5 V `Echo`, which the ESP32-S3 pin cannot take. A 5 V HC-SR04 (not "P") needs a 1k / 2k divider on `Echo`.
+- **Left** means the robot's left: stand behind the crab looking towards Tiến (the screen side). The left module on the [front sonar head](../case/sonar_front/README.md) looks to your left.
+- A swapped `Trig` / `Echo` damages nothing, but that side reads nothing.
+- **Check:** open `/radar` (http://192.168.4.1/radar on the crab's own Wi-Fi).
+  - Both **Trái** and **Phải** should show cm, not "—".
+  - Cover the left eye with a hand: the **Trái** number should drop and the left arc should turn red.
+  - If **Phải** reacts instead, swap the pairs 10/11 ↔ 12/13.
 
 ## Eight servos mean eight three-wire plugs
 
