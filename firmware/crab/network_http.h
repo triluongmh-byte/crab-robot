@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Actual HTTP handlers and station servicing, also exercised by host tests.
 #pragma once
-constexpr const char* FIRMWARE_PROFILE="positional180-v33";
+constexpr const char* FIRMWARE_PROFILE="positional180-v34";
 String jsonString(const String& s){String out="\"";for(size_t i=0;i<s.length();i++){unsigned char c=s[i];if(c=='"'||c=='\\'){out+='\\';out+=char(c);}else if(c<32){char b[7];snprintf(b,sizeof(b),"\\u%04x",c);out+=b;}else out+=char(c);}return out+"\"";}
 void json(int code,const String& s){server.sendHeader("Cache-Control","no-store");server.sendHeader("X-Content-Type-Options","nosniff");server.send(code,"application/json; charset=utf-8",s);}
 void ok(){json(200,"{\"ok\":true}");}

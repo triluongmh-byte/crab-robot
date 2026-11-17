@@ -477,3 +477,26 @@ Release `positional180-v33`. The owner saw a knee lift fully at 100 and asked fo
   - A stalled SG90 draws a lot of current, heats up and, on the single 5 V supply, can brown the crab out.
   - The page tells the owner to move slowly and back off when a servo buzzes.
   - None of this has been tested on hardware.
+
+## Bigger built-in emotions — 2026-11-17
+
+Release `positional180-v34`. The owner asked for the built-in emotions to move much more, so the shapes read from across the room. Only the emotion page changed; the firmware limits are those of v33.
+
+| Emotion | Shape (page units: hip + forward, knee + lift) |
+|---|---|
+| 😄 Vui | Bounce: knees −45 (tall, feet spread, hips ±25) ↔ +30 (low, feet gathered, hips ∓15), three times |
+| 😢 Buồn | Front knees +70, rear −20, front hips −20: head down on the table, slow sigh |
+| 😡 Giận | Rear knees −50, front hips +30: leans in; the front knees stamp in turn (+70 / −40) |
+| 👋 Chào | Front-right knee to 150 and waves 150 ↔ 95; the other three press down (−25/−30) to hold the body |
+| 💃 Nhảy | Diagonal sway: one diagonal −45 while the other is +35, hips ±35, three times |
+| 😴 Ngủ | All knees +75, hips splayed ±15: lies on its belly, breathes 75 ↔ 65 |
+| 😲 Ngạc nhiên | All knees −55 in 150 ms, feet spread, hold, settle |
+
+The test keeps every preset within these rules:
+- hips stay within ±40 and knees within −55…150;
+- no more than one leg is lifted past 80 at a time;
+- a front leg and the rear leg on the same side never close in on each other by more than 20° each;
+- any move of 50° or more gets at least 150 ms;
+- every preset ends standing.
+
+None of these shapes has been tried on the crab. If one tips it over or makes a leg touch the body, scale that frame down.
