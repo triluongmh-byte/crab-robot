@@ -11,10 +11,10 @@ The robot still runs on the [two-port USB power bank wiring](WIRING.md#2-connect
 
 The parts come in **two buying rounds**:
 
-1. **Round 1** is what turns the toy into a robot, for under 100k VND.
+1. **Round 1** is what turns the toy into a robot, and it is cheap.
 2. **Round 2** is a power kit that only works as a whole, so it is bought in one go.
 
-## Round 1: sensors, about 75–95k VND
+## Round 1: sensors
 
 | Part | Qty | Notes |
 |---|---|---|
@@ -70,7 +70,7 @@ The distances live in `firmware/crab/config.h` (`AUTO_STOP_CM`, `AUTO_SLOW_CM`, 
 
 ## Round 2: battery power (2× 18650, 2S)
 
-The owner reuses two 18650 cells (owner, 2026-11-17) instead of buying the 2S LiPo. This saves about 150k VND.
+The owner reuses two 18650 cells (owner, 2026-11-17) instead of buying the 2S LiPo. It is cheaper than buying a LiPo and a balance charger.
 - The pack voltage is the same: 7.4 V nominal, 8.4 V full, so everything downstream is unchanged, including the battery-sense divider.
 - With 2500 mAh cells it holds about 18 Wh, against 11 Wh for the LiPo 1500.
 - It weighs about 90 g, against 80 g for the LiPo.
@@ -81,15 +81,15 @@ The owner reuses two 18650 cells (owner, 2026-11-17) instead of buying the 2S Li
 | Part | Status | Notes |
 |---|---|---|
 | 2× 18650 Li-ion cell | **Owner has them** (reused) | Same type and age. Measure each one and discard any below 2.5 V, dented, leaking or getting hot. When full, they should be within 0.05 V of each other |
-| BMS 2S **with balancing**, "7.4V 20A Cân bằng" | To buy (~42k) | **Not the 4A version:** servo peaks would trip it and drop power. Balancing keeps both cells at the same voltage |
-| Li-ion charger **8.4 V 1 A** (CC/CV, red/green LED) | To buy (~50–70k) | Plugs into the BMS P+/P−. A plain 8.4 V adapter does not limit the current, so do not use one |
-| Nickel strip spot-weld, or a 2-cell holder | To do (~10–20k at a shop) | A shop spot-welds the two cells into one block with 3 leads (−, middle, +). **Never solder directly onto an 18650.** Spring holders can lose contact while the crab walks |
-| UBEC 5 A (2–6S), **jumper on 5 V** | To buy (~130k) | Servo branch. 6 V would overdrive the WS2812 lamp on the same rail |
+| BMS 2S **with balancing**, "7.4V 20A Cân bằng" | To buy | **Not the 4A version:** servo peaks would trip it and drop power. Balancing keeps both cells at the same voltage |
+| Li-ion charger **8.4 V 1 A** (CC/CV, red/green LED) | To buy | Plugs into the BMS P+/P−. A plain 8.4 V adapter does not limit the current, so do not use one |
+| Nickel strip spot-weld, or a 2-cell holder | To do (a shop can do it) | A shop spot-welds the two cells into one block with 3 leads (−, middle, +). **Never solder directly onto an 18650.** Spring holders can lose contact while the crab walks |
+| UBEC 5 A (2–6S), **jumper on 5 V** | To buy | Servo branch. 6 V would overdrive the WS2812 lamp on the same rail |
 | LM2596 adjustable buck | **Bought** | Logic branch. **Set it to 5.0 V with a multimeter before connecting it** |
-| T-plug lead pair (male + female, 16 AWG) | To buy (~35k) | The pack comes off for charging without unsoldering |
+| T-plug lead pair (male + female, 16 AWG) | To buy | The pack comes off for charging without unsoldering |
 | Rocker switch 6 A (3-pin) | **Bought** (5 pcs) | Use the middle pin and one outer pin, in the + lead after the BMS |
 | 1000 µF 16 V capacitor | **Bought** (4 pcs) | Across PCA `V+`/`GND`. Long leg +, striped side − |
-| 100k + 33k resistors | To buy (a few hundred đồng) | Battery-sense divider. Optional: the crab runs without it, but it cannot tell when the pack is low |
+| 100k + 33k resistors | To buy | Battery-sense divider. Optional: the crab runs without it, but it cannot tell when the pack is low |
 
 No longer needed: the 2S LiPo 1500 mAh and the B3 balance charger.
 
