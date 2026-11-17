@@ -22,23 +22,25 @@ const sameBox=(a,b)=>{for(const key of ['x','y','width','height'])assert(Math.ab
     if(url.pathname==='/api/move')commands.push(Object.fromEntries(new URLSearchParams(route.request().postData())));
     await route.fulfill({contentType:'application/json',body:JSON.stringify(data)});
    });
-   await page.goto('http://crab.test/');await page.locator('[data-dir="1"]:not([disabled])').waitFor();
-   const button=page.locator('[data-dir="1"]'),box=await button.boundingBox();
-   assert(box.y>=64&&box.y+box.height<=view.height);assert(await page.locator('[data-dir]').count()===4);
+   await page.goto('http://crab.test/');await page.locator('#joy:not(.off)').waitFor();
+   const button=page.locator('#joy'),box=await button.boundingBox();
+   assert(box.y>=64&&box.y+box.height<=view.height,'joystick off screen');assert(Math.abs(box.width-box.height)<1,'joystick not round');
+   for(const id of ['#stop','#power','#light','#lightColor']){const b=await page.locator(id).boundingBox();assert(b&&b.y>=64&&b.y+b.height<=view.height&&b.x>=0&&b.x+b.width<=view.width,id+' off screen');}
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'horizontal scroll');
    assert((await page.locator('#tools').isVisible())===!mobile);
-   const center={x:box.x+box.width/2,y:box.y+box.height/2};let cdp;
-   if(mobile){cdp=await context.newCDPSession(page);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...center,id:1}]});}
-   else{await page.mouse.move(center.x,center.y);await page.mouse.down();}
+   const center={x:box.x+box.width/2,y:box.y+box.height/2},up={x:center.x,y:box.y+box.height*0.08};let cdp;
+   if(mobile){cdp=await context.newCDPSession(page);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...center,id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{...up,id:1}]});}
+   else{await page.mouse.move(center.x,center.y);await page.mouse.down();await page.mouse.move(up.x,up.y,{steps:4});}
    await page.waitForFunction(()=>held===1);
    message='Trạng thái dài thử bố cục\nDòng thứ hai\nDòng thứ ba\nDòng thứ tư\nDòng thứ năm';
    await page.waitForFunction(()=>document.getElementById('status').textContent.includes('Dòng thứ năm'));
    sameBox(box,await button.boundingBox());assert(await page.evaluate(()=>held)===1);
    if(mobile){
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:center.x+25,y:center.y-20,id:1}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:box.x+box.width*0.92,y:center.y,id:1}]});await page.waitForFunction(()=>held===4);for(let i=0;i<40&&!commands.some(x=>x.dir==='4');i++)await page.waitForTimeout(50);
     assert(await page.evaluate(()=>scrollY)===0);sameBox(box,await button.boundingBox());
     await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
    }else await page.mouse.up();
-   await page.waitForFunction(()=>held===0);assert(commands.some(x=>x.dir==='1'&&x.fresh==='1'));assert(commands.some(x=>x.dir==='1'&&x.fresh==='0'));
+   await page.waitForFunction(()=>held===0);assert(commands.some(x=>x.dir==='1'&&x.fresh==='1'));assert(commands.some(x=>x.dir==='1'&&x.fresh==='0'));if(mobile)assert(commands.some(x=>x.dir==='4'));
    assert(errors.length===0,errors.join('\n'));
    await page.screenshot({path:path.join(output,view.name+'.png')});
    message='Đã vào Wi-Fi';await page.waitForFunction(()=>!document.getElementById('status').textContent.includes('Dòng thứ năm'));
