@@ -29,10 +29,10 @@ main{max-width:1100px;margin:auto;padding:14px;display:grid;gap:14px;grid-templa
 <section class="card"><h2>Cảm xúc có sẵn</h2><div class="presets" id="presets"></div>
 <div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="loopPreset" style="width:auto;min-height:0"> Lặp lại</label></div></section>
 <section class="card span2"><h2>Tạo cảm xúc</h2>
-<p class="dim">Hông: + là đưa bàn chân ra trước. Gối: + là nhấc chân lên, − là đạp xuống (thân cao lên). Mỗi khung có thời gian chuyển và thời gian giữ. Kéo thanh là cua cử động theo ngay.</p>
+<p class="dim">Hông: + là đưa bàn chân ra trước. Gối: + là nhấc chân lên, − là đạp xuống (thân cao lên). Mỗi khung có thời gian chuyển và thời gian giữ. Kéo thanh là cua cử động theo ngay. <b>Mở hết biên</b>: mọi khớp tới ±170 (gần hết hành trình servo). Kéo từ từ; nghe servo rè hay thấy chân đụng thân là kéo lùi lại ngay, kẹt lâu servo nóng và cua sụt áp.</p>
 <div class="legs" id="legs"></div>
 <div class="row"><label>Màu đèn <input type="color" id="color" value="#ffc400"></label><label>Chuyển (ms) <input type="number" id="ms" min="0" max="3000" step="10" value="300"></label><label>Giữ (ms) <input type="number" id="hold" min="0" max="5000" step="10" value="0"></label><label>Mắt <select id="mood"></select></label></div>
-<div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="mirror" style="width:auto;min-height:0"> Đối xứng trái/phải</label><button id="live">Xem trực tiếp: tắt</button><button id="zero">Về đứng</button></div>
+<div class="row"><label style="flex:0 0 auto"><input type="checkbox" id="mirror" style="width:auto;min-height:0"> Đối xứng trái/phải</label><label style="flex:0 0 auto"><input type="checkbox" id="wide" style="width:auto;min-height:0"> 🔓 Mở hết biên (±170)</label><button id="live">Xem trực tiếp: tắt</button><button id="zero">Về đứng</button></div>
 <div class="row"><button id="addFrame">+ Thêm khung</button><button id="updateFrame">Cập nhật khung</button><button id="deleteFrame">Xóa khung</button></div>
 <ul id="frames"></ul>
 <div class="row"><button id="playOnce">▶ Chạy</button><button id="playLoop">🔁 Lặp</button></div>
@@ -44,10 +44,13 @@ main{max-width:1100px;margin:auto;padding:14px;display:grid;gap:14px;grid-templa
 const $=id=>document.getElementById(id);
 // Leg order FL, FR, RL, RR. Page units: hip + = foot forwards, knee + = lift.
 // Firmware command frame: knee negative lifts; left hips move forwards when negative.
-const LEGS=['Trước trái','Trước phải','Sau trái','Sau phải'],HIP_FORWARD=[-1,1,-1,1],LIMIT=30,KNEE_UP=100,TICK=150,MAX_LIST=3800;
-const clampDeg=v=>Math.max(-LIMIT,Math.min(LIMIT,Math.round(Number(v)||0)));
-// Knees (positive = lift) may go up to KNEE_UP; pressing down stays at LIMIT.
-const clampKnee=v=>Math.max(-LIMIT,Math.min(KNEE_UP,Math.round(Number(v)||0)));
+const LEGS=['Trước trái','Trước phải','Sau trái','Sau phải'],HIP_FORWARD=[-1,1,-1,1],LIMIT=30,KNEE_UP=100,MAX=170,TICK=150,MAX_LIST=3800;
+// Sliders normally span hips +-LIMIT and knees -LIMIT..KNEE_UP; "Mở hết biên"
+// opens every joint to +-MAX (firmware POSE_LIMIT, about 170 deg of real servo
+// travel; owner, 2026-11-17). Commands and saved frames are clamped to +-MAX.
+const clampDeg=v=>Math.max(-MAX,Math.min(MAX,Math.round(Number(v)||0)));
+const clampKnee=clampDeg;
+const inNormal=(i,v)=>v>=-LIMIT&&v<=(i%2?KNEE_UP:LIMIT);
 const clampJoint=(i,v)=>i%2?clampKnee(v):clampDeg(v);
 // Sliders use the owner's leg names, same as the calibration menu: front left =
 // CH0/1, front right = CH2/3, rear left = CH4/5, rear right = CH6/7 (owner,
@@ -94,7 +97,8 @@ async function playFrames(list,loop,mood){
 }
 function halt(){run++;liveOff();lastColor='';lastMood='';if(token&&navigator.sendBeacon)navigator.sendBeacon('/api/move',new URLSearchParams({token,seq:String(++seq),dir:'0',fresh:'0'}));}
 function readEditor(){const p=[];for(let i=0;i<8;i++)p.push(clampJoint(i,$('j'+i).value));const f=F(p,$('color').value,Math.max(0,Math.min(3000,Number($('ms').value)||0)),Math.max(0,Math.min(5000,Number($('hold').value)||0)));if($('mood').value!=='normal')f.push($('mood').value);return f;}
-function writeEditor(f){for(let i=0;i<8;i++){$('j'+i).value=f[i];$('v'+i).textContent=f[i]+'°';}$('color').value=f[8];$('ms').value=f[9];$('hold').value=f[10];$('mood').value=MOODS.includes(f[11])?f[11]:'normal';}
+function setWide(on){$('wide').checked=on;for(let i=0;i<8;i++){const r=$('j'+i);if(!r)continue;r.min=on?-MAX:-LIMIT;r.max=on?MAX:(i%2?KNEE_UP:LIMIT);const v=Number(r.value)||0,c=Math.max(Number(r.min),Math.min(Number(r.max),v));if(c!==v){r.value=c;$('v'+i).textContent=c+'°';}}}
+function writeEditor(f){if(!$('wide').checked&&f.slice(0,8).some((v,i)=>!inNormal(i,Number(v))))setWide(true);for(let i=0;i<8;i++){$('j'+i).value=f[i];$('v'+i).textContent=f[i]+'°';}$('color').value=f[8];$('ms').value=f[9];$('hold').value=f[10];$('mood').value=MOODS.includes(f[11])?f[11]:'normal';}
 function mirrorFrom(i){if(!$('mirror').checked)return;const leg=i>>1,joint=i&1,other=leg^1,j=2*other+joint;$('j'+j).value=$('j'+i).value;$('v'+j).textContent=$('j'+j).value+'°';}
 function renderFrames(){const ul=$('frames');ul.replaceChildren();frames.forEach((f,i)=>{const li=document.createElement('li'),b=document.createElement('button');b.textContent=String(i+1);b.style.borderBottom='6px solid '+f[8];if(i===selected)b.className='sel';b.onclick=()=>{selected=i;writeEditor(f);renderFrames();};li.appendChild(b);ul.appendChild(li);});}
 function listJson(list){return JSON.stringify(list);}
@@ -115,6 +119,7 @@ function build(){
 build();
 $('arm').onclick=async()=>{try{halt();await api('actuator',{token,seq:++seq,value:'positional',confirm:'1'});await poll();}catch(e){setStatus(e.message);}};
 $('stopAll').onclick=halt;
+$('wide').onchange=()=>setWide($('wide').checked);
 $('zero').onclick=()=>writeEditor(F(STAND,$('color').value,Number($('ms').value)||0,Number($('hold').value)||0));
 function startLive(){if(!ready){setStatus('Servo chưa sẵn sàng — bấm Bật servo rồi chờ 3 giây.');return false;}run++;liveOn=true;$('live').textContent='Xem trực tiếp: bật';liveLoop();return true;}
 // Owner: sliders looked dead because preview was opt-in. Touching one now drives the crab.
@@ -127,6 +132,6 @@ $('playOnce').onclick=()=>{if(ready&&frames.length)playFrames(frames,false);};
 $('playLoop').onclick=()=>{if(ready&&frames.length)playFrames(frames,true);};
 $('save').onclick=async()=>{const n=$('name').value.trim().slice(0,24);if(!n||!frames.length){setStatus('Đặt tên và thêm ít nhất một khung.');return;}const list=saved.filter(e=>e.n!==n).concat([{n,f:frames.map(f=>f.slice())}]);if(await store(list))setStatus('Đã lưu “'+n+'” vào cua.');};
 for(const ev of ['blur','pagehide'])window.addEventListener(ev,halt);document.addEventListener('visibilitychange',()=>{if(document.hidden)halt();});
-window.CuaEmote={MOODS,toCommand,hexRgb,PRESETS,playFrames,halt,autoLive,state:()=>({run,seq,ready,liveOn,frames,saved}),setReady:v=>{ready=v;}};
+window.CuaEmote={MOODS,toCommand,hexRgb,PRESETS,playFrames,halt,autoLive,setWide,writeEditor,readEditor,state:()=>({run,seq,ready,liveOn,frames,saved}),setReady:v=>{ready=v;}};
 api('session').then(d=>{token=d.token;seq=0;poll();loadSaved();setInterval(poll,1000);}).catch(e=>setStatus(e.message));
 </script></body></html>

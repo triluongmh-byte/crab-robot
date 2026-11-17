@@ -65,9 +65,7 @@ inline void gait(float phase,Vec v,float amplitude,float out[8],float knee=cfg::
 inline int pulse(int ch,float angle,float offset,bool raw=false){
  if(raw)return cfg::CENTRE_US;
  // Clamp AFTER mirror and trim: trim cannot bypass the owner's travel budget.
- // Hip pulse range stays at HIP_LIMIT so large trims keep working; knees unchanged.
- const float limit=ch%2?cfg::KNEE_PULSE_LIMIT:cfg::HIP_LIMIT,request=ch%2?cfg::POSE_KNEE_LIFT:cfg::HIP_LIMIT;
- float degrees=clamp(cfg::SIGN[ch]*clamp(angle,-request,request)+clamp(offset,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT),-limit,limit);
+ float degrees=clamp(cfg::SIGN[ch]*clamp(angle,-cfg::POSE_LIMIT,cfg::POSE_LIMIT)+clamp(offset,-cfg::TRIM_LIMIT,cfg::TRIM_LIMIT),-cfg::PULSE_LIMIT,cfg::PULSE_LIMIT);
  return int(std::lround(cfg::CENTRE_US+cfg::US_PER_DEG*degrees));
 }
 inline std::string apName(uint32_t mac){char s[24];snprintf(s,sizeof(s),"CuaRobot-%04X",unsigned(mac&0xFFFF));return s;}
@@ -238,7 +236,7 @@ struct Motion {
   for(int ch=0;ch<8;ch++)if(!std::isfinite(angles[ch]))return false;
   const float seconds=std::min(ms,uint32_t(5000))*.001f;
   for(int ch=0;ch<8;ch++){
-   pose[ch]=ch%2?clamp(angles[ch],-cfg::POSE_KNEE_LIFT,cfg::JOINT_LIMIT):clamp(angles[ch],-cfg::JOINT_LIMIT,cfg::JOINT_LIMIT); // knee: negative lifts
+   pose[ch]=clamp(angles[ch],-cfg::POSE_LIMIT,cfg::POSE_LIMIT); // knee: negative lifts
    const float distance=std::fabs(pose[ch]-position[ch]);
    poseRate[ch]=seconds>0?clamp(distance/seconds,1,cfg::SLEW_DPS):cfg::SLEW_DPS;
   }

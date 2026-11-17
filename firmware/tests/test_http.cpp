@@ -8,7 +8,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v32")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v33")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -65,13 +65,16 @@ int main(){
  server.request("/emo");assert(server.code==200&&server.body==String((const char*)EMOTE_UI_GZ,EMOTE_UI_GZ_LEN)&&server.headers["Content-Encoding"]=="gzip"&&EMOTE_UI_GZ_LEN<sizeof(EMOTE_UI)/2);
  const char* poseA="10,-20,-10,-20,10,-20,-10,-20";
  server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a","1,2,3"}});assert(server.code==400&&!motion.posing);
- server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a","1,2,3,4,5,6,7,99"}});assert(server.code==400);
+ server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a","1,2,3,4,5,6,7,171"}});assert(server.code==400); // beyond POSE_LIMIT (170)
  server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a","1,2,3,4,5,6,7,8x"}});assert(server.code==400);
  server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","9000"},{"a",poseA}});assert(server.code==400);
  server.request("/api/pose",{{"token","7"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a",poseA}});assert(server.code==409&&!motion.posing);
  server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","1"},{"ms","300"},{"a",poseA}});assert(server.code==200&&motion.posing&&motion.pose[1]==-20&&motion.lease);
  server.request("/api/pose",{{"token","42"},{"seq","1"},{"fresh","0"},{"ms","0"},{"a",poseA}});assert(server.code==409); // replayed sequence
  server.request("/api/pose",{{"token","42"},{"seq","2"},{"fresh","0"},{"ms","0"},{"a",poseA}});assert(server.code==200&&motion.posing);
+ server.request("/api/pose",{{"token","42"},{"seq","3"},{"fresh","0"},{"ms","0"},{"a","-170,170,0,-170.0,0,0,0,0"}});assert(server.code==200&&motion.pose[0]==-170&&motion.pose[1]==170&&motion.pose[3]==-170); // full range for emotions (v33)
+ server.request("/api/pose",{{"token","42"},{"seq","4"},{"fresh","0"},{"ms","0"},{"a",poseA}});assert(server.code==200);
+ motion.lastSeq=2; // rewind: the steps below were numbered before the v33 lines
  server.request("/api/move",{{"token","42"},{"seq","3"},{"dir","0"},{"fresh","0"}});assert(server.code==200&&!motion.posing&&motion.relaxing);
  server.request("/api/led",{{"token","42"},{"r","300"},{"g","0"},{"b","0"}});assert(server.code==400);
  server.request("/api/led",{{"token","7"},{"r","255"},{"g","0"},{"b","0"}});assert(server.code==409);
@@ -135,7 +138,7 @@ int main(){
  // Radar page (v32): served gzipped; /api/radar needs no token and reports both
  // sides (null when stale), thresholds, beam geometry and Auto transitions.
  server.request("/radar");assert(server.code==200&&server.body==String((const char*)RADAR_UI_GZ,RADAR_UI_GZ_LEN)&&server.headers["Content-Encoding"]=="gzip"&&RADAR_UI_GZ_LEN<sizeof(RADAR_UI)/2);
- server.request("/api/radar");assert(server.code==200&&server.body.find("\"firmware\":\"positional180-v32\"")!=String::npos&&server.body.find("\"sides\":[{\"cm\":null,\"raw\":null,\"age\":")!=String::npos
+ server.request("/api/radar");assert(server.code==200&&server.body.find("\"firmware\":\"positional180-v33\"")!=String::npos&&server.body.find("\"sides\":[{\"cm\":null,\"raw\":null,\"age\":")!=String::npos
   &&server.body.find("\"stopCm\":25,\"slowCm\":45,\"maxCm\":250,\"farCm\":400,\"yawDeg\":12,\"beamDeg\":15")!=String::npos&&server.body.find("\"auto\":false")!=String::npos);
  // Earlier Auto runs left transitions; the newest is the stop by STOP above.
  assert(autopilot.eventCount>0&&server.body.find("\"events\":[[")!=String::npos&&server.body.find(crab::automsg::MANUAL)!=String::npos);

@@ -96,6 +96,7 @@ Tap **🎭 Cảm xúc** at the top of the main page, or open `/emo`.
 - **7 built-in emotions:** 😄 happy, 😢 sad, 😡 angry, 👋 hello, 💃 dance, 😴 sleep, 😲 surprised. Each has its own lamp colour.
 - **Make your own:** drag a leg's Hip/Knee sliders and the crab follows live. Tick **Đối xứng trái/phải** (mirror left/right) to make both sides match. Add frames, set move/hold times, name it and tap **Lưu vào cua** (save to crab).
 - **Slider direction:** Hip **+** moves the foot forward (±30°). Knee **+** lifts the leg, up to 100°; **−** pushes down, to 30°, and the body goes up. Walking itself never lifts a knee more than 60°.
+- **🔓 Mở hết biên (±170)** (since v33): opens every hip and knee slider to ±170, close to the servo's full travel (about 170° real). Opening an emotion that uses big angles ticks it for you. Move slowly; if a servo buzzes or a leg touches the body, back off at once, because a stalled servo heats up and can make the crab brown out.
 - **Safety:** leaving the page or losing the link returns the crab to its standing pose, slowly at 120°/s.
 
 ## The eye screen
@@ -223,7 +224,7 @@ A wrong file or a cut upload leaves the old firmware running. If new firmware cr
 
 ## Firmware
 
-- **Running now:** `positional180-v32` (radar page), target **`lilygo`**, flashed over Wi-Fi on 2026-11-17. The **`integrated`** target is for the future integrated board.
+- **Running now:** `positional180-v33` (full-range emotions), target **`lilygo`**, flashed over Wi-Fi on 2026-11-17. The **`integrated`** target is for the future integrated board.
 - **Build, flash and version history:** [firmware/README.md](firmware/README.md). See also [gaits](firmware/CRAWL.md), [web controls](firmware/WEB-CONTROL.md) and [emotions](firmware/EMOTIONS.md).
 
 ```sh

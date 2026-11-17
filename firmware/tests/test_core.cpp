@@ -231,12 +231,15 @@ static void test_pose(){
  ready(m);m.newSession(5);uint32_t t=2200;
  float bad[8]={0,0,0,0,0,0,0,NAN};assert(!m.poseCommand(5,1,bad,300,t,true)&&!m.posing);
  assert(m.poseCommand(5,2,a,300,t,true)&&m.posing&&m.lease);
- // Move over the requested 300 ms (not instantly), and clamp to JOINT_LIMIT.
+ // Move over the requested 300 ms (not instantly), and clamp to POSE_LIMIT.
  for(uint32_t k=t;k<t+150;k+=10)m.tick(k);assert(m.position[1]<-10&&m.position[1]>-20);
  for(uint32_t k=t+150;k<t+400;k+=10){if(k%100==0)assert(m.poseCommand(5,m.lastSeq+1,a,0,k,false));m.tick(k);}
  for(int ch=0;ch<8;ch++)assert(std::fabs(m.position[ch]-a[ch])<.01f);
- float big[8]={90,-90,0,0,0,0,0,0};assert(m.poseCommand(5,m.lastSeq+1,big,0,t+400,false)&&m.pose[0]==cfg::JOINT_LIMIT&&m.pose[1]==-90);
- {float down[8]={-90,90,0,-150,0,0,0,0};assert(m.poseCommand(5,m.lastSeq+1,down,0,t+410,false)&&m.pose[0]==-cfg::JOINT_LIMIT&&m.pose[1]==cfg::JOINT_LIMIT&&m.pose[3]==-cfg::POSE_KNEE_LIFT);} // knees lift to 60, press down only 30
+ float big[8]={90,-90,0,0,0,0,0,0};assert(m.poseCommand(5,m.lastSeq+1,big,0,t+400,false)&&m.pose[0]==90&&m.pose[1]==-90);
+ {float down[8]={-200,200,0,-170,0,0,0,0};assert(m.poseCommand(5,m.lastSeq+1,down,0,t+410,false)&&m.pose[0]==-cfg::POSE_LIMIT&&m.pose[1]==cfg::POSE_LIMIT&&m.pose[3]==-cfg::POSE_LIMIT);} // every joint both ways to 170
+ // Final pulse never leaves 556..2444 us, even with a full trim on top.
+ for(int ch=0;ch<8;ch++)for(float a:{-500.f,-170.f,170.f,500.f})for(float o:{-30.f,30.f}){const int us=pulse(ch,a,o);assert(us>=556&&us<=2444);}
+ assert(pulse(1,-170,0)==1500-944||pulse(1,-170,0)==1500+944);
  assert(m.poseCommand(5,m.lastSeq+1,a,0,t+410,false));for(uint32_t k=t+410;k<t+500;k+=10)m.tick(k);
  // Deadman: no renewal for 500 ms -> relax towards standing at RELAX_DPS.
  uint32_t k=t+500;while(m.posing){m.tick(k);k+=10;}assert(m.relaxing&&k-(t+410)>=cfg::DEADMAN_MS&&k-(t+410)<=cfg::DEADMAN_MS+30);
@@ -347,10 +350,10 @@ static void test_motion(){
  assert(pwmCounts(pulse(0,0,3))-pwmCounts(pulse(0,0,0))>=3);
  assert(!m.trim(8,1));assert(!m.trim(2,22));m.setAssembly(false);assert(!m.trim(2,-1));
  m.inhibit=true;assert(!m.command(12,8,1,2900));m.inhibit=false;assert(m.command(12,9,1,3000));m.newSession(99);assert(!m.lease&&!m.command(12,10,1,3010));
- for(int ch=0;ch<8;ch++)for(float a:{-100.f,-30.f,0.f,30.f,100.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);const int limit=ch%2?722:500;assert(std::abs(p-1500)<=limit&&p>=500&&p<=2500);}
- // Hips reach +/-90 deg; knees take a 100 deg pose lift plus a 30 deg trim (v30).
- assert(pulse(0,90,0)==2000&&pulse(0,-90,0)==1000&&pulse(1,90,0)==2000&&pulse(1,100,0)==2056&&pulse(1,120,0)==2056&&pulse(1,100,30)==2222&&pulse(1,100,99)==2222);
- assert(pulse(3,-60,30)==2000&&pulse(3,-100,30)==2222); // CH3 (sign -1, trim +30) gets the whole lift
+ for(int ch=0;ch<8;ch++)for(float a:{-200.f,-100.f,-30.f,0.f,30.f,100.f,200.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(std::abs(p-1500)<=944&&p>=556&&p<=2444);}
+ // v33: every joint reaches +/-170 nominal (1500 +/- 944 us); trims add until the same limit.
+ assert(pulse(0,90,0)==2000&&pulse(0,-90,0)==1000&&pulse(1,100,0)==2056&&pulse(1,170,0)==2444&&pulse(1,200,0)==2444&&pulse(1,100,30)==2222&&pulse(1,160,30)==2444&&pulse(1,100,99)==2222);
+ assert(pulse(3,-60,30)==2000&&pulse(3,-100,30)==2222&&pulse(3,-170,30)==2444&&pulse(3,-170,-30)==2278); // CH3 (sign -1)
  Motion wrap;ready(wrap,0xfffff000);wrap.newSession(2);assert(wrap.command(2,1,1,0xffffff00));wrap.tick(0x200);assert(!wrap.lease);
  // Long realistic run tests the production scheduler, lease renewal, limits, ramp and exact startup order.
  for(int dir=1;dir<=8;dir++){
