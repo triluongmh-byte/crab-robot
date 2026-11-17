@@ -1,8 +1,9 @@
 # Battery power and self-driving parts
 
-**Status, 2026-11-17:**
+**Status, 2026-11-17 (evening):**
 - **Auto mode (Tự đi) is in the firmware** from `positional180-v22`. Since v32 it also has a radar page (`/radar`) with live stop/veer thresholds and a log.
 - **Round 1 is bought:** both HC-SR04P modules and the 1000 µF capacitors. The front sonar head (`case/sonar_front`) is being printed.
+- **Power now:** one 5 V supply into the PCA also feeds the LILYGO (lead F), with a 1000 µF capacitor across `V+`/`GND`. The two cells can already run the crab through the LM2596; see [Battery now, with parts already owned](#battery-now-with-parts-already-owned).
 - **Round 2 changed:** the owner reuses **two 18650 cells in series (2S)** instead of buying the LiPo, plus a 2S balancing BMS. Already bought: the LM2596 and the rocker switches. Still to buy: see the table below.
 
 The robot still runs on the [two-port USB power bank wiring](WIRING.md#2-connect-power--two-different-pca-labels).
@@ -75,6 +76,42 @@ The owner reuses two 18650 cells (owner, 2026-11-17) instead of buying the 2S Li
 - With 2500 mAh cells it holds about 18 Wh, against 11 Wh for the LiPo 1500.
 - It weighs about 90 g, against 80 g for the LiPo.
 - Do not use three cells (3S, 12.6 V). That adds about 45 g for 8 small servos to carry, and the divider would have to change to 100k / 22k.
+
+### Battery now, with parts already owned
+
+The owner asked for a way to run on the cells without buying anything more (2026-11-17). Since the crab already runs from [one 5 V supply into the PCA](WIRING.md#2-connect-power-one-5-v-supply-into-the-pca-owner-2026-11-17), the LM2596 can stand in for that supply:
+
+```text
+18650 (−) ── 18650 (+)(−) ── 18650 (+)        two cells in series, 7.4–8.4 V
+   │                             │
+   │                       rocker switch 6 A
+   │                             │
+LM2596 IN−                  LM2596 IN+
+LM2596 OUT+ (set to 5.0 V) ──► PCA screw terminal V+   (where the supply went)
+LM2596 OUT−                ──► PCA screw terminal GND
+```
+
+Everything after the PCA terminal stays as it is: the capacitor, lead F to the LILYGO `5V`, lead B, and the sensors.
+
+**Do first:**
+1. **Set the LM2596 to 5.0 V with a multimeter while it is connected to nothing but the cells.** New modules come set anywhere up to 12 V. That would burn the servos and the board.
+2. **Measure both cells.** They must be within 0.1 V of each other, and neither below 3.0 V.
+3. **Join the cells** + to −. Tape them tightly together and hold the leads on the ends with nickel strip or a tight wrap. **Never solder onto an 18650.**
+
+**Limits, because there is no UBEC and no BMS yet:**
+
+| Limit | What to do |
+|---|---|
+| The LM2596 is comfortable to about 2 A; servo peaks reach 3–4 A | Keep **Tốc độ** at about 60–70 %. If the LM2596 gets too hot to touch, let it cool |
+| No BMS: over-discharge damages the cells | Measure the pack. **Stop below 6.4 V (3.2 V per cell)** |
+| No BMS: the LM2596 slowly drains the pack while the crab is idle | Turn the switch off when not driving |
+| No 8.4 V charger | Take the cells out and charge **each one separately** in a single-cell 18650 charger (or a TP4056-type module) |
+
+As the pack runs down, the LM2596 can no longer hold 5 V and the crab starts showing **Sụt áp**. Treat that as the low-battery warning: switch off and charge.
+
+Without a multimeter, do not fit the LM2596; stay on the power bank.
+
+When the UBEC 5 A, the BMS and the charger arrive, change to the full kit below.
 
 ### Parts
 

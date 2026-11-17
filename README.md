@@ -25,7 +25,7 @@ The web controls are in Vietnamese. Button names below are quoted as they appear
 | **8 × SG90 positional 180°** | 4 hips on the body, 4 knees on the legs | Joints. **Do not use 360° continuous servos** |
 | **WS2812 strip ×8** | Thin strip with 8 LEDs | Colour lamp |
 | **2 × HC-SR04P** (bought, being fitted) | Four round "eyes" in one row on the front sonar head, under the screen | Obstacle sensing for **Tự đi** (Auto) and the radar page |
-| **Separate 5 V servo supply** | Into the PCA `V+` / `GND` screw terminal | Powers servos and LEDs; kept apart from the LILYGO's USB. To be replaced by a pack of 2 × 18650 cells (2S), see [battery power](firmware/BATTERY-AUTONOMY.md#round-2-battery-power-2-18650-2s) |
+| **One 5 V supply** | Into the PCA `V+` / `GND` screw terminal, with a 1000 µF capacitor across it | Powers servos, LEDs and (through lead F) the LILYGO. It can be a power bank, or [2 × 18650 cells through the LM2596](firmware/BATTERY-AUTONOMY.md#battery-now-with-parts-already-owned) |
 
 ## Open the controls
 
@@ -151,13 +151,45 @@ At each socket: **orange → `PWM`/`S`**, **red (middle) → `V+`**, **brown →
 | **C** | `18` | PCA **`SDA`** |
 | **D** | `17` | PCA **`SCL`** |
 | **E** | `1` | LED **`DIN`** |
+| **F** | `5V` (bottom of the left column, by USB-C) | PCA **`V+`** terminal |
 
-**Power:**
-- **USB:** into the LILYGO's USB-C. Use a data cable when flashing.
-- **Separate 5 V:** into the PCA terminal, positive to **`V+`**, negative to **`GND`**.
+Ultrasonic sensors: left `Trig`/`Echo` → **10/11**, right → **12/13**, `VCC` → **`3V`** (bottom of the right column), `GND` → **`G`**. See [step 4 of the wiring guide](firmware/WIRING.md#4-connect-the-two-ultrasonic-sensors-tự-đi).
+
+**Power (since 2026-11-17, one supply):**
+- **5 V supply** into the PCA terminal, positive to **`V+`**, negative to **`GND`**. Put a 1000 µF capacitor across the same two terminals, long leg on `V+`.
+- **Lead F** carries that 5 V to the LILYGO's `5V` pin. Unplug the LILYGO's USB-C while F is fitted.
 - **LEDs:** powered from the PCA's servo-side **`V+`/`GND`**.
+- **To flash over USB:** switch the PCA supply off first, then plug in the computer.
 
-**`VCC` is 3.3 V logic; `V+` is the 5 V servo supply. Never join them, and never power servos from the LILYGO.** Close-up photos and troubleshooting are in the [wiring guide](firmware/WIRING.md).
+**`VCC` is 3.3 V logic; `V+` is the 5 V servo supply. Never join them, and never power servos from the LILYGO's `3V`.** Close-up photos and troubleshooting are in the [wiring guide](firmware/WIRING.md).
+
+### Battery: 2 × 18650 with parts already owned
+
+The 5 V supply can be two 18650 cells through the LM2596 buck. Nothing else needs buying.
+
+```text
+18650 (−) ── 18650 (+)(−) ── 18650 (+)        2 cells in series: 7.4–8.4 V
+   │                             │
+   │                       switch 6 A
+   │                             │
+LM2596 IN−                  LM2596 IN+
+LM2596 OUT+ (set to 5.0 V) ──► PCA V+    (in place of the power bank)
+LM2596 OUT−                ──► PCA GND
+```
+
+Everything after the PCA terminal stays the same: the capacitor, lead F to the LILYGO, and lead B.
+
+1. **Set the LM2596 to 5.0 V with a multimeter before connecting it to the PCA.** A new module can output up to 12 V, which burns the servos and the board. If you have no multimeter, stay on the power bank.
+2. **Check the cells.** Both must be within 0.1 V of each other and neither below 3.0 V.
+3. **Join the cells** + to −, taped tightly. Hold the leads on with nickel strip or a tight wrap. **Never solder onto an 18650.**
+
+While running:
+- Keep **Tốc độ** at about 60–70 %: the LM2596 is comfortable to about 2 A.
+- **Stop below 6.4 V** (3.2 V per cell). Turn the switch off when you are not driving.
+- **Sụt áp** showing again and again means the cells are low.
+- Charge each cell separately in a single-cell charger. There is no BMS yet.
+
+Details are in [battery power](firmware/BATTERY-AUTONOMY.md#battery-now-with-parts-already-owned), including the full kit (UBEC + BMS + 8.4 V charger) for later.
 
 ## Saving and restoring settings
 
