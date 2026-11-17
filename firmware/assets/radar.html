@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Cua Robot · Radar</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:16px/1.4 system-ui,sans-serif;background:#eff5fa;color:#172333}
+button,input{font:inherit;min-height:44px;border-radius:10px;padding:8px 10px;border:1px solid #879bad;background:#fff;color:inherit}
+button{cursor:pointer;touch-action:manipulation}button:disabled{opacity:.45;cursor:default}button:active{background:#addaff}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;background:#fff;border-bottom:1px solid #d1dee8;position:sticky;top:0;z-index:5}
+.topbar h1{font-size:20px;margin:0}.topbar a{color:#124c92;text-decoration:none;font-weight:600}
+main{max-width:1100px;margin:auto;padding:14px;display:grid;gap:14px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start}
+.card{background:#fff;border:1px solid #d1dee8;border-radius:14px;padding:14px;min-width:0}.card h2{font-size:18px;margin:0 0 10px}
+#scope{background:#0b1a14;border-color:#0b1a14;padding:10px}
+#radar{display:block;width:100%;height:auto;max-height:72vh;margin:auto;font-family:system-ui,sans-serif}
+.readout{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.side{background:#12261d;border-radius:10px;padding:8px 10px;color:#bfe9cf}.side b{display:block;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums;color:#e8fff0}
+.side.stop b{color:#ff6b5e}.side.slow b{color:#ffb547}.side.lost b{color:#8a9a92}
+#stateLine{color:#bfe9cf;margin-top:8px;font-size:15px}
+#status{background:#dfeffc;border:1px solid #c7dff1;border-radius:10px;padding:10px;white-space:pre-line;min-height:48px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}.row>*{flex:1 1 auto}
+#auto{font-weight:700;background:#eef8f0;border-color:#7fb48a}#auto.on{background:#2e7d4f;border-color:#2e7d4f;color:#fff}
+#stop{background:#ffe1e1;border-color:#d68e8e;font-weight:700}
+label.tune{display:block;margin:10px 0 0}label.tune input{width:100%;min-height:32px;padding:0;border:0}
+.val{float:right;font-variant-numeric:tabular-nums;color:#38536a;font-weight:600}
+#events{list-style:none;margin:8px 0 0;padding:0;font-size:14px;max-height:260px;overflow-y:auto}#events li{padding:4px 0;border-bottom:1px solid #eef2f5;font-variant-numeric:tabular-nums}
+.dim{color:#526778;font-size:14px}
+@media(max-width:760px){main{grid-template-columns:minmax(0,1fr);padding:10px}}
+@keyframes sweep{to{transform:rotate(360deg)}}#sweep{transform-origin:0 0;animation:sweep 4s linear infinite}
+@media(prefers-reduced-motion:reduce){#sweep{animation:none;display:none}}
+</style></head>
+<body>
+<header class="topbar"><h1>📡 Radar tự đi</h1><a href="/">← Lái cua</a></header>
+<main>
+<section class="card" id="scope" aria-label="Màn hình radar">
+<svg id="radar" viewBox="-230 -236 460 472" role="img" aria-label="Radar: cua ở tâm, phía trên là hướng Tiến"></svg>
+<div class="readout"><div class="side" id="sideL">Trái<b id="cmL">—</b></div><div class="side" id="sideR">Phải<b id="cmR">—</b></div></div>
+<div id="stateLine" aria-live="polite">Đang kết nối…</div>
+<div class="row"><button id="range">Tầm nhìn: 1 m</button></div>
+</section>
+<div style="display:grid;gap:14px;min-width:0">
+<section class="card"><h2>Tự đi</h2><div id="status" role="status">Đang kết nối…</div>
+<div class="row"><button id="auto" disabled aria-pressed="false">🤖 Tự đi</button><button id="stop">⏹ DỪNG</button></div>
+<p class="dim">Trang này nhận quyền điều khiển (trang lái phải mở lại). Giữ màn hình sáng khi cua tự đi: tắt màn hình hay đổi tab là cua dừng.</p></section>
+<section class="card"><h2>Ngưỡng</h2>
+<label class="tune">Dừng khi vật gần hơn <span class="val" id="stopVal">25 cm</span><input type="range" id="stopCm" min="10" max="80" step="1" value="25"></label>
+<label class="tune">Né sang bên khi gần hơn <span class="val" id="slowVal">45 cm</span><input type="range" id="slowCm" min="15" max="150" step="1" value="45"></label>
+<p class="dim">Kéo là cua dùng ngay (cả khi đang tự đi) và nhớ sau khi tắt máy. Vòng đỏ = dừng, vòng cam = né.</p></section>
+<section class="card"><h2>Log thông số</h2>
+<p class="dim" id="logInfo">Chưa có dữ liệu.</p>
+<div class="row"><button id="csv">⬇️ Tải CSV</button><button id="copy">📋 Chép tóm tắt</button><button id="clear">🗑 Xóa</button></div>
+<ul id="events" aria-label="Sự kiện gần đây"></ul></section>
+</div>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg',R=200,POLL_MS=200,MAX_ROWS=30000,TRAIL=8;
+const STATE_VI={off:'Lái tay',cruise:'Đi thẳng',halt:'Dừng — có vật cản',backoff:'Lùi lại',turn:'Quay né',look:'Đứng nhìn quanh'};
+const DIR_VI=['Đứng yên','↑ Tiến','↓ Lùi','← Trái','Phải →','↖ Tới trái','Tới phải ↗','↙ Lùi trái','Lùi phải ↘'];
+const ZONE_COLOR={stop:'#ff5a4e',slow:'#ffb02e',ok:'#3ddc84',clear:'#3ddc84',lost:'#7d8b84'};
+let token='',seq=0,last=null,busy=false,busyAction=false,failUntil=0,fails=0,range=100,rows=[],seenEvent=0,startedAt=0,tuneTimer=0,tuneDirty=false;
+const trails=[[],[]];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// --- geometry (screen: 0 deg = Tiến/up, negative = robot's left = screen left) ---
+// Each module is turned yawDeg outwards (case/sonar_front Params.yaw_deg); beams are +-beamDeg.
+function beam(side,yaw,half){const c=side?yaw:-yaw;return [c-half,c+half];}
+function polar(r,deg){const a=deg*Math.PI/180;return [+(r*Math.sin(a)).toFixed(1),+(-r*Math.cos(a)).toFixed(1)];}
+function arcPath(r,a0,a1){const p=polar(r,a0),q=polar(r,a1);return 'M'+p[0]+' '+p[1]+'A'+r+' '+r+' 0 0 1 '+q[0]+' '+q[1];}
+function wedgePath(r,a0,a1){const p=polar(r,a0),q=polar(r,a1);return 'M0 0L'+p[0]+' '+p[1]+'A'+r+' '+r+' 0 0 1 '+q[0]+' '+q[1]+'Z';}
+// Zone of one side's reading: lost (no fresh echo), clear (nothing within maxCm), stop, slow or ok.
+function zone(cm,stop,slow,max){if(cm===null||cm===undefined)return 'lost';if(cm>max)return 'clear';if(cm<stop)return 'stop';if(cm<slow)return 'slow';return 'ok';}
+function toR(cm){return Math.min(cm,range)/range*R;}
+function rings(rangeCm){const step=rangeCm<=100?25:50,out=[];for(let c=step;c<=rangeCm;c+=step)out.push(c);return out;}
+function el(tag,attrs,parent,text){const e=document.createElementNS?document.createElementNS(NS,tag):document.createElement(tag);for(const k in attrs)e.setAttribute?e.setAttribute(k,attrs[k]):(e[k]=attrs[k]);if(text!==undefined)e.textContent=text;if(parent)parent.appendChild(e);return e;}
+function draw(d){
+ const svg=$('radar');svg.replaceChildren();
+ const yaw=d?d.yawDeg:12,half=d?d.beamDeg:15,stop=d?d.stopCm:25,slow=d?d.slowCm:45,max=d?d.maxCm:250;
+ el('circle',{cx:0,cy:0,r:R+6,fill:'#0f2a1f',stroke:'#2f6b4c','stroke-width':2},svg);
+ el('path',{d:'M'+(-R-6)+' 0A'+(R+6)+' '+(R+6)+' 0 0 0 '+(R+6)+' 0Z',fill:'#0b1a14',opacity:.75},svg);
+ el('text',{x:0,y:R*.62,fill:'#4f7a63','font-size':13,'text-anchor':'middle'},svg,'phía sau: không có cảm biến');
+ for(const c of rings(range)){el('circle',{cx:0,cy:0,r:toR(c),fill:'none',stroke:'#2f6b4c','stroke-width':1},svg);const p=polar(toR(c)-3,150);el('text',{x:p[0],y:p[1],fill:'#6fae8a','font-size':12},svg,c>=100?(c/100)+' m':c+'');}
+ for(const a of [-90,-45,0,45,90]){const p=polar(R,a);el('line',{x1:0,y1:0,x2:p[0],y2:p[1],stroke:'#1f4a36','stroke-width':1},svg);}
+ const sw=el('g',{id:'sweep'},svg);el('path',{d:wedgePath(R,-14,0),fill:'#3ddc84',opacity:.13},sw);el('line',{x1:0,y1:0,x2:0,y2:-R,stroke:'#3ddc84','stroke-width':1.5,opacity:.6},sw);
+ for(const [c,col] of [[slow,'#ffb02e'],[stop,'#ff5a4e']])if(c<=range)el('circle',{cx:0,cy:0,r:toR(c),fill:'none',stroke:col,'stroke-width':2,'stroke-dasharray':'6 5'},svg);
+ for(let i=0;i<2;i++){
+  const [a0,a1]=beam(i,yaw,half),s=d&&d.sides?d.sides[i]:null,cm=s?s.cm:null,z=zone(cm,stop,slow,max),col=ZONE_COLOR[z];
+  el('path',{d:wedgePath(R,a0,a1),fill:'#3ddc84',opacity:.06,stroke:'#3ddc84','stroke-opacity':.25},svg);
+  trails[i].forEach((t,k)=>el('path',{d:arcPath(toR(t.cm),a0,a1),fill:'none',stroke:ZONE_COLOR[t.z],'stroke-width':3,opacity:((k+1)/(trails[i].length+1)*.45).toFixed(2)},svg));
+  // Labels sit in the outer half of each beam (the two beams overlap straight ahead).
+  const la=(i?1:-1)*(yaw+half*.5);
+  if(z==='lost'){const p=polar(R*.62,la);el('text',{x:p[0],y:p[1],fill:col,'font-size':14,'text-anchor':i?'start':'end'},svg,'mất tín hiệu');continue;}
+  const far=z==='clear'||cm>range,r=far?R:toR(cm);
+  el('path',{d:wedgePath(r,a0,a1),fill:col,opacity:far?.08:.22},svg);
+  el('path',{d:arcPath(r,a0,a1),fill:'none',stroke:col,'stroke-width':far?2:6,'stroke-linecap':'round','stroke-dasharray':far?'4 6':'none'},svg);
+  const p=polar(Math.max(r-16,30),la);el('text',{x:p[0],y:p[1],fill:'#ffffff','font-size':15,'font-weight':700,'text-anchor':'middle'},svg,far?'xa':cm+'');
+ }
+ el('text',{x:0,y:-R-14,fill:'#bfe9cf','font-size':14,'text-anchor':'middle','font-weight':700},svg,'↑ Tiến');
+ el('circle',{cx:0,cy:0,r:15,fill:'#12261d',stroke:'#3ddc84','stroke-width':2},svg);
+ el('text',{x:0,y:6,'font-size':17,'text-anchor':'middle'},svg,'🦀');
+}
+// --- log ---
+const pad=(n,w=2)=>String(n).padStart(w,'0');
+function clock(ms){const t=new Date(ms);return pad(t.getHours())+':'+pad(t.getMinutes())+':'+pad(t.getSeconds())+'.'+pad(t.getMilliseconds(),3);}
+const v=x=>x===null||x===undefined?'':x;
+function push(r){rows.push(r);if(rows.length>MAX_ROWS)rows.splice(0,rows.length-MAX_ROWS);}
+// Row: kind, page clock ms, robot ms, L cm, R cm, L raw, R raw, L age, R age, state, dir, auto, stop, slow, avoids, note
+function sample(d){const L=d.sides[0],Rt=d.sides[1];push(['mau',Date.now(),d.t,L.cm,Rt.cm,L.raw,Rt.raw,L.age,Rt.age,d.state,d.dir,d.auto?1:0,d.stopCm,d.slowCm,d.avoids,'']);}
+function events(d){
+ for(const e of d.events||[]){const [s,at,state,l,r,why]=e;if(s<=seenEvent)continue;seenEvent=s;
+  push(['su_kien',Date.now(),at,l,r,'','','','',state,'','',d.stopCm,d.slowCm,d.avoids,why||'']);
+  addEvent((STATE_VI[state]||state)+(why?' ('+why+')':'')+' · T '+l+' · P '+r+' cm');}
+}
+function note(text){push(['ghi_chu',Date.now(),last?last.t:'','','','','','','','','','',last?last.stopCm:'',last?last.slowCm:'','',text]);addEvent('📝 '+text);}
+function addEvent(text){const li=document.createElement('li');li.textContent=clock(Date.now()).slice(0,8)+' · '+text;const ul=$('events');ul.insertBefore?ul.insertBefore(li,ul.firstChild||null):ul.appendChild(li);while(ul.children.length>40)ul.removeChild?ul.removeChild(ul.lastChild):ul.children.pop();}
+function header(){const d=last||{};return ['# Cua Robot radar log','# firmware '+v(d.firmware)+' · bat dau '+(startedAt?new Date(startedAt).toISOString():''),'# cam bien: moi module xoay '+v(d.yawDeg)+' do ra ngoai, chum +-'+v(d.beamDeg)+' do, xa nhat '+v(d.maxCm)+' cm (400 = khong thay gi)','# nguong luc xuat: dung < '+v(d.stopCm)+' cm, ne < '+v(d.slowCm)+' cm'];}
+const COLS='kind,clock,robot_ms,left_cm,right_cm,left_raw,right_raw,left_age_ms,right_age_ms,state,dir,auto,stop_cm,slow_cm,avoids,note';
+function csvCell(x){x=String(v(x));return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x;}
+function toCsv(){return header().concat([COLS],rows.map(r=>r.map((x,i)=>i===1?clock(x):csvCell(x)).join(','))).join('\n')+'\n';}
+function median(a){if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y);return s[s.length>>1];}
+function summary(){
+ const smp=rows.filter(r=>r[0]==='mau'),ev=rows.filter(r=>r[0]==='su_kien'),lines=header();
+ const secs=smp.length>1?((smp[smp.length-1][1]-smp[0][1])/1000).toFixed(0):0;
+ lines.push('mau: '+smp.length+' trong '+secs+' s');
+ ['Trai','Phai'].forEach((n,i)=>{const vals=smp.map(r=>r[3+i]).filter(x=>x!==null&&x!==''&&x<400),lost=smp.filter(r=>r[3+i]===null).length;
+  lines.push(n+': gan nhat '+v(vals.length?Math.min(...vals):null)+' cm, trung vi '+v(median(vals))+' cm, co vat '+vals.length+'/'+smp.length+', mat tin hieu '+lost);});
+ const count=k=>ev.filter(r=>r[9]===k).length;lines.push('dung (halt) '+count('halt')+', lui '+count('backoff')+', quay '+count('turn')+', nhin quanh '+count('look')+', tat '+count('off'));
+ lines.push('su kien (robot_ms state T P ly do):');for(const r of ev.slice(-60))lines.push(r[2]+' '+r[9]+' '+r[3]+' '+r[4]+(r[15]?' '+r[15]:''));
+ for(const r of rows.filter(r=>r[0]==='ghi_chu').slice(-30))lines.push('ghi chu '+clock(r[1])+' '+r[15]);
+ return lines.join('\n');
+}
+function renderLog(){const smp=rows.filter(r=>r[0]==='mau').length;$('logInfo').textContent=rows.length?'Đang ghi: '+smp+' mẫu (5 lần/giây), '+(rows.length-smp)+' sự kiện. Giữ tối đa '+MAX_ROWS+' dòng.':'Chưa có dữ liệu.';}
+// --- robot ---
+async function api(path,data={}){const r=await fetch('/api/'+path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(data),cache:'no-store'});let d={};try{d=await r.json();}catch(e){}if(!r.ok)throw Error(d.error||'Lệnh chưa được nhận.');return d;}
+function setStatus(s){$('status').textContent=s;}
+const ready=()=>!!last&&!!last.driver&&!!last.positional&&last.enabled===8&&!last.assembly;
+const sensorsOk=()=>!!last&&!!last.sides&&last.sides[0].cm!==null&&last.sides[1].cm!==null;
+function render(d){
+ draw(d);
+ const z=[0,1].map(i=>zone(d.sides[i].cm,d.stopCm,d.slowCm,d.maxCm));
+ [['sideL','cmL',0],['sideR','cmR',1]].forEach(([box,num,i])=>{const cm=d.sides[i].cm;$(box).className='side '+z[i];$(num).textContent=cm===null?'—':cm>d.maxCm?'xa':cm+' cm';});
+ $('stateLine').textContent=(d.auto?'🤖 '+(STATE_VI[d.state]||d.state):'✋ Lái tay')+' · lệnh: '+(DIR_VI[d.dir]||d.dir)+(d.avoids?' · né liên tiếp '+d.avoids:'');
+ const b=$('auto');b.classList.toggle('on',!!d.auto);b.setAttribute('aria-pressed',String(!!d.auto));b.textContent=d.auto?'🤖 Đang tự đi':'🤖 Tự đi';
+ b.disabled=!token||!d.autoSupported||(!d.auto&&!sensorsOk());
+ if(!tuneDirty){$('stopCm').value=d.stopCm;$('slowCm').value=d.slowCm;showTune();}
+ if(!busyAction)setStatus(!d.autoSupported?'Board này không có cảm biến siêu âm.':!d.driver?'Kiểm tra dây PCA9685.':!sensorsOk()?'Chưa thấy đủ 2 cảm biến (trái GPIO10/11, phải GPIO12/13).':d.auto?'Đang tự đi. Bấm DỪNG để dừng.':!token?'Chưa nhận được quyền điều khiển — tải lại trang.':ready()?'Sẵn sàng tự đi.':'Bấm 🤖 Tự đi: trang tự bật servo rồi cho cua đi.');
+}
+async function poll(){
+ if(busy||Date.now()<failUntil)return;busy=true;
+ try{const r=await fetch('/api/radar',{cache:'no-store'});if(!r.ok)throw Error('radar');const d=await r.json();
+  const wasAuto=last&&last.auto;last=d;if(!startedAt)startedAt=Date.now();if(fails)note('Kết nối lại');fails=0;
+  for(let i=0;i<2;i++){const cm=d.sides[i].cm;if(cm!==null&&cm<=d.maxCm){trails[i].push({cm,z:zone(cm,d.stopCm,d.slowCm,d.maxCm)});if(trails[i].length>TRAIL)trails[i].shift();}}
+  sample(d);events(d);render(d);renderLog();if(wasAuto&&!d.auto)note('Tự đi đã tắt ('+(STATE_VI[d.state]||d.state)+')');
+ }catch(e){if(!fails)note('Mất kết nối');fails++;failUntil=Date.now()+Math.min(3000,500*fails);setStatus('Mất kết nối với cua…');}
+ busy=false;
+}
+async function toggleAuto(){
+ if(!token)throw Error('Chưa nhận quyền điều khiển — tải lại trang.');
+ if(last&&last.auto){await api('auto',{token,active:'0'});note('Tắt Tự đi');return;}
+ busyAction=true;
+ try{
+  if(!last||!last.positional){setStatus('Đang bật servo…');await api('actuator',{token,seq:String(++seq),value:'positional',confirm:'1'});note('Bật servo');}
+  for(let i=0;i<40&&!ready();i++){setStatus('Chờ servo bật đủ 8 kênh…');await sleep(150);}
+  if(!ready())throw Error('Servo chưa sẵn sàng (cần bật đủ 8/8, thoát Ráp).');
+  await api('auto',{token,active:'1'});note('Bật Tự đi · dừng '+last.stopCm+' cm · né '+last.slowCm+' cm');setStatus('Đang tự đi.');
+ }finally{busyAction=false;}
+}
+function halt(why){if(!token)return;const b=new URLSearchParams({token,active:'0'});if(navigator.sendBeacon)navigator.sendBeacon('/api/auto',b);else api('auto',{token,active:'0'}).catch(()=>{});note(why);}
+function showTune(){$('stopVal').textContent=$('stopCm').value+' cm';$('slowVal').textContent=$('slowCm').value+' cm';}
+// Keep slow >= stop + 5 by pushing the other slider, then send after a short pause.
+function onTune(which){let s=Number($('stopCm').value),w=Number($('slowCm').value);if(w<s+5){if(which==='stop')w=Math.min(150,s+5);else s=Math.max(10,w-5);}if(w<s+5)s=w-5;$('stopCm').value=s;$('slowCm').value=w;showTune();tuneDirty=true;clearTimeout(tuneTimer);tuneTimer=setTimeout(sendTune,400);}
+async function sendTune(){const stop=$('stopCm').value,slow=$('slowCm').value;try{if(!token)throw Error('Chưa có quyền điều khiển — tải lại trang.');await api('autotune',{token,stop,slow});note('Đổi ngưỡng: dừng '+stop+' cm · né '+slow+' cm');}catch(e){setStatus(e.message);}tuneDirty=false;}
+function download(){const blob=new Blob([toCsv()],{type:'text/csv;charset=utf-8'}),a=document.createElement('a'),t=new Date();a.href=URL.createObjectURL(blob);a.download='cua-radar-'+t.getFullYear()+pad(t.getMonth()+1)+pad(t.getDate())+'-'+pad(t.getHours())+pad(t.getMinutes())+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);}
+async function copySummary(){const text=summary();try{await navigator.clipboard.writeText(text);setStatus('Đã chép tóm tắt log — dán gửi cho fen.');}catch(e){window.prompt('Chép đoạn này:',text);}}
+$('auto').onclick=()=>toggleAuto().catch(e=>{setStatus(e.message);note('Lỗi: '+e.message);});
+$('stop').onclick=()=>{halt('DỪNG');if(token&&navigator.sendBeacon)navigator.sendBeacon('/api/move',new URLSearchParams({token,seq:String(++seq),dir:'0',fresh:'0'}));};
+$('stopCm').oninput=()=>onTune('stop');$('slowCm').oninput=()=>onTune('slow');
+$('range').onclick=()=>{range=range===100?250:100;$('range').textContent='Tầm nhìn: '+(range===100?'1 m':'2,5 m');draw(last);};
+$('csv').onclick=download;$('copy').onclick=()=>copySummary();$('clear').onclick=()=>{rows=[];$('events').replaceChildren();renderLog();};
+// Leaving the page stops Tự đi, like every other page (a hidden page cannot see the crab).
+window.addEventListener('pagehide',()=>{if(last&&last.auto)halt('Rời trang → dừng');});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&last&&last.auto)halt('Ẩn trang → dừng');});
+window.CuaRadar={beam,polar,arcPath,wedgePath,zone,rings,toCsv,summary,toggleAuto,halt,poll,state:()=>({token,seq,last,rows,range,seenEvent})};
+draw(null);
+api('session').then(d=>{token=d.token;seq=0;note('Mở trang radar');}).catch(e=>setStatus(e.message)).finally(()=>{poll();setInterval(poll,POLL_MS);});
+</script></body></html>

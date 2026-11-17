@@ -402,3 +402,58 @@ Release `positional180-v31`. The owner asked for a round stick instead of the 8 
   - **💡 Đèn.** Turns the lamp on or off, and shows its state.
   - **🎨 Lamp colour.** These two used to live in the side menu.
 - **No change on the robot side.** Only the page and the version string changed. `/api/move` is the same.
+
+## Radar page for Tự đi — 2026-11-17
+
+Release `positional180-v32`. The owner asked for a new radar-style screen for Auto mode, with the crab in the centre and obstacles shown, and for the readings to be logged so the thresholds can be tuned.
+
+### The page: `/radar`
+
+Open it with **📡** in the top bar of the drive page. Like `/emo`, it takes control, so the drive page has to be reopened afterwards.
+
+**The radar**
+- The crab is in the centre and Tiến is up. Rings are every 25 cm (1 m view) or every 50 cm (2.5 m view).
+- The red dashed ring is the stop distance and the orange one is the veer distance.
+- Each sensor is drawn as its beam: the left beam is turned 12° left and the right beam 12° right, each ±15° (`cfg::SONAR_YAW_DEG` and `SONAR_BEAM_HALF_DEG`, matching `case/sonar_front` `Params.yaw_deg`).
+- An echo is drawn as an arc across the whole beam, because an HC-SR04 does not say where inside the cone the object is.
+- Arc colours:
+  - red: closer than the stop distance;
+  - orange: closer than the veer distance;
+  - green: farther away;
+  - "xa": nothing within 250 cm;
+  - grey "mất tín hiệu": that sensor is silent.
+- The last 8 echoes fade out behind the current one.
+
+**🤖 Tự đi**
+- Switches the servos on if they are off, waits for 8/8, then starts Auto.
+- **⏹ DỪNG**, hiding the page or leaving it all stop Auto.
+
+**Ngưỡng**
+- Two sliders: stop at 10–80 cm, veer at no less than stop + 5 cm and at most 150 cm.
+- A new value applies on the next autopilot frame, even while the crab is driving.
+- Values are saved (`aStop` and `aSlow` in `cua-180-v1`). The defaults stay 25 and 45 cm.
+
+**Log thông số**
+- While the page is open, every poll (5 per second) adds a row: both medians, the newest raw echoes, their ages, the Auto state, the drive command, the thresholds and the obstacle count.
+- Each Auto transition is added once, with the left/right readings that caused it.
+- Page notes are added too: Tự đi on/off, threshold changes, link lost or back.
+- The log keeps up to 30 000 rows.
+- **⬇️ Tải CSV** downloads it.
+- **📋 Chép tóm tắt** copies a short text summary to paste into a chat: closest and median distance per side, how often each side was silent, counts of each state, and the last 60 transitions.
+
+### Robot side
+
+- **`GET /api/radar`** needs no token. It returns:
+  - per side: median `cm`, newest `raw` and `age` in ms (`cm` and `raw` are null once the side is stale);
+  - Auto state, drive command and obstacle count;
+  - thresholds and beam geometry;
+  - the last 12 Auto transitions as `[seq, ms, state, left, right, note]`.
+- **`POST /api/autotune`** takes `token`, `stop` and `slow`. It answers 409 without the owner token and 400 for values out of range.
+- The autopilot logic itself is unchanged, apart from reading the two thresholds from these settings.
+
+### Testing
+
+- Host tests cover the API, the bounds, saving the thresholds and the event ring.
+- `firmware/tests/test_radar.js` runs the page script against a fake robot.
+- The page was also checked in Chrome at 320, 390 and 1280 px wide.
+- Not yet tested with real sensors: the modules are still being printed and wired.

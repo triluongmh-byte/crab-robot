@@ -27,6 +27,7 @@ struct SonarSide {
  uint16_t raw[3]={0,0,0};uint8_t count=0,next=0;uint32_t seenAt=0;
  void add(uint16_t cm,uint32_t now){raw[next]=cm;next=uint8_t((next+1)%3);if(count<3)count++;seenAt=now;}
  bool fresh(uint32_t now)const{return count>0&&now-seenAt<cfg::SONAR_STALE_MS;}
+ uint16_t last()const{return count?raw[(next+2)%3]:0;} // newest reading, before the median
  uint16_t cm()const{
   if(count==0)return 0;if(count==1)return raw[(next+2)%3];
   if(count==2){const uint16_t a=raw[(next+1)%3],b=raw[(next+2)%3];return a<b?a:b;} // two: the nearer, to be safe
@@ -52,8 +53,13 @@ inline const char* autoStateName(AutoState s){
  switch(s){case AutoState::Cruise:return "cruise";case AutoState::Halt:return "halt";case AutoState::Backoff:return "backoff";
   case AutoState::Turn:return "turn";case AutoState::Look:return "look";default:return "off";}
 }
+// One Auto transition, kept for the radar page's log: the readings that caused it.
+struct AutoEvent {uint32_t seq=0,at=0;AutoState state=AutoState::Off;uint16_t left=0,right=0;const char* note=nullptr;};
+constexpr int AUTO_EVENTS=12;
 struct Autopilot {
  AutoState state=AutoState::Off;
+ int stopCm=cfg::AUTO_STOP_CM,slowCm=cfg::AUTO_SLOW_CM; // tuned from the radar page
+ AutoEvent events[AUTO_EVENTS];uint32_t eventCount=0;uint16_t lastLeft=0,lastRight=0;
  uint32_t since=0,turnMs=0,nextWander=0,noteAt=0,seed=0x9e3779b9u;
  int side=1;          // +1 turn left (left is freer), -1 turn right
  uint8_t avoids=0;    // obstacles in a row without a long clear cruise
@@ -61,9 +67,12 @@ struct Autopilot {
  bool active()const{return state!=AutoState::Off;}
  uint32_t rnd(uint32_t lo,uint32_t hi){seed=seed*1664525u+1013904223u;return lo+(seed>>8)%(hi-lo+1);}
  static bool due(uint32_t now,uint32_t at){return int32_t(now-at)>=0;}
- void enter(AutoState s,uint32_t now){state=s;since=now;}
+ static bool tuneValid(int stop,int slow){return stop>=cfg::AUTO_TUNE_STOP_MIN&&stop<=cfg::AUTO_TUNE_STOP_MAX&&slow>=stop+cfg::AUTO_TUNE_SLOW_GAP&&slow<=cfg::AUTO_TUNE_SLOW_MAX;}
+ bool setTune(int stop,int slow){if(!tuneValid(stop,slow))return false;stopCm=stop;slowCm=slow;return true;}
+ void record(AutoState s,uint32_t now,const char* why){AutoEvent& e=events[eventCount%AUTO_EVENTS];e.seq=++eventCount;e.at=now;e.state=s;e.left=lastLeft;e.right=lastRight;e.note=why;}
+ void enter(AutoState s,uint32_t now){state=s;since=now;record(s,now,nullptr);}
  void start(uint32_t now){avoids=0;note=nullptr;nextWander=now+rnd(cfg::AUTO_WANDER_MIN_MS,cfg::AUTO_WANDER_MAX_MS);enter(AutoState::Cruise,now);}
- void stop(uint32_t now,const char* why){state=AutoState::Off;since=now;note=why;noteAt=now;}
+ void stop(uint32_t now,const char* why){state=AutoState::Off;since=now;note=why;noteAt=now;record(AutoState::Off,now,why);}
  // Message for the screen and page: running, or why it stopped (for 5 s).
  const char* message(uint32_t now)const{return active()?automsg::ON:note&&now-noteAt<5000?note:nullptr;}
  void halt(uint32_t now,int left,int right){
@@ -74,20 +83,21 @@ struct Autopilot {
  // left/right, 7/8 back arcs (car convention, see crab::bodyYaw).
  int tick(uint32_t now,const Sonar& s){
   if(!active())return 0;
-  if(!s.ok(now)){stop(now,automsg::LOST);return 0;}
+  if(!s.ok(now)){lastLeft=lastRight=0;stop(now,automsg::LOST);return 0;}
   const int left=s.side[0].cm(),right=s.side[1].cm(),nearest=left<right?left:right;
+  lastLeft=uint16_t(left);lastRight=uint16_t(right);
   const uint32_t t=now-since;
   switch(state){
    case AutoState::Cruise:
-    if(nearest<cfg::AUTO_STOP_CM){halt(now,left,right);return 0;}
+    if(nearest<stopCm){halt(now,left,right);return 0;}
     if(t>=cfg::AUTO_CLEAR_MS)avoids=0;
     if(due(now,nextWander)){
      nextWander=now+rnd(cfg::AUTO_WANDER_MIN_MS,cfg::AUTO_WANDER_MAX_MS);
      if(rnd(0,2)==0){enter(AutoState::Look,now);turnMs=rnd(1500,3000);return 0;}
      side=rnd(0,1)?1:-1;turnMs=rnd(800,1800);enter(AutoState::Turn,now);return side>0?5:6;
     }
-    if(left<cfg::AUTO_SLOW_CM&&left<=right)return 6; // something near on the left: veer right
-    if(right<cfg::AUTO_SLOW_CM)return 5;
+    if(left<slowCm&&left<=right)return 6; // something near on the left: veer right
+    if(right<slowCm)return 5;
     return 1;
    case AutoState::Halt:
     if(t>=cfg::AUTO_HALT_MS)enter(AutoState::Backoff,now);
@@ -97,11 +107,11 @@ struct Autopilot {
     if(t>=cfg::AUTO_BACK_MS){turnMs=cfg::AUTO_TURN_MS;enter(AutoState::Turn,now);return side>0?5:6;}
     return side>0?8:7;
    case AutoState::Turn:
-    if(nearest<cfg::AUTO_STOP_CM){halt(now,left,right);return 0;}
+    if(nearest<stopCm){halt(now,left,right);return 0;}
     if(t>=turnMs){enter(AutoState::Cruise,now);return 1;}
     return side>0?5:6;
    case AutoState::Look:
-    if(nearest<cfg::AUTO_STOP_CM){halt(now,left,right);return 0;}
+    if(nearest<stopCm){halt(now,left,right);return 0;}
     if(t>=turnMs)enter(AutoState::Cruise,now);
     return 0;
    default:return 0;
