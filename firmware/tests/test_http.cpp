@@ -8,7 +8,7 @@
 #include <iostream>
 int main(){
  configureHttp();motion.begin(0);server.request("/api/session");assert(server.code==200&&motion.session==42);
- clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v34")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
+ clockMs=2200;server.request("/api/status");assert(server.body.find("positional180-v35")!=String::npos&&server.body.find("\"positional\":false")!=String::npos&&server.body.find("\"drive360\":false")!=String::npos&&server.body.find("\"brownoutHold\":false")!=String::npos);
  // Telemetry must never arm, write, or manufacture measured angles.
  int writes=servos.offCalls;servos.samples[0].known=servos.samples[0].active=true;servos.samples[0].pulseUs=1556;servos.samples[0].counts=319;
  server.request("/api/servos");assert(server.code==200&&servos.offCalls==writes&&!motion.positional());
@@ -114,8 +114,11 @@ int main(){
  // Slanted buttons 5..8 walk forward/back while turning.
  server.request("/api/move",{{"token","42"},{"seq","20"},{"dir","5"},{"fresh","1"}});assert(server.code==200&&motion.yaw>0&&motion.velocity.x==crab::bodyDirection(1).x&&motion.dir==5);
  server.request("/api/move",{{"token","42"},{"seq","21"},{"dir","8"},{"fresh","1"}});assert(server.code==200&&motion.yaw>0&&motion.velocity.x==crab::bodyDirection(2).x);
- server.request("/api/move",{{"token","42"},{"seq","22"},{"dir","9"},{"fresh","1"}});assert(server.code==400);
- server.request("/api/move",{{"token","42"},{"seq","23"},{"dir","1"},{"fresh","1"}});assert(server.code==200&&motion.yaw==0);
+ server.request("/api/move",{{"token","42"},{"seq","22"},{"dir","11"},{"fresh","1"}});assert(server.code==400); // past DIR_MAX
+ server.request("/api/move",{{"token","42"},{"seq","23"},{"dir","9"},{"fresh","1"}});assert(server.code==200&&motion.yaw==cfg::SPIN_YAW&&motion.velocity.x==0&&motion.velocity.y==0&&motion.dir==9); // v35 spin left
+ server.request("/api/move",{{"token","42"},{"seq","24"},{"dir","10"},{"fresh","0"}});assert(server.code==200&&motion.yaw==-cfg::SPIN_YAW);
+ server.request("/api/move",{{"token","42"},{"seq","25"},{"dir","1"},{"fresh","1"}});assert(server.code==200&&motion.yaw==0);
+ motion.lastSeq=23; // rewind: the steps below were numbered before the two v35 spin lines
  // Auto mode: refused without both sensors, a wrong token or unarmed servos;
  // status reports it; a manual move or STOP takes over.
  server.request("/api/status");assert(server.body.find("\"auto\":false")!=String::npos&&server.body.find("\"sonarOk\":false")!=String::npos&&server.body.find("\"sonar\":[null,null]")!=String::npos&&server.body.find("\"autoNote\":null")!=String::npos);
@@ -138,7 +141,7 @@ int main(){
  // Radar page (v32): served gzipped; /api/radar needs no token and reports both
  // sides (null when stale), thresholds, beam geometry and Auto transitions.
  server.request("/radar");assert(server.code==200&&server.body==String((const char*)RADAR_UI_GZ,RADAR_UI_GZ_LEN)&&server.headers["Content-Encoding"]=="gzip"&&RADAR_UI_GZ_LEN<sizeof(RADAR_UI)/2);
- server.request("/api/radar");assert(server.code==200&&server.body.find("\"firmware\":\"positional180-v34\"")!=String::npos&&server.body.find("\"sides\":[{\"cm\":null,\"raw\":null,\"age\":")!=String::npos
+ server.request("/api/radar");assert(server.code==200&&server.body.find("\"firmware\":\"positional180-v35\"")!=String::npos&&server.body.find("\"sides\":[{\"cm\":null,\"raw\":null,\"age\":")!=String::npos
   &&server.body.find("\"stopCm\":25,\"slowCm\":45,\"maxCm\":250,\"farCm\":400,\"yawDeg\":12,\"beamDeg\":15")!=String::npos&&server.body.find("\"auto\":false")!=String::npos);
  // Earlier Auto runs left transitions; the newest is the stop by STOP above.
  assert(autopilot.eventCount>0&&server.body.find("\"events\":[[")!=String::npos&&server.body.find(crab::automsg::MANUAL)!=String::npos);

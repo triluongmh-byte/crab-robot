@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Actual HTTP handlers and station servicing, also exercised by host tests.
 #pragma once
-constexpr const char* FIRMWARE_PROFILE="positional180-v34";
+constexpr const char* FIRMWARE_PROFILE="positional180-v35";
 String jsonString(const String& s){String out="\"";for(size_t i=0;i<s.length();i++){unsigned char c=s[i];if(c=='"'||c=='\\'){out+='\\';out+=char(c);}else if(c<32){char b[7];snprintf(b,sizeof(b),"\\u%04x",c);out+=b;}else out+=char(c);}return out+"\"";}
 void json(int code,const String& s){server.sendHeader("Cache-Control","no-store");server.sendHeader("X-Content-Type-Options","nosniff");server.send(code,"application/json; charset=utf-8",s);}
 void ok(){json(200,"{\"ok\":true}");}
@@ -139,7 +139,7 @@ void configureHttp(){
   body+="]}";json(200,body);
  });
  server.on("/api/session",HTTP_POST,[]{uint32_t token=esp_random()&0x7fffffff;if(!token)token=1;{Guard g;offForChangeLocked();motion.newSession(token);}json(200,"{\"token\":\""+String(token)+"\"}");});
- server.on("/api/move",HTTP_POST,[]{uint32_t token,seq,dir,fresh;if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("dir",dir)||!uintArg("fresh",fresh)||fresh>1||dir>8){error();return;}bool accepted,blocked;{Guard g;blocked=dir&&(!motion.positional()||motion.enabled<8||motion.assembly);accepted=!blocked&&motion.command(token,seq,int(dir),millis(),fresh==1);}if(blocked){actuatorError();return;}if(accepted)ok();else error(409);});
+ server.on("/api/move",HTTP_POST,[]{uint32_t token,seq,dir,fresh;if(!uintArg("token",token)||!uintArg("seq",seq)||!uintArg("dir",dir)||!uintArg("fresh",fresh)||fresh>1||dir>uint32_t(cfg::DIR_MAX)){error();return;}bool accepted,blocked;{Guard g;blocked=dir&&(!motion.positional()||motion.enabled<8||motion.assembly);accepted=!blocked&&motion.command(token,seq,int(dir),millis(),fresh==1);}if(blocked){actuatorError();return;}if(accepted)ok();else error(409);});
  server.on("/api/scan",HTTP_POST,[]{
   pauseSavedRetry();
   if(network.state==crab::NetState::Connecting){json(200,"{\"busy\":true}");return;}

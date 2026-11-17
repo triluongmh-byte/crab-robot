@@ -45,7 +45,8 @@ struct EyeInput {
 // Drive command -> where the eyes look on screen (see cfg::EYE_LOOK_SIGN).
 inline void travelLook(int dir,int8_t& x,int8_t& y){
  const int s=cfg::EYE_LOOK_SIGN;
- x=int8_t(dir==3||dir==5||dir==7?s:dir==4||dir==6||dir==8?-s:0);
+ // Spinning: look the way the body turns (9 left, 10 right).
+ x=int8_t(dir==3||dir==5||dir==7||dir==9?s:dir==4||dir==6||dir==8||dir==10?-s:0);
  y=int8_t(dir==1||dir==5||dir==6?-1:dir==2||dir==7||dir==8?1:0);
 }
 struct Eyes {

@@ -53,7 +53,7 @@ label.tune{display:block;margin:10px 0 0}label.tune input{width:100%;min-height:
 'use strict';
 const $=id=>document.getElementById(id);
 const NS='http://www.w3.org/2000/svg',R=200,POLL_MS=200,MAX_ROWS=30000,TRAIL=8;
-const STATE_VI={off:'Lái tay',cruise:'Đi thẳng',halt:'Dừng — có vật cản',backoff:'Lùi lại',turn:'Quay né',look:'Đứng nhìn quanh'};
+const STATE_VI={off:'Lái tay',cruise:'Đi thẳng',halt:'Dừng — có vật cản',backoff:'Lùi lại',spin:'Xoay tìm đường',turn:'Quay né',look:'Đứng nhìn quanh'};
 const DIR_VI=['Đứng yên','↑ Tiến','↓ Lùi','← Trái','Phải →','↖ Tới trái','Tới phải ↗','↙ Lùi trái','Lùi phải ↘'];
 const ZONE_COLOR={stop:'#ff5a4e',slow:'#ffb02e',ok:'#3ddc84',clear:'#3ddc84',lost:'#7d8b84'};
 let token='',seq=0,last=null,busy=false,busyAction=false,failUntil=0,fails=0,range=100,rows=[],seenEvent=0,startedAt=0,tuneTimer=0,tuneDirty=false;
@@ -121,7 +121,7 @@ function summary(){
  lines.push('mau: '+smp.length+' trong '+secs+' s');
  ['Trai','Phai'].forEach((n,i)=>{const vals=smp.map(r=>r[3+i]).filter(x=>x!==null&&x!==''&&x<400),lost=smp.filter(r=>r[3+i]===null).length;
   lines.push(n+': gan nhat '+v(vals.length?Math.min(...vals):null)+' cm, trung vi '+v(median(vals))+' cm, co vat '+vals.length+'/'+smp.length+', mat tin hieu '+lost);});
- const count=k=>ev.filter(r=>r[9]===k).length;lines.push('dung (halt) '+count('halt')+', lui '+count('backoff')+', quay '+count('turn')+', nhin quanh '+count('look')+', tat '+count('off'));
+ const count=k=>ev.filter(r=>r[9]===k).length;lines.push('dung (halt) '+count('halt')+', lui '+count('backoff')+', xoay tim duong '+count('spin')+', quay '+count('turn')+', nhin quanh '+count('look')+', tat '+count('off'));
  lines.push('su kien (robot_ms state T P ly do):');for(const r of ev.slice(-60))lines.push(r[2]+' '+r[9]+' '+r[3]+' '+r[4]+(r[15]?' '+r[15]:''));
  for(const r of rows.filter(r=>r[0]==='ghi_chu').slice(-30))lines.push('ghi chu '+clock(r[1])+' '+r[15]);
  return lines.join('\n');

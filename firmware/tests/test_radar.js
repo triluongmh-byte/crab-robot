@@ -76,7 +76,7 @@ const texts=n=>[n.textContent].concat(...n.children.map(texts));
  const csv=C.toCsv().split('\n');assert(csv[0].startsWith('# Cua Robot radar log'));assert(/xoay 12 do/.test(csv[2])&&/dung < 15 cm, ne < 20 cm/.test(csv[3]));
  assert.equal(csv[4],'kind,clock,robot_ms,left_cm,right_cm,left_raw,right_raw,left_age_ms,right_age_ms,state,dir,auto,stop_cm,slow_cm,avoids,note');
  assert.equal(csv.length,5+C.state().rows.length+1);assert(csv.some(l=>/^mau,\d\d:\d\d:\d\d\.\d{3},5000,31,120,/.test(l)));assert(csv.some(l=>l.startsWith('su_kien,')&&l.includes(',6400,22,120,')));
- const sum=C.summary();assert(/dung \(halt\) 1/.test(sum)&&/Trai: gan nhat 31 cm/.test(sum)&&/6400 halt 22 120/.test(sum));
+ const sum=C.summary();assert(/xoay tim duong 0/.test(sum)&&/dung \(halt\) 1/.test(sum)&&/Trai: gan nhat 31 cm/.test(sum)&&/6400 halt 22 120/.test(sum));
  elements.copy.onclick();await advance(10);assert.equal(clip,sum);
  elements.csv.onclick();assert(made.some(a=>a.clicked&&/^cua-radar-\d{8}-\d{4}\.csv$/.test(a.download)));assert.equal(ctx.lastBlob.text,C.toCsv());
  // Range toggle and the log cap.

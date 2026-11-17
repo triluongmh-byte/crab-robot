@@ -41,7 +41,7 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  const press=(d,props={})=>joy.fire('pointerdown',{clientX:P[d][0],clientY:P[d][1],...props}),drag=(x,y,props={})=>joy.fire('pointermove',{clientX:x,clientY:y,...props});
  const off=()=>joy.classList.contains('off'),held=()=>vm.runInContext('held',ctx),lastMove=()=>calls.filter(c=>c.path==='/api/move').at(-1);
  assert(off()&&!/data-dir=/.test(html)&&el('joyKnob'));assert.equal(el('speed').value,'65');assert.equal(el('speedValue').textContent,'65%');assert.equal(vm.runInContext('page',ctx),'control');
- const before=calls.length;press(1);await flush();assert.equal(calls.length,before);assert(!joy.holding);await el('light').onclick();assert(calls.some(c=>c.path==='/api/light'));
+ const before=calls.length;press(1);await flush();assert.equal(calls.length,before);assert(!joy.holding);assert(el('spinL').disabled&&el('spinR').disabled);el('spinL').fire('pointerdown');await flush();assert.equal(calls.length,before);await el('light').onclick();assert(calls.some(c=>c.path==='/api/light'));
  // Lamp button sits under the joystick and shows its state.
  state.lightOn=true;await poll();assert.equal(el('light').textContent,'💡 Đèn: bật');assert.equal(el('light').attributes['aria-pressed'],'true');state.lightOn=false;await poll();assert.equal(el('light').textContent,'💡 Đèn: tắt');
  assert.equal(el('power').textContent,'⚡ Servo: TẮT');assert(!el('power').disabled);
@@ -73,6 +73,16 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
  assert(/CH0 · Hông trước trái/.test(el('trim0').textContent)&&/CH6 · Hông sau phải/.test(el('trim6').textContent));
  // Joystick: each of the 8 rays drives that direction; holding keeps it alive; release stops.
  for(const d of [1,2,3,4,5,6,7,8]){press(d);await flush();assert.equal(lastMove().data.dir,String(d));assert.equal(lastMove().data.fresh,'1');assert(joy.holding&&joy.capture===1&&el('joyKnob').style.transform);await hold();await flush();assert.equal(lastMove().data.fresh,'0');assert.equal(lastMove().data.dir,String(d));joy.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');assert(!joy.holding&&el('joyKnob').style.transform==='');assert.equal(el('joyDir').textContent,'Đứng yên');}
+ // v35 spin buttons: hold ↺ = dir 9, ↻ = dir 10, renewed while held; release stops; off with the joystick.
+ {const L=el('spinL'),R=el('spinR');assert(!L.disabled&&!R.disabled);
+  assert.deepEqual(vm.runInContext('DIR_NAMES.slice(9)',ctx),['↺ Xoay trái','Xoay phải ↻']);
+  for(const [b,d] of [[L,'9'],[R,'10']]){b.fire('pointerdown');await flush();assert.equal(lastMove().data.dir,d);assert.equal(lastMove().data.fresh,'1');assert(b.cls.has('holding')&&b.capture===1);
+   await hold();await flush();assert.equal(lastMove().data.dir,d);assert.equal(lastMove().data.fresh,'0');assert.equal(el('joyDir').textContent,d==='9'?'↺ Xoay trái':'Xoay phải ↻');
+   b.fire('pointerup');assert.equal(beacons.at(-1).data.dir,'0');assert(!b.cls.has('holding'));assert.equal(held(),0);}
+  // a second finger on the joystick is ignored while spinning; DỪNG releases the button highlight
+  L.fire('pointerdown',{pointerId:5});await flush();joy.fire('pointerdown',{pointerId:6,clientX:100,clientY:10});await flush();assert.equal(held(),9);
+  el('stop').onclick();assert.equal(held(),0);assert(!L.cls.has('holding'));L.fire('pointerup',{pointerId:5});
+  R.fire('pointerdown',{pointerType:'mouse',button:2});assert.equal(held(),0);}
  // Pressing the centre (dead zone) does not walk; dragging out picks a direction, swinging round changes it in place.
  let moves=calls.filter(c=>c.path==='/api/move').length;joy.fire('pointerdown',{clientX:105,clientY:95});await flush();assert(joy.holding&&held()===0);assert.equal(calls.filter(c=>c.path==='/api/move').length,moves);
  drag(100,20);await flush();assert.equal(lastMove().data.dir,'1');assert.equal(el('joyDir').textContent,'↑ Tiến');drag(185,100);await flush();assert.equal(lastMove().data.dir,'4');assert.equal(lastMove().data.fresh,'1');assert(joy.holding);

@@ -48,6 +48,7 @@ The web controls are in Vietnamese. Button names below are quoted as they appear
    - Dragging between two marks gives an arc that turns while walking.
    - Let go to stop. If the link drops, the crab stops within 0.5 s.
    - On a computer, the arrow keys work too.
+   - **Hold ↺ or ↻** (the round buttons at the bottom corners of the stick, since v35) to spin on the spot, left or right. Let go to stop.
    - Under the stick: **⏹ DỪNG** (stop), **⚡ Servo** (servos on/off), **💡 Đèn** (lamp on/off) and **🎨** (lamp colour).
 4. To forget the saved Wi-Fi, hold **BOOT** for about 8 seconds.
 
@@ -60,11 +61,13 @@ Needs the two front ultrasonic sensors (round 1 in [firmware/BATTERY-AUTONOMY.md
 1. Arm the servos as usual. When both sensors answer, the green **🤖 Tự đi** button above the joystick lights up, and the line beside it shows both distances.
 2. Tap **🤖 Tự đi**.
    - The crab walks forward and veers away from things on one side.
-   - At an obstacle closer than 25 cm it stops with surprised eyes, backs off turning towards the freer side, and carries on. It veers away under 45 cm. Both distances can be changed on the [radar page](#radar-page).
+   - At an obstacle closer than 25 cm it stops with surprised eyes and takes a short step back.
+   - Then it **spins on the spot** towards the freer side until both eyes see a free way: at least the veer distance + 10 cm, for 0.4 s. Then it walks on. The spin is its look-around, so it needs no rotating radar (since v35).
+   - It veers away from things under 45 cm. Both distances can be changed on the [radar page](#radar-page).
    - Now and then it wanders off or stops to look around.
 3. **DỪNG** or touching the joystick takes back control (Manual). So do an emotion, **Ráp** and **BOOT**.
 
-It never starts by itself, even after a reset. If it gets stuck 5 times in a row it stops and shows **Kẹt rồi, nhờ giúp** with sad eyes. On the drive page, locking the phone doesn't stop it; only DỪNG does.
+It never starts by itself, even after a reset. If a spin finds no free way within 15 s, or it gets stuck 5 times in a row, it stops and shows **Kẹt rồi, nhờ giúp** with sad eyes. On the drive page, locking the phone doesn't stop it; only DỪNG does.
 
 ## Radar page
 
@@ -240,7 +243,7 @@ A wrong file or a cut upload leaves the old firmware running. If new firmware cr
 
 ## Firmware
 
-- **Running now:** `positional180-v34` (bigger built-in emotions), target **`lilygo`**, flashed over Wi-Fi on 2026-11-17. The **`integrated`** target is for the future integrated board.
+- **Running now:** `positional180-v35` (spin on the spot, spin-to-search Tự đi), target **`lilygo`**, flashed over Wi-Fi on 2026-11-17. The **`integrated`** target is for the future integrated board.
 - **Build, flash and version history:** [firmware/README.md](firmware/README.md). See also [gaits](firmware/CRAWL.md), [web controls](firmware/WEB-CONTROL.md) and [emotions](firmware/EMOTIONS.md).
 
 ```sh

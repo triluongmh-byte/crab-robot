@@ -20,7 +20,7 @@ if integration['integratedInterface']['status']!='reconciled':
 assert 'carrierInterface' not in integration # obsolete note3 pass is historical only
 ui=(root/'firmware/assets/ui.html').read_text();embedded=(root/'firmware/crab/web_ui.h').read_text();assert ui in embedded
 # v31: one joystick replaced the eight data-dir buttons; it still names all nine commands (0 stand, 1..8).
-assert len(re.search(r"DIR_NAMES=\[([^\]]*)\]",ui).group(1).split(','))==9 and 'id="joy"' in ui
+assert len(re.search(r"DIR_NAMES=\[([^\]]*)\]",ui).group(1).split(','))==11 and 'id="spinL"' in ui and 'id="spinR"' in ui and 'id="joy"' in ui
 radar=(root/'firmware/assets/radar.html').read_text();assert radar in embedded and 'href="/radar"' in ui
 points=set(json.loads((root/'firmware/assets/font-manifest.json').read_text())['codepoints'])
 core=(root/'firmware/crab/core.h').read_text()

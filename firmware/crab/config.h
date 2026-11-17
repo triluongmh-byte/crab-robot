@@ -63,6 +63,12 @@ constexpr GaitPattern TROT={{0,.5f,.5f,0},.56f,.1f,.24f,.28f,true};
 // (dir 5 forward-left, 6 forward-right, 7 back-left, 8 back-right), like a car
 // with the wheel turned. ARC_YAW is the share of each hip stroke spent turning.
 constexpr float ARC_YAW=.5f;
+// Owner, 2026-11-17: on an obstacle the crab turns its whole body on the spot
+// to look for a free way (dir 9 spin left = counter-clockwise from above,
+// 10 spin right). The same trot with every hip pushing the same way and no
+// translation: SPIN_YAW is that share (1 = whole stroke turns the body).
+constexpr float SPIN_YAW=1.f;
+constexpr int DIR_MAX=10;
 // Eyes look towards the robot's own left when it walks left. +1 assumes the
 // screen faces outwards like a face (robot left = viewer's right).
 constexpr int EYE_LOOK_SIGN=1;
@@ -82,6 +88,12 @@ constexpr int AUTO_TUNE_STOP_MIN=10, AUTO_TUNE_STOP_MAX=80, AUTO_TUNE_SLOW_GAP=5
 // Front sonar head (case/sonar_front, Params.yaw_deg): each module turned this
 // far outwards; HC-SR04 beam half-angle. Only the radar page draws with them.
 constexpr int SONAR_YAW_DEG=12, SONAR_BEAM_HALF_DEG=15;
-constexpr uint32_t AUTO_HALT_MS=600, AUTO_BACK_MS=1500, AUTO_TURN_MS=1400, AUTO_CLEAR_MS=4000;
+constexpr uint32_t AUTO_HALT_MS=600, AUTO_BACK_MS=800, AUTO_CLEAR_MS=4000;
+// Spin-to-search (v35): after a short straight back-off the crab spins towards
+// the freer side until both sensors read at least slowCm + AUTO_SPIN_EXTRA_CM
+// for AUTO_SPIN_HOLD_MS, then walks on. No free way within AUTO_SPIN_MAX_MS
+// (more than a full turn) counts as stuck.
+constexpr uint32_t AUTO_SPIN_HOLD_MS=400, AUTO_SPIN_MAX_MS=15000;
+constexpr int AUTO_SPIN_EXTRA_CM=10;
 constexpr uint32_t AUTO_WANDER_MIN_MS=8000, AUTO_WANDER_MAX_MS=16000;
 }
