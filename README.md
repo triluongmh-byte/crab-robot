@@ -268,6 +268,7 @@ Building doesn't flash a board, run motors, print or order anything.
 | Printed parts, assembly, body edits | [case/README.md](case/README.md) · [printed parts list](case/PRINTED-INVENTORY.md) |
 | Sensors and Auto mode (round 1), battery power (round 2: 2 × 18650 + BMS) | [firmware/BATTERY-AUTONOMY.md](firmware/BATTERY-AUTONOMY.md) |
 | Front sonar head (V, four eyes in a row) · screen stand | [case/sonar_front/README.md](case/sonar_front/README.md) · [case/screen_stand/README.md](case/screen_stand/README.md) |
+| Sonar turret (optional accessory, rotating SG90 on CH8) | [case/sonar_turret/README.md](case/sonar_turret/README.md) |
 | Integrated ESP32-S3 + PCA9685 board | [docs/INTEGRATED-CONTROLLER.md](docs/INTEGRATED-CONTROLLER.md) · [KiCad sources](design/) |
 | Build-from-source results | [BUILD-VALIDATION.md](BUILD-VALIDATION.md) |
 | 360° servo trials (didn't work out) | [firmware/EXPERIMENT-STATUS.md](firmware/EXPERIMENT-STATUS.md) |
