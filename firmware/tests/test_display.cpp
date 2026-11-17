@@ -91,6 +91,7 @@ int main(int argc,char** argv){
  {crab::Eyes e;crab::EyeInput in;in.walking=true;crab::travelLook(3,in.sideX,in.sideY);assert(in.sideX==cfg::EYE_LOOK_SIGN&&in.sideY==0);
   crab::EyeFrame fr;for(uint32_t t=0;t<400;t+=20)fr=e.frame(t,in);assert(fr.mood==crab::Mood::Happy&&fr.lookX==24*cfg::EYE_LOOK_SIGN);
   int8_t x,y;crab::travelLook(1,x,y);assert(x==0&&y==-1);crab::travelLook(8,x,y);assert(x==-cfg::EYE_LOOK_SIGN&&y==1);crab::travelLook(0,x,y);assert(x==0&&y==0);
+  crab::travelLook(9,x,y);assert(x==cfg::EYE_LOOK_SIGN&&y==0);crab::travelLook(10,x,y);assert(x==-cfg::EYE_LOOK_SIGN&&y==0); // spin: look the way it turns
   in=crab::EyeInput{};in.posing=true;in.mood=crab::Mood::Angry;assert(e.frame(500,in).mood==crab::Mood::Angry);
   in=crab::EyeInput{};in.idleMs=cfg::SLEEPY_MS;fr=e.frame(1000,in);assert(fr.mood==crab::Mood::Sleepy&&fr.open<=45);
   in.idleMs=cfg::ASLEEP_MS;assert(e.frame(1100,in).mood==crab::Mood::Asleep);

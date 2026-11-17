@@ -500,3 +500,22 @@ The test keeps every preset within these rules:
 - every preset ends standing.
 
 None of these shapes has been tried on the crab. If one tips it over or makes a leg touch the body, scale that frame down.
+
+## Spin on the spot, spin-to-search Tự đi — 2026-11-17
+
+Release `positional180-v35`. The owner watched other crab robots: on an obstacle they turn their whole body round, and that turn is the scan. A rotating radar is not needed (the [sonar turret](../case/sonar_turret/README.md) stays an optional accessory).
+
+- **Spin.**
+  - Drive commands **9** (spin left, counter-clockwise seen from above) and **10** (spin right) are new. `/api/move` accepts `dir` 0–10.
+  - The spin uses the same diagonal trot with no translation: every hip pushes the same way (`cfg::SPIN_YAW` = 1), so the whole stroke turns the body.
+  - The gait model gives no travel and more turn than an arc.
+  - The eyes look the way the body turns.
+- **Drive page.** Two round buttons, **↺** and **↻**, sit at the bottom-left and bottom-right corners of the stick. Hold one to spin; let go to stop. They use the joystick's own hold, renewal and release path, and they are disabled when the joystick is.
+- **Tự đi.** It still stops below the stop distance (surprised face). The backoff and spin that follow are new:
+  1. **Backoff:** a straight step back (`AUTO_BACK_MS` 800 ms; it was a 1.5 s back arc).
+  2. **Spin** (new state `spin`, *Xoay tìm đường*): the crab spins towards the freer side until **both** sensors read at least `slowCm + AUTO_SPIN_EXTRA_CM` (10) for `AUTO_SPIN_HOLD_MS` (400 ms). Then it cruises.
+  3. If there is no free way within `AUTO_SPIN_MAX_MS` (15 s, more than a full turn), it stops with *Kẹt rồi, nhờ giúp* and sad eyes.
+  - Wandering, veering and the 5-in-a-row stuck rule are unchanged.
+  - The radar page logs the `spin` state and counts it in the summary.
+- **Fix found by the tests.** A first version kept "free since" as `now|1`. On an even `now` that sits 1 ms in the future, and the unsigned age wrapped to ~4·10⁹, so the crab would have left the spin at once. It now uses a separate flag.
+- **Not tested on hardware.** First hold ↺ / ↻ by hand to see that the body really turns (and how fast), then try Tự đi.

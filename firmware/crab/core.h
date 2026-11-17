@@ -23,12 +23,14 @@ inline Vec direction(int n){
 }
 // Owner drive command in the CAD frame: 1 Forward, 2 Backward, 3 Left, 4 Right;
 // 5..8 are arcs (forward-left, forward-right, back-left, back-right) that walk
-// forward/back while turning the body; see bodyYaw.
+// forward/back while turning the body; see bodyYaw. 9/10 spin on the spot
+// (left = counter-clockwise, right) with no translation.
+inline bool spinDir(int n){return n==9||n==10;}
 inline Vec bodyDirection(int n){Vec d=direction(n>=5&&n<=8?(n<=6?1:2):n);return cfg::FRONT_IS_CH46?Vec{-d.x,-d.y}:d;}
 // Body turn rate share, + = counter-clockwise seen from above (turn left). A
 // 180-degree frame rotation keeps the turn sense. Reversing with "left" swings
 // the tail left, which turns the body clockwise (car convention).
-inline float bodyYaw(int n){return n==5||n==8?cfg::ARC_YAW:n==6||n==7?-cfg::ARC_YAW:0.f;}
+inline float bodyYaw(int n){return n==9?cfg::SPIN_YAW:n==10?-cfg::SPIN_YAW:n==5||n==8?cfg::ARC_YAW:n==6||n==7?-cfg::ARC_YAW:0.f;}
 // Project body translation onto each hip tangent in the nominal CAD frame.
 inline float hipProjection(int leg,Vec v){return -std::sin(cfg::RADIAL[leg])*v.x+std::cos(cfg::RADIAL[leg])*v.y;}
 // Physical right side (y<0 in the owner's frame); see cfg::FRONT_IS_CH46.
@@ -243,7 +245,7 @@ struct Motion {
   velocity={};amplitude=0;posing=true;relaxing=false;autoMode=false;lastCommand=now;lease=true;return true;
  }
  bool command(uint32_t id,uint32_t seq,int dir,uint32_t now,bool fresh=true){
-  if(dir<0||dir>8||!sequence(id,seq))return false;
+  if(dir<0||dir>cfg::DIR_MAX||!sequence(id,seq))return false;
   if(dir==0){stop();return true;}
   if(inhibit||assembly||test.opened||continuous.opened)return false;
   if(actuator==Actuator::Unknown)return false; //180-only release: no timed360 fallback
@@ -259,7 +261,7 @@ struct Motion {
  // Called by the autopilot every frame; each call refreshes the deadman, so a
  // stalled loop still stops the crab (and ends Auto) after DEADMAN_MS.
  bool autoDrive(int dir,uint32_t now){
-  if(!autoMode||dir<0||dir>8)return false;
+  if(!autoMode||dir<0||dir>cfg::DIR_MAX)return false;
   if(inhibit||assembly||!positional()||enabled<8){stop();return false;}
   velocity=bodyDirection(dir);yaw=bodyYaw(dir);this->dir=dir;posing=false;relaxing=false;lastCommand=now;lease=true;return true;
  }

@@ -5,8 +5,9 @@
 // Auto mode (owner, 2026-11-14): "it is a remote-control toy, make it a robot".
 // Two front ultrasonic sensors (left, right) and a small state machine, no ML:
 // cruise forward, veer away from a near side, and on an obstacle stop with a
-// surprised face, back off turning the nose to the freer side, arc away, and
-// carry on. Now and then it wanders or stops to look around. It never starts
+// surprised face, back off a little, then spin on the spot towards the freer
+// side until both sensors see a free way, and carry on (v35, owner: "đụng vật
+// cản nó sẽ xoay thân vòng tròn, là nó đã tự quét rồi"). Now and then it wanders or stops to look around. It never starts
 // by itself: boot and every reset come up in Manual, and any manual command,
 // STOP, a lost sensor or a stuck crab returns to Manual.
 namespace crab {
@@ -48,10 +49,10 @@ struct Sonar {
  SonarSide side[2]; // 0 left, 1 right (robot's own sides)
  bool ok(uint32_t now)const{return side[0].fresh(now)&&side[1].fresh(now);}
 };
-enum class AutoState:uint8_t {Off,Cruise,Halt,Backoff,Turn,Look};
+enum class AutoState:uint8_t {Off,Cruise,Halt,Backoff,Turn,Look,Spin};
 inline const char* autoStateName(AutoState s){
  switch(s){case AutoState::Cruise:return "cruise";case AutoState::Halt:return "halt";case AutoState::Backoff:return "backoff";
-  case AutoState::Turn:return "turn";case AutoState::Look:return "look";default:return "off";}
+  case AutoState::Turn:return "turn";case AutoState::Look:return "look";case AutoState::Spin:return "spin";default:return "off";}
 }
 // One Auto transition, kept for the radar page's log: the readings that caused it.
 struct AutoEvent {uint32_t seq=0,at=0;AutoState state=AutoState::Off;uint16_t left=0,right=0;const char* note=nullptr;};
@@ -60,7 +61,8 @@ struct Autopilot {
  AutoState state=AutoState::Off;
  int stopCm=cfg::AUTO_STOP_CM,slowCm=cfg::AUTO_SLOW_CM; // tuned from the radar page
  AutoEvent events[AUTO_EVENTS];uint32_t eventCount=0;uint16_t lastLeft=0,lastRight=0;
- uint32_t since=0,turnMs=0,nextWander=0,noteAt=0,seed=0x9e3779b9u;
+ uint32_t since=0,turnMs=0,nextWander=0,noteAt=0,seed=0x9e3779b9u,clearSince=0;
+ bool clearing=false; // both eyes free since clearSince (Spin)
  int side=1;          // +1 turn left (left is freer), -1 turn right
  uint8_t avoids=0;    // obstacles in a row without a long clear cruise
  const char* note=nullptr; // why it last stopped, shown for a few seconds
@@ -79,8 +81,9 @@ struct Autopilot {
   if(++avoids>=cfg::AUTO_STUCK_AVOIDS){stop(now,automsg::STUCK);return;}
   side=left>=right?1:-1;enter(AutoState::Halt,now);
  }
- // Drive command for this instant: 0 stand, 1 forward, 5/6 forward arc
- // left/right, 7/8 back arcs (car convention, see crab::bodyYaw).
+ // Drive command for this instant: 0 stand, 1 forward, 2 back, 5/6 forward
+ // arc left/right (car convention, see crab::bodyYaw), 9/10 spin left/right.
+ int clearCm()const{return slowCm+cfg::AUTO_SPIN_EXTRA_CM;}
  int tick(uint32_t now,const Sonar& s){
   if(!active())return 0;
   if(!s.ok(now)){lastLeft=lastRight=0;stop(now,automsg::LOST);return 0;}
@@ -103,9 +106,18 @@ struct Autopilot {
     if(t>=cfg::AUTO_HALT_MS)enter(AutoState::Backoff,now);
     return 0;
    case AutoState::Backoff:
-    // Reversing with the tail swung right (8) turns the nose left, and vice versa.
-    if(t>=cfg::AUTO_BACK_MS){turnMs=cfg::AUTO_TURN_MS;enter(AutoState::Turn,now);return side>0?5:6;}
-    return side>0?8:7;
+    // A short straight step back gives the legs room to spin.
+    if(t>=cfg::AUTO_BACK_MS){clearing=false;enter(AutoState::Spin,now);return side>0?9:10;}
+    return 2;
+   case AutoState::Spin:
+    // Turn the body towards the freer side until both eyes see a free way for
+    // a moment; the sweep is the scan. A full turn without one means stuck.
+    if(left>=clearCm()&&right>=clearCm()){
+     if(!clearing){clearing=true;clearSince=now;}
+     if(now-clearSince>=cfg::AUTO_SPIN_HOLD_MS){clearing=false;enter(AutoState::Cruise,now);return 1;}
+    }else clearing=false;
+    if(t>=cfg::AUTO_SPIN_MAX_MS){stop(now,automsg::STUCK);return 0;}
+    return side>0?9:10;
    case AutoState::Turn:
     if(nearest<stopCm){halt(now,left,right);return 0;}
     if(t>=turnMs){enter(AutoState::Cruise,now);return 1;}

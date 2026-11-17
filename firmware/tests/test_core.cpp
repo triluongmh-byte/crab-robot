@@ -221,7 +221,16 @@ static void test_arcs(){
   travel(6,a,t);assert(a>.2*a1&&t<-.2*a1);  // forward, turning right
   travel(7,a,t);assert(a<-.2*a1&&t<-.2*a1); // backward, tail swings left (clockwise)
   travel(8,a,t);assert(a<-.2*a1&&t>.2*a1);  // backward, tail swings right
+  // v35 spin on the spot: no travel, the whole stroke turns the body, each way more than an arc.
+  double a5,t5;travel(5,a5,t5);
+  travel(9,a,t);assert(std::fabs(a)<.01*a1&&t>t5);
+  travel(10,a,t);assert(std::fabs(a)<.01*a1&&t<-t5);
+  assert(spinDir(9)&&spinDir(10)&&!spinDir(5)&&bodyDirection(9).x==0&&bodyDirection(9).y==0&&bodyDirection(10).x==0);
  }
+ {Motion m;ready(m);m.newSession(5);assert(m.command(5,1,9,2200,true)&&m.yaw==cfg::SPIN_YAW&&m.dir==9);assert(m.command(5,2,10,2210,false)&&m.yaw==-cfg::SPIN_YAW);
+  assert(!m.command(5,3,11,2220,false));
+  // the gait actually moves while spinning (amplitude builds, hips sweep)
+  float h0=0;for(uint32_t k=2220;k<3400;k+=20){m.command(5,m.lastSeq+1,10,k,false);m.tick(k);h0=std::max(h0,std::fabs(m.position[0]));}assert(h0>10);}
  // Stop clears the turn; the last drive command is kept for the eyes.
  {Motion m;ready(m);m.newSession(5);assert(m.command(5,1,6,2200,true)&&m.yaw<0&&m.dir==6);m.stop();assert(m.yaw==0&&m.dir==0);}
 }
@@ -268,27 +277,37 @@ static void test_autopilot(){
  uint32_t t=1000;feed(s,200,200,t);a.start(t);a.nextWander=t+100000;assert(a.active()&&a.tick(t,s)==1&&a.message(t)==automsg::ON);
  // Something near one side: veer away while still walking forward.
  feed(s,40,200,t);assert(a.tick(t,s)==6&&bodyYaw(6)<0);feed(s,200,40,t);assert(a.tick(t,s)==5&&bodyYaw(5)>0);
- // Obstacle, right side freer: stop with a surprised face, back off with the
- // tail swung left (nose turns right), then arc forward-right, then cruise.
+ // Obstacle, right side freer (v35): stop with a surprised face, step straight
+ // back, then spin right on the spot until both eyes see a free way, then cruise.
  feed(s,20,60,t);assert(a.tick(t,s)==0&&a.state==AutoState::Halt&&a.side==-1&&a.mood(t)==Mood::Surprised);
  assert(a.tick(t+cfg::AUTO_HALT_MS-1,s)==0);t+=cfg::AUTO_HALT_MS;assert(a.tick(t,s)==0&&a.state==AutoState::Backoff&&a.mood(t)==Mood::Normal);
- assert(a.tick(t+20,s)==7&&bodyYaw(7)<0&&bodyDirection(7).x==bodyDirection(2).x);
- t+=cfg::AUTO_BACK_MS;feed(s,200,200,t);assert(a.tick(t,s)==6&&a.state==AutoState::Turn);
- feed(s,200,200,t+cfg::AUTO_TURN_MS-1);assert(a.tick(t+cfg::AUTO_TURN_MS-1,s)==6);t+=cfg::AUTO_TURN_MS;assert(a.tick(t,s)==1&&a.state==AutoState::Cruise);
- // Left freer: back-right (nose turns left), then forward-left.
- feed(s,90,20,t);assert(a.tick(t,s)==0&&a.side==1);t+=cfg::AUTO_HALT_MS;feed(s,90,20,t);a.tick(t,s);assert(a.tick(t+20,s)==8&&bodyYaw(8)>0);
- t+=cfg::AUTO_BACK_MS;feed(s,200,200,t);assert(a.tick(t,s)==5);
- // An obstacle during the turn stops again.
- feed(s,10,10,t+50);assert(a.tick(t+50,s)==0&&a.state==AutoState::Halt);
+ assert(a.tick(t+20,s)==2);
+ t+=cfg::AUTO_BACK_MS;feed(s,20,60,t);assert(a.tick(t,s)==10&&a.state==AutoState::Spin&&bodyYaw(10)<0);
+ // still blocked: keeps spinning; one side clear is not enough
+ t+=500;feed(s,30,200,t);assert(a.tick(t,s)==10);
+ // both clear (>= slow + extra) must hold for AUTO_SPIN_HOLD_MS; a blip resets it
+ const int clr=a.clearCm();assert(clr==cfg::AUTO_SLOW_CM+cfg::AUTO_SPIN_EXTRA_CM);
+ t+=100;feed(s,clr,clr,t);assert(a.tick(t,s)==10);t+=cfg::AUTO_SPIN_HOLD_MS-50;feed(s,clr,clr-1,t);assert(a.tick(t,s)==10);
+ t+=50;feed(s,200,200,t);assert(a.tick(t,s)==10);t+=cfg::AUTO_SPIN_HOLD_MS-1;feed(s,200,200,t);assert(a.tick(t,s)==10);
+ t+=1;feed(s,200,200,t);assert(a.tick(t,s)==1&&a.state==AutoState::Cruise);
+ {const AutoEvent& e=a.events[(a.eventCount-1)%AUTO_EVENTS];assert(e.state==AutoState::Cruise);const AutoEvent& f=a.events[(a.eventCount-2)%AUTO_EVENTS];assert(f.state==AutoState::Spin&&std::string(autoStateName(f.state))=="spin");}
+ // Left freer: spin left (9).
+ feed(s,90,20,t);assert(a.tick(t,s)==0&&a.side==1);t+=cfg::AUTO_HALT_MS;feed(s,90,20,t);a.tick(t,s);assert(a.tick(t+20,s)==2);
+ t+=cfg::AUTO_BACK_MS;feed(s,90,20,t);assert(a.tick(t,s)==9&&bodyYaw(9)>0);
+ // No free way within a full turn: stuck, sad face.
+ {uint32_t k=t;while(a.active()&&k<t+cfg::AUTO_SPIN_MAX_MS+100){feed(s,20,20,k);a.tick(k,s);k+=100;}
+  assert(!a.active()&&a.note==automsg::STUCK&&k-t>=cfg::AUTO_SPIN_MAX_MS&&k-t<=cfg::AUTO_SPIN_MAX_MS+100);}
+ // A wander arc that meets an obstacle stops again.
+ {Autopilot w;feed(s,200,200,0);w.start(0);w.enter(AutoState::Turn,0);w.turnMs=2000;feed(s,10,10,50);assert(w.tick(50,s)==0&&w.state==AutoState::Halt);}
  // A long clear cruise forgets earlier obstacles; repeated ones without it mean stuck.
  Autopilot b;feed(s,200,200,0);b.start(0);b.nextWander=1000000;uint32_t u=0;
  for(int i=0;i<cfg::AUTO_STUCK_AVOIDS;i++){
   feed(s,200,200,u);b.tick(u,s);feed(s,10,30,u);b.tick(u,s);
-  if(i<cfg::AUTO_STUCK_AVOIDS-1){assert(b.state==AutoState::Halt);u+=cfg::AUTO_HALT_MS;feed(s,200,200,u);b.tick(u,s);u+=cfg::AUTO_BACK_MS;feed(s,200,200,u);b.tick(u,s);u+=cfg::AUTO_TURN_MS;feed(s,200,200,u);b.tick(u,s);assert(b.state==AutoState::Cruise);}
+  if(i<cfg::AUTO_STUCK_AVOIDS-1){assert(b.state==AutoState::Halt);u+=cfg::AUTO_HALT_MS;feed(s,200,200,u);b.tick(u,s);u+=cfg::AUTO_BACK_MS;feed(s,200,200,u);b.tick(u,s);u+=1;feed(s,200,200,u);b.tick(u,s);u+=cfg::AUTO_SPIN_HOLD_MS;feed(s,200,200,u);b.tick(u,s);assert(b.state==AutoState::Cruise);}
  }
  assert(!b.active()&&b.note==automsg::STUCK&&b.mood(u)==Mood::Sad&&b.message(u)==automsg::STUCK&&b.message(u+5000)==nullptr);
  Autopilot c;feed(s,200,200,0);c.start(0);c.nextWander=1000000;feed(s,10,30,0);c.tick(0,s);assert(c.avoids==1);
- uint32_t v=cfg::AUTO_HALT_MS;feed(s,200,200,v);c.tick(v,s);v+=cfg::AUTO_BACK_MS;feed(s,200,200,v);c.tick(v,s);v+=cfg::AUTO_TURN_MS;feed(s,200,200,v);c.tick(v,s);assert(c.state==AutoState::Cruise);
+ uint32_t v=cfg::AUTO_HALT_MS;feed(s,200,200,v);c.tick(v,s);v+=cfg::AUTO_BACK_MS;feed(s,200,200,v);c.tick(v,s);v+=1;feed(s,200,200,v);c.tick(v,s);v+=cfg::AUTO_SPIN_HOLD_MS;feed(s,200,200,v);c.tick(v,s);assert(c.state==AutoState::Cruise);
  v+=cfg::AUTO_CLEAR_MS;feed(s,200,200,v);assert(c.tick(v,s)==1&&c.avoids==0);
  // Wandering: sometimes stop and look around, sometimes arc a random way.
  int looks=0,turns=0;
