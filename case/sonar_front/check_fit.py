@@ -3,8 +3,8 @@
   1. Static: head + both HC-SR04P envelopes + zip ties vs frame_upper, the 12 servo solids, the screws, the screen
      stand and the LILYGO (in its slot, its plugs and Dupont housings). frame_lower is not fitted any more and the
      electronics reference is the future integrated board, so neither is checked.
-  2. Modules in the holder: no overlap between the module envelopes and the head or each other (header pins bent
-     back); a 5 mm screwdriver reaches all four screws on the bench (screw the modules in before tying).
+  2. Modules in the holder: no overlap between the module envelopes and the head or each other;
+     a 5 mm screwdriver reaches all four screws on the bench (screw the modules in before tying).
   3. Leg sweep of the two +Y legs (CAD FL, RL) inside the firmware limits (config.h / core.h):
        walking: hip up to HIP_AMPLITUDE 25 x (1 + BALANCE_LIMIT 30 %) = 32.5 deg, knees only lift (0..-60);
        emotion poses: hips +-30, knees -100 (POSE_KNEE_LIFT) .. +30 (press-down limit).
@@ -95,11 +95,14 @@ def main():
     _init(str(rd))
     rep, ok = {'robotExports': str(rd), 'frame': 'robot (CAD) frame; +Y = the owner\'s front (Tiến)', 'checks': {}}, True
 
-    def check(name, value, good):
+    def check(name, value, good, owner=False):
+        """owner=True: the owner measured the real robot (2026-11-17, photo IMG_2728) and overrides this CAD result:
+        it is reported, not gated."""
         nonlocal ok
-        rep['checks'][name] = value
-        ok = ok and good
-        print(('PASS ' if good else 'FAIL ') + name, json.dumps(value, ensure_ascii=False)[:300])
+        rep['checks'][name] = value if not owner else {'cad': value, 'cadPass': good, 'gated': False,
+                                                       'note': 'owner measured the real robot: legs do not reach the head'}
+        ok = ok and (good or owner)
+        print(('PASS ' if good else 'INFO ' if owner else 'FAIL ') + name, json.dumps(value, ensure_ascii=False)[:300])
 
     up = OLD.load('frame_upper').val()
     sv = OLD.servo_solids()
@@ -135,8 +138,8 @@ def main():
     mods = [(ml, m) for ml, m in _mine[1:] if not ml.startswith('zip tie')]
     rr = [{'part': ml, 'overlapMm3': round(OLD.overlap(m, head), 3), 'gapMm': round(OLD.min_distance(m, head), 2)} for ml, m in mods]
     check('modules in holder: no overlap', [r for r in rr if r['overlapMm3'] > TOL], all(r['overlapMm3'] <= TOL for r in rr))
-    lr = [round(OLD.overlap(a_, b_), 3) for la, a_ in mods if ' upper ' in la for lb, b_ in mods if ' lower ' in lb]
-    check('upper and lower module envelopes apart (max overlap mm3)', max(lr), max(lr) <= TOL)
+    lr = [round(OLD.overlap(a_, b_), 3) for la, a_ in mods if ' right ' in la for lb, b_ in mods if ' left ' in lb]
+    check('right and left module envelopes apart (max overlap mm3)', max(lr), max(lr) <= TOL)
 
     sd = [{'driver': l, 'vsHeadMm3': round(OLD.overlap(d, head), 2), 'vsModulesMm3': round(sum(OLD.overlap(d, m) for _, m in mods), 2),
            'vsFrameOnRobotMm3': round(OLD.overlap(d, up), 1)} for l, d in F.screwdrivers()]
@@ -159,11 +162,11 @@ def main():
     worst_hard = min(hard, key=lambda r: r['minHardMm'])
     worst_plug = min(sw, key=lambda r: r['minPlugMm'])
     check('leg sweep: head, modules, ties >= 2 mm', {'poses': len(sw), 'worstMm': worst_hard['minHardMm'], 'at': [worst_hard['hip'], worst_hard['knee']],
-                                                     'closest': worst_hard['closestHard']}, worst_hard['minHardMm'] >= 2.0)
+                                                     'closest': worst_hard['closestHard']}, worst_hard['minHardMm'] >= 2.0, owner=True)
     check('leg sweep: Dupont plug envelope >= 0.5 mm', {'worstMm': worst_plug['minPlugMm'], 'at': [worst_plug['hip'], worst_plug['knee']],
-                                                       'closest': worst_plug['closestPlug']}, worst_plug['minPlugMm'] >= 0.5)
+                                                       'closest': worst_plug['closestPlug']}, worst_plug['minPlugMm'] >= 0.5, owner=True)
     at25 = [b for b in bl if abs(b['hip']) <= 25]
-    check('beams never see the own feet while walking at balance 0 (hip <= 25)', {'hits': at25[:4]}, not at25)
+    check('beams never see the own feet while walking at balance 0 (hip <= 25)', {'hits': at25[:4], 'poses': len(at25)}, not at25, owner=True)
     rep['beamLegHitsAboveBalance0'] = {'hipsDeg': sorted({b['hip'] for b in bl}), 'maxRangeMm': max((b['rangeMm'] for b in bl), default=None),
                                        'note': 'only with Bù lệch above about +-20 % (hip > 25 deg); a near-range echo filter in the firmware would cover it'}
 

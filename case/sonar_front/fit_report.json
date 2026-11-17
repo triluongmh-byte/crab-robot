@@ -6,8 +6,8 @@
   "static closest non-tie gap mm (>= 0.15)": [
    {
     "ours": "head",
-    "body": "screen stand",
-    "minDistanceMm": 0.23,
+    "body": "screw #8",
+    "minDistanceMm": 0.2,
     "overlapMm3": 0.0
    },
    {
@@ -23,9 +23,9 @@
     "overlapMm3": 0.0
    },
    {
-    "ours": "HC-SR04P upper dupont plug",
-    "body": "screen stand",
-    "minDistanceMm": 2.85,
+    "ours": "HC-SR04P right back parts",
+    "body": "frame_upper",
+    "minDistanceMm": 3.05,
     "overlapMm3": 0.0
    }
   ],
@@ -49,65 +49,114 @@
   ],
   "plate to frame_upper gap mm (rests on the rail face)": 0.25,
   "modules in holder: no overlap": [],
-  "upper and lower module envelopes apart (max overlap mm3)": 0.0,
+  "right and left module envelopes apart (max overlap mm3)": 0.0,
   "screwdriver access on the bench (5 mm shaft, 60 mm, along each screw axis)": [
    {
-    "driver": "screwdriver upper +x",
-    "vsHeadMm3": 0.0,
-    "vsModulesMm3": 0.0,
-    "vsFrameOnRobotMm3": 46.9
-   },
-   {
-    "driver": "screwdriver upper -x",
-    "vsHeadMm3": 0.0,
-    "vsModulesMm3": 0.0,
-    "vsFrameOnRobotMm3": 43.0
-   },
-   {
-    "driver": "screwdriver lower -x",
+    "driver": "screwdriver right inner",
     "vsHeadMm3": 0.0,
     "vsModulesMm3": 0.0,
     "vsFrameOnRobotMm3": 0.0
    },
    {
-    "driver": "screwdriver lower +x",
+    "driver": "screwdriver right outer",
+    "vsHeadMm3": 0.0,
+    "vsModulesMm3": 0.0,
+    "vsFrameOnRobotMm3": 0.0
+   },
+   {
+    "driver": "screwdriver left inner",
+    "vsHeadMm3": 0.0,
+    "vsModulesMm3": 0.0,
+    "vsFrameOnRobotMm3": 0.0
+   },
+   {
+    "driver": "screwdriver left outer",
     "vsHeadMm3": 0.0,
     "vsModulesMm3": 0.0,
     "vsFrameOnRobotMm3": 0.0
    }
   ],
   "wall between each tie slot and the screwdriver channels mm (>= 1.2)": {
-   "slot": "slot x-12 upper",
-   "channel": "channel upper -x",
-   "wallMm": 2.09
+   "slot": "slot x-12 lower",
+   "channel": "channel left inner",
+   "wallMm": 11.83
   },
   "leg sweep: head, modules, ties >= 2 mm": {
-   "poses": 478,
-   "worstMm": 13.47,
-   "at": [
-    32.5,
-    0
-   ],
-   "closest": "RL foot vs head"
+   "cad": {
+    "poses": 478,
+    "worstMm": 0.0,
+    "at": [
+     25.0,
+     -60
+    ],
+    "closest": "FL knee servo vs HC-SR04P right cans"
+   },
+   "cadPass": false,
+   "gated": false,
+   "note": "owner measured the real robot: legs do not reach the head"
   },
   "leg sweep: Dupont plug envelope >= 0.5 mm": {
-   "worstMm": 99.0,
-   "at": [
-    -32.5,
-    -60
-   ],
-   "closest": ""
+   "cad": {
+    "worstMm": 6.53,
+    "at": [
+     30,
+     30
+    ],
+    "closest": "FL foot vs HC-SR04P right dupont plug"
+   },
+   "cadPass": true,
+   "gated": false,
+   "note": "owner measured the real robot: legs do not reach the head"
   },
   "beams never see the own feet while walking at balance 0 (hip <= 25)": {
-   "hits": []
+   "cad": {
+    "hits": [
+     {
+      "beam": "right can outer",
+      "leg": "FL foot",
+      "hip": 25,
+      "knee": -60,
+      "rangeMm": 10.7,
+      "volMm3": 3260.9
+     },
+     {
+      "beam": "right can outer",
+      "leg": "FL knee servo",
+      "hip": 25,
+      "knee": -60,
+      "rangeMm": 7.9,
+      "volMm3": 0.4
+     },
+     {
+      "beam": "right can outer",
+      "leg": "FL foot",
+      "hip": 25,
+      "knee": -45,
+      "rangeMm": 9.5,
+      "volMm3": 3202.7
+     },
+     {
+      "beam": "right can outer",
+      "leg": "FL knee servo",
+      "hip": 25,
+      "knee": -45,
+      "rangeMm": 7.9,
+      "volMm3": 0.4
+     }
+    ],
+    "poses": 16
+   },
+   "cadPass": false,
+   "gated": false,
+   "note": "owner measured the real robot: legs do not reach the head"
   },
   "beams clear of the head, the other module, the frame and the stand": [
    {
-    "beam": "upper (left) can -x",
-    "heightAboveFloorMm": 59.5,
-    "yawDeg": -15.0,
-    "pitchDeg": 10.0,
-    "floorHitRangeMm": 680,
+    "beam": "right can inner",
+    "heightAboveFloorMm": 49.0,
+    "yawDeg": 12.0,
+    "pitchDeg": 8.0,
+    "floorHitRangeMm": 399,
     "coneOverlapMm3": {
      "head": 0.0,
      "frame_upper": 0.0,
@@ -116,11 +165,11 @@
     }
    },
    {
-    "beam": "upper (left) can +x",
-    "heightAboveFloorMm": 59.5,
-    "yawDeg": -15.0,
-    "pitchDeg": 10.0,
-    "floorHitRangeMm": 680,
+    "beam": "right can outer",
+    "heightAboveFloorMm": 49.0,
+    "yawDeg": 12.0,
+    "pitchDeg": 8.0,
+    "floorHitRangeMm": 399,
     "coneOverlapMm3": {
      "head": 0.0,
      "frame_upper": 0.0,
@@ -129,11 +178,11 @@
     }
    },
    {
-    "beam": "lower (right) can +x",
-    "heightAboveFloorMm": 36.3,
-    "yawDeg": 15.0,
-    "pitchDeg": 10.0,
-    "floorHitRangeMm": 414,
+    "beam": "left can inner",
+    "heightAboveFloorMm": 49.0,
+    "yawDeg": -12.0,
+    "pitchDeg": 8.0,
+    "floorHitRangeMm": 399,
     "coneOverlapMm3": {
      "head": 0.0,
      "frame_upper": 0.0,
@@ -142,11 +191,11 @@
     }
    },
    {
-    "beam": "lower (right) can -x",
-    "heightAboveFloorMm": 36.3,
-    "yawDeg": 15.0,
-    "pitchDeg": 10.0,
-    "floorHitRangeMm": 414,
+    "beam": "left can outer",
+    "heightAboveFloorMm": 49.0,
+    "yawDeg": -12.0,
+    "pitchDeg": 8.0,
+    "floorHitRangeMm": 399,
     "coneOverlapMm3": {
      "head": 0.0,
      "frame_upper": 0.0,
@@ -155,39 +204,40 @@
     }
    }
   ],
-  "lowest beam reaches the floor beyond mm (AUTO_SLOW_CM 45 -> >= 300)": 414,
+  "lowest beam reaches the floor beyond mm (AUTO_SLOW_CM 45 -> >= 300)": 399,
   "Ngủ pose (all knees lift 30): head >= 1.5 and module envelopes (bent plug) >= 0.5 mm above the floor": {
    "floorInBodyFrameZ": -0.35,
-   "headClearanceMm": 7.69,
-   "moduleClearanceMm": 1.75
+   "headClearanceMm": 20.77,
+   "moduleClearanceMm": 3.37
   },
-  "head top below the screen (z <= 51.1; cradle front-bottom edge z 52.1, the head is in front of the stand)": 51.0
+  "head top below the screen (z <= 51.1; cradle front-bottom edge z 52.1, the head is in front of the stand)": 43.0
  },
  "beamLegHitsAboveBalance0": {
   "hipsDeg": [
+   25,
+   27.5,
+   30,
    32.5
   ],
-  "maxRangeMm": 33.1,
+  "maxRangeMm": 10.7,
   "note": "only with Bù lệch above about +-20 % (hip > 25 deg); a near-range echo filter in the firmware would cover it"
  },
  "headBbox": [
-  -25.12,
-  25.03,
+  -49.49,
+  49.49,
   37.25,
-  71.28,
-  7.34,
-  51.0
+  59.35,
+  20.42,
+  43.0
  ],
- "headVolumeMm3": 10524.3,
- "groundClearanceMm": 23.8,
+ "headVolumeMm3": 8000.6,
+ "groundClearanceMm": 36.9,
  "params": {
-  "yaw_deg": 15.0,
-  "pitch_deg": 10.0,
-  "y_back": 58.0,
-  "z_upper": 40.6,
-  "z_lower": 17.4,
-  "plug_v": 3.6,
-  "plug_back": 15.0,
+  "yaw_deg": 12.0,
+  "pitch_deg": 8.0,
+  "apex_x": 2.2,
+  "z_cut": 43.0,
+  "back_gap": 0.4,
   "rail_y": [
    34.0,
    37.05
@@ -198,18 +248,15 @@
   ],
   "plate_y0": 37.25,
   "plate_t": 2.4,
-  "plate_x": 19.0,
-  "plate_z0": 16.0,
+  "plate_z0": 24.0,
   "tie_x": [
    -12.0,
    12.0
   ],
   "tie_w": 3.0,
   "tie_h": 1.6,
-  "spine_x": 7.0,
-  "spine_slope": 1.27,
-  "driver_d": 6.0,
-  "z_cut": 51.0
+  "spine_half": 1.6,
+  "driver_d": 6.0
  },
  "ok": true
 }

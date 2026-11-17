@@ -7,7 +7,7 @@ Status of each part (2026-11-17):
   screen_stand       current: holds the bare LILYGO on the +Y (Tiến) display rim
   switch_holder      usable: zip-ties a rocker switch to a frame bar
   power_tray         shelved: frame_lower is not fitted any more
-  sonar_front        current: both HC-SR04P in two flat rows on the +Y (Tiến) face, under the screen stand
+  sonar_front        current: both HC-SR04P flat in a V, four eyes in a row, on the +Y (Tiến) face
   (sonar_bracket, made for the -X end, is obsolete and no longer on the plate)
 
 Usage:  python3 case/print_all.py [--slice OUTDIR]
@@ -46,7 +46,7 @@ def parts():
         ('screen_stand', stand, True, (0.95, 0.8, 0.1)),
         ('switch_holder', PT.switch_holder(), False, (0.3, 0.7, 0.3)),
         ('power_tray', PT.gen_step(), False, (0.6, 0.6, 0.65)),
-        ('sonar_front', SF.to_print(SF.head_robot()), True, (0.15, 0.75, 0.75)),
+        ('sonar_front', SF.to_print(SF.head_robot()), False, (0.15, 0.75, 0.75)),
     ]]
 
 

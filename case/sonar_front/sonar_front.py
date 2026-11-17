@@ -1,27 +1,25 @@
-"""Front sonar head: two HC-SR04P lying flat, one above the other, on the +Y (Tiến, screen side) face of frame_upper,
-under the screen stand. The owner (2026-11-17) wanted the four "eyes" side by side like a face; a single row of four
-(about 94 mm wide) hits the hip servos and the front legs, so the two modules sit in two rows of two instead:
-  * upper module: looks `yaw_deg` to the LEFT (-X)  -> the left sensor  (GPIO10/11)
-  * lower module: looks `yaw_deg` to the RIGHT (+X) -> the right sensor (GPIO12/13)
-both tilted `pitch_deg` up. Each row is 49 mm wide, so the head stays inside the free space between the front legs.
+"""Front sonar head: two HC-SR04P lying flat side by side in a V, the four "eyes" in one row, on the +Y (Tiến, screen
+side) face of frame_upper, just under the screen.
 
-The HC-SR04P right-angle header sits on a long edge: the upper module has it on top, the lower one at the bottom, and
-the owner bends the four pins 90 deg backwards, so both Dupont plugs go back toward the body instead of up into the
-screen or down onto the floor.
+Seen from above the head is an isosceles triangle (owner, 2026-11-17, from his photo of a module held against the
+face): the back plate along the +Y side rail is the base, the two modules are the equal sides and meet at the apex in
+front of x = 0. Each module is turned `yaw_deg` outwards (right module looks right = +X, left module looks left) and
+tilted `pitch_deg` up. The right-angle header is on the bottom edge, so the Dupont plugs hang down, below the head,
+and the wires go back under the body; nothing rises in front of the screen.
 
-A back plate rests on the +Y side rail of frame_upper (y 34..37.05, z 34.4..39.95), held by two zip ties around it.
-A centre spine runs forward from the plate to a middle beam, which joins the two module shelves.
+The back plate rests on the outside face of the +Y side rail (y 34..37.05, z 34.4..39.95) and is held by two zip
+ties around it (glue it as well if wanted). A centre spine ties the apex to the plate; the outer end lips join the
+plate ends.
 
 Frames:
   * robot (CAD) frame of case/model.py: +Y = the owner's front (Tiến), +X = old bank mouth, z0 = frame_lower bottom.
   * module-local (one HC-SR04P), as in ../sonar_bracket: X = s along the PCB length (centre 0), Y = v across it
-    (0 = the inner edge on the middle beam, pcb_h = the header edge), Z = w along the face normal
+    (0 = the top edge under the shelf, pcb_h = the header edge at the bottom), Z = w along the face normal
     (0 = PCB back face, 1.6 = front, 13.6 = can faces).
-  * print: upside down, the top plane `z_cut` on the bed.
+  * print: upside down, the top plane `z_cut` (shelves, plate and spine tops) on the bed.
 
 Module retention: two M2x6 self-taps per module from the back, through the PCB holes on the header edge, into bosses on
-the bezel front; the inner edge rests on the shelf and the ends sit between the end lips. Screw the modules in on the
-bench before tying the head to the rail (check_fit: screwdriver access).
+the bezel front (or a drop of glue); the top edge sits under the shelf and the ends between the end lips.
 """
 import math
 import sys
@@ -32,50 +30,45 @@ import cadquery as cq
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'sonar_bracket'))
-import sonar_bracket as SB  # noqa: E402  (module dimensions, primitives)
+import sonar_bracket as SB  # noqa: E402  (module dimensions, primitives, module envelope)
 
 M = SB.P            # HC-SR04P module numbers (GIA DINH, see ../sonar_bracket/sonar_bracket.py)
 box, cyl_z, _union = SB.box, SB.cyl_z, SB._union
-ROWS = ('upper', 'lower')
+SIDES = (('right', 1), ('left', -1))
 
 
 @dataclass(frozen=True)
 class Params:
     # aim
-    yaw_deg: float = 15.0         # upper module turned left, lower turned right; at 20+ the beams see the own front feet
-    pitch_deg: float = 10.0       # can axes tilted up; the low cans stay clear of floor echoes (check_fit floorHit)
-    # module placement: PCB back face, mid-length, mid-height of each module
-    y_back: float = 58.0          # 18 mm in front of the plate: room for the bent-back Dupont plugs
-    z_upper: float = 40.6
-    z_lower: float = 17.4          # the lower bent-back plug clears the floor in the Ngủ pose
-    # bent-back header / Dupont plug envelope (module-local, beyond the header edge)
-    plug_v: float = 3.6           # pins bent 90 deg right at the edge + 2.5 mm housing
-    plug_back: float = 15.0       # housing 14 mm behind the PCB back + wire
+    yaw_deg: float = 12.0         # each module turned outwards: the two 15 deg beams cover -27..+27 and overlap 6 deg
+                                  # straight ahead, so both sensors see an obstacle dead ahead; > 15 opens a blind gap
+    pitch_deg: float = 8.0        # can axes tilted up; the beams' lower edges reach the floor beyond AUTO_SLOW
+    # module placement
+    apex_x: float = 2.2           # PCB inner end (back face) off the centre line: the inner end lips stay on their side
+    z_cut: float = 43.0           # shelf tops = plate top = print bed; 1.45 mm over the upper tie slot, 9 mm under the
+                                  # screen's bottom edge (z 52.1)
+    back_gap: float = 0.4         # module back parts to the plate front
     # body interface: +Y side rail of frame_upper (measured in case/robot/frame_upper.step)
     rail_y: tuple = (34.0, 37.05)
     rail_z: tuple = (34.4, 39.95)
     plate_y0: float = 37.25       # plate back face, 0.2 off the rail face
     plate_t: float = 2.4
-    plate_x: float = 19.0         # half-width
-    plate_z0: float = 16.0
+    plate_z0: float = 24.0
     tie_x: tuple = (-12.0, 12.0)  # off the rim posts (x -46..-40, -1..5) that stand over the rail top; the screen-stand
                                   # snap tabs over x -12.5..-3.5 are higher (z >= 42.3) than the tie (<= 41.2)
     tie_w: float = 3.0            # slot for a 2.5 mm zip tie
     tie_h: float = 1.6            # ... <= 1.3 mm thick
-    spine_x: float = 7.0          # half-width of the centre spine
-    spine_slope: float = 1.27     # spine faces rise tan(52 deg) per mm back from each shelf edge in module axes: 45 deg
-                                  # to the bed in print (pitch 10), and they pass under the back parts (w -3, v 1.5)
+    spine_half: float = 1.6
     driver_d: float = 6.0         # channels for a 5 mm screwdriver shaft where the plate is in the way
-    z_cut: float = 51.0           # flat top = print bed; under the screen (front-bottom cradle edge z 52.1) and in front
-                                  # of the stand (y >= 37.25 vs <= 37.02)
 
 
 P = Params()
 
 
 def validate(p: Params = P):
-    assert p.z_cut <= 52.1 - 1.0 and p.plate_y0 >= 37.02 + 0.2, 'top would reach the screen'
-    assert p.plate_z0 <= p.rail_z[0] - p.tie_h - 1.0, 'plate must reach below the lower tie slot'
+    assert p.z_cut <= 52.1 - 3.0, 'top would reach the screen'
+    assert p.z_cut >= p.rail_z[1] + p.tie_h + 1.2, 'no material over the upper tie slot'
+    assert p.plate_z0 <= p.rail_z[0] - p.tie_h - 1.2, 'plate must reach below the lower tie slot'
     tie_top = p.rail_z[1] + 1.2
     for x in p.tie_x:
         a, b = x - p.tie_w / 2, x + p.tie_w / 2
@@ -84,53 +77,64 @@ def validate(p: Params = P):
         if tie_top > 42.3 - 0.5:
             for lo, hi in ((-32.5, -23.5), (-12.5, -3.5)):
                 assert b <= lo - 0.5 or a >= hi + 0.5, f'tie at x {x} under a snap tab'
-        assert abs(x) + p.tie_w / 2 + 1.6 <= p.plate_x, 'tie slot too close to the plate edge'
-    assert p.y_back - p.plug_back >= p.plate_y0 + p.plate_t + 0.3, 'bent-back plugs would hit the plate'
-    assert 5.0 <= p.spine_x <= 16.0 - 1.0, 'spine: between the back parts end (s 16) and stiff enough'
+    assert 0 < p.yaw_deg <= 15.0, 'yaw > 15 opens a blind gap straight ahead between the two 15 deg beams'
 
 
-# ------------------------------------------------------------------------------------------------ module frames
-def axes(row, p: Params = P):
-    """(S, Tv, N) of a module, right-handed: S along the length, Tv toward the header edge, N the face normal.
-    upper: looks left (-X), header up; lower: looks right (+X), header down."""
+# ------------------------------------------------------------------------------------------------ module frame
+def axes(p: Params = P):
+    """Right module: S (along the PCB, outwards), Tv (toward the header edge = down), N (face normal)."""
     y, t = math.radians(p.yaw_deg), math.radians(p.pitch_deg)
-    sx = -1.0 if row == 'upper' else 1.0
-    N = np.array([sx * math.sin(y) * math.cos(t), math.cos(y) * math.cos(t), math.sin(t)])
+    N = np.array([math.sin(y) * math.cos(t), math.cos(y) * math.cos(t), math.sin(t)])
     up = np.array([0.0, 0.0, 1.0]) - math.sin(t) * N
-    up /= np.linalg.norm(up)
-    Tv = up if row == 'upper' else -up
+    Tv = -up / np.linalg.norm(up)
     S = np.cross(Tv, N)
+    if S[0] < 0:                  # keep S outwards; flip N's partner to stay right-handed
+        S, Tv = -S, Tv            # (never happens for Tv = down, N forward: S = down x forward = +x)
     return S, Tv, N
 
 
-def origin(row, p: Params = P):
-    S, Tv, N = axes(row, p)
-    c = np.array([0.0, p.y_back, p.z_upper if row == 'upper' else p.z_lower])
-    return c - (M.pcb_h / 2) * Tv
+def _shelf_top_v():
+    return -M.shelf_t
 
 
-def to_robot_pt(s, v, w, row, p: Params = P):
-    S, Tv, N = axes(row, p)
-    return tuple(float(c) for c in origin(row, p) + s * S + v * Tv + w * N)
+def origin(p: Params = P):
+    """Module-local origin in the robot frame. The inner end of the PCB back face sits at x = apex_x, the shelf top on
+    z_cut, and y is the smallest that keeps the back parts (s <= 16, w -3) `back_gap` in front of the plate."""
+    S, Tv, N = axes(p)
+    L2 = M.pcb_l / 2
+    o = np.zeros(3)
+    o[0] = p.apex_x - (-L2) * S[0]
+    # highest shelf-top corner on z_cut (shelf: v = -shelf_t, w from the 45 deg edge to the bezel front)
+    zf = M.pcb_t + M.bezel_t
+    zs = max((-L2 * k) * S[2] + _shelf_top_v() * Tv[2] + w * N[2] for k in (-1, 1) for w in (M.pcb_t - M.shelf_back, zf))
+    o[2] = p.z_cut - zs
+    yb = min(s * S[1] + v * Tv[1] + (-M.back_comp) * N[1] for s in (-16.0, 16.0) for v in (1.5, M.pcb_h - 1.5))
+    o[1] = p.plate_y0 + p.plate_t + p.back_gap - yb
+    return o
 
 
-def place(shape, row, p: Params = P):
+def to_robot_pt(s, v, w, p: Params = P, side=1):
+    S, Tv, N = axes(p)
+    q = origin(p) + s * S + v * Tv + w * N
+    return (float(side * q[0]), float(q[1]), float(q[2]))
+
+
+def place(shape, p: Params = P, side=1):
     from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
     from OCP.gp import gp_Trsf
-    S, Tv, N = axes(row, p)
-    O = origin(row, p)
+    S, Tv, N = axes(p)
+    O = origin(p)
     t = gp_Trsf()
     t.SetValues(*[float(x) for x in (S[0], Tv[0], N[0], O[0], S[1], Tv[1], N[1], O[1], S[2], Tv[2], N[2], O[2])])
     s = shape.val() if isinstance(shape, cq.Workplane) else shape
-    return cq.Shape.cast(BRepBuilderAPI_Transform(s.wrapped, t, True).Shape())
-
-
-def print_up_v(row):
-    """Module-local v direction that points up in the print (= robot down): -v for upper, +v for lower."""
-    return -1.0 if row == 'upper' else 1.0
+    out = cq.Shape.cast(BRepBuilderAPI_Transform(s.wrapped, t, True).Shape())
+    return out.mirror('YZ') if side < 0 else out
 
 
 # ------------------------------------------------------------------------------------------------ holder (module-local)
+PRINT_UP_V = 1.0          # +v (toward the header edge = robot down) is up in the upside-down print
+
+
 def _can_cutter(xc, d):
     """Can hole along module Z with a truncated teardrop toward v-direction d (print up)."""
     r, yc = M.can_hole_d / 2, M.pcb_h / 2
@@ -152,42 +156,25 @@ def _boss(bx, by, zf, d):
     return c.fuse(wedge)
 
 
-def holder_local(row, p: Params = P):
+def holder_local(p: Params = P):
     L2 = M.pcb_l / 2
     xe = L2 + M.end_fit + M.lip_t
     zf = M.pcb_t + M.bezel_t
     by = M.pcb_h / 2 + M.hole_dy / 2
-    up = print_up_v(row)
     parts = [
         box(-xe, xe, 0.0, M.pcb_h, M.pcb_t, zf),                                   # bezel
-        SB._shelf(M, xe, zf),                                                      # beam along the inner edge
+        SB._shelf(M, xe, zf),                                                      # shelf over the PCB top edge
         box(L2 + M.end_fit, xe, -M.shelf_t, M.pcb_h, -M.lip_back, zf),             # end lips
         box(-xe, -L2 - M.end_fit, -M.shelf_t, M.pcb_h, -M.lip_back, zf),
-    ] + [_boss(bx, by, zf, -up) for bx in (-M.hole_dx / 2, M.hole_dx / 2)]
+    ] + [_boss(bx, by, zf, -PRINT_UP_V) for bx in (-M.hole_dx / 2, M.hole_dx / 2)]
     s = _union(parts)
     for xc in (M.can_pitch / 2, -M.can_pitch / 2):
-        s = s.cut(_can_cutter(xc, up))
+        s = s.cut(_can_cutter(xc, PRINT_UP_V))
     cw = M.centre_win
     s = s.cut(box(-cw, cw, -0.01, M.pcb_h + 1, M.pcb_t - 0.01, zf + 1))           # crystal + header plastic relief
     for bx in (-M.hole_dx / 2, M.hole_dx / 2):
         s = s.cut(cyl_z(bx, by, -1.0, zf + M.boss_h + 0.5, M.pilot_d))
     return s.clean()
-
-
-def module_local(p: Params = P):
-    """HC-SR04P envelope with the header pins bent 90 deg backwards: dict name -> solid (module-local)."""
-    L2, yc, hw = M.pcb_l / 2, M.pcb_h / 2, M.header_w / 2
-    out = {'pcb': box(-L2, L2, 0, M.pcb_h, 0, M.pcb_t)}
-    cans = None
-    for xc in (M.can_pitch / 2, -M.can_pitch / 2):
-        c = cyl_z(xc, yc, M.pcb_t, M.pcb_t + M.can_h, M.can_d)
-        cans = c if cans is None else cans.fuse(c)
-    out['cans'] = cans
-    out['back parts'] = box(-16, 16, 1.5, M.pcb_h - 1.5, -M.back_comp, 0)
-    out['crystal'] = box(-5.7, 5.7, 1.0, 5.7, M.pcb_t, M.pcb_t + 3.6)
-    out['header'] = box(-hw, hw, M.pcb_h - 2.5, M.pcb_h, M.pcb_t, M.pcb_t + 2.54)
-    out['dupont plug'] = box(-hw - 1.0, hw + 1.0, M.pcb_h - 0.5, M.pcb_h + p.plug_v, -p.plug_back, M.pcb_t + 2.6)
-    return out
 
 
 # ------------------------------------------------------------------------------------------------ head (robot frame)
@@ -206,65 +193,39 @@ def hull_solid(pts):
     return cq.Solid.makeSolid(cq.Shell.makeShell(faces)).fix().clean()
 
 
-def _shelf_pts(row, p: Params = P):
-    """Robot-frame corner points of a module's shelf (v -shelf_t..0, w from the 45 deg back edge to the bezel front)."""
-    xe = M.pcb_l / 2 + M.end_fit + M.lip_t
+def _lip_pts(end, p: Params = P, side=1, w_back=None):
+    """Robot-frame corners of an end lip (end -1 = inner, +1 = outer)."""
+    L2 = M.pcb_l / 2
+    xe = L2 + M.end_fit + M.lip_t
     zf = M.pcb_t + M.bezel_t
-    return [to_robot_pt(s, v, w, row, p) for s in (-xe, xe)
-            for v, w in ((0.0, M.pcb_t), (-M.shelf_t, M.pcb_t - M.shelf_back), (-M.shelf_t, zf), (0.0, zf))]
+    w0 = -M.lip_back if w_back is None else w_back
+    s0, s1 = sorted((end * (L2 + M.end_fit), end * xe))
+    return [to_robot_pt(s, v, w, p, side) for s in (s0, s1) for v in (-M.shelf_t, M.pcb_h) for w in (w0, zf)]
 
 
-def _region_local(poly_vw):
-    """Module-local prism: a polygon in the (v, w) plane, through all s."""
-    return cq.Workplane('YZ').polyline(poly_vw).close().extrude(240).val().translate(cq.Vector(-120, 0, 0))
+def apex(p: Params = P):
+    """Solid wedge joining the two inner end lips in front of x = 0."""
+    return hull_solid(_lip_pts(-1, p, 1) + _lip_pts(-1, p, -1))
 
 
-def _above_chamfer(row, p: Params = P):
-    """Module-local region the middle beam must leave free: the PCB slot (v >= 0) and everything above the 45 deg shelf
-    chamfer behind it (v >= w - pcb_t), so nothing hangs over the slot in the upside-down print."""
-    t = M.pcb_t
-    return place(_region_local([(0.0, t), (200.0, t), (200.0, 200.0), (0.0, 200.0)]), row, p).fuse(
-        place(_region_local([(-150.0, t - 150.0), (0.0, t), (200.0, t), (200.0, -200.0), (-150.0, -200.0)]), row, p))
+def plate_x(p: Params = P):
+    """Plate half-width: out to the outer end lips."""
+    return max(q[0] for q in _lip_pts(1, p, 1))
 
 
-def _in_front_of_slope(row, p: Params = P):
-    """Module-local side of the spine slope plane that holds the module: v + shelf_t + k (w - w0) >= 0 with w0 the
-    shelf back edge; the spine stays behind it."""
-    k, w0 = p.spine_slope, M.pcb_t - M.shelf_back
-    vb = lambda w: -M.shelf_t - k * (w - w0)      # noqa: E731
-    # ... but only above the shelf bottom (v > -shelf_t): under it the spine may run forward into the middle beam
-    return place(_region_local([(-M.shelf_t, w0), (vb(-150.0), -150.0), (300.0, -150.0), (300.0, 150.0), (-M.shelf_t, 150.0)]), row, p)
-
-
-def middle_beam(p: Params = P):
-    """Hull of the two shelves: the beam between the rows, trimmed to stay below each row's PCB slot and chamfer."""
-    h = hull_solid(_shelf_pts('upper', p) + _shelf_pts('lower', p))
-    for row in ROWS:
-        h = h.cut(_above_chamfer(row, p))
-    return h.clean()
+def corner(p: Params = P, side=1):
+    """Hull joining an outer end lip to the plate behind it."""
+    lp = _lip_pts(1, p, side)
+    zs = [q[2] for q in lp]
+    xs = [q[0] for q in lp]
+    pl = [(x, p.plate_y0 + p.plate_t - 0.5, z) for x in (min(xs), max(xs)) for z in (max(min(zs), p.plate_z0), max(zs))]
+    return hull_solid(lp + pl)
 
 
 def spine(p: Params = P):
-    """Centre spine (|x| <= the tie strands): from the back edge of each shelf it runs back to the plate along a line
-    that rises spine_slope per mm away from the other row (module axes), so it passes under the module back parts and
-    its upper face prints at 45 deg; the lower side stops at the plate bottom (z plate_z0), clear of the lower plug."""
-    yp = p.plate_y0 + 0.5
-    pts = []
-    for row in ROWS:
-        S, Tv, N = axes(row, p)
-        d = -N + p.spine_slope * Tv
-        for s in (-p.spine_x, p.spine_x):
-            e = np.array(to_robot_pt(s, -M.shelf_t, M.pcb_t - M.shelf_back, row, p))
-            t = (e[1] - yp) / -d[1]
-            if row == 'lower':
-                t = min(t, (e[2] - p.plate_z0) / -d[2])
-            q = e + t * d
-            pts += [tuple(e), tuple(q), (q[0], yp, q[2]), to_robot_pt(s, -M.shelf_t, M.pcb_t, row, p)]   # 2 mm into the beam
-    h = hull_solid(pts)
-    for row in ROWS:
-        h = h.cut(_in_front_of_slope(row, p))
-    xl = min(abs(x) for x in p.tie_x) - 1.25 - 1.0              # stay off the zip ties' front strands
-    return h.intersect(box(-xl, xl, 0, 120, -20, 80)).clean()
+    """Centre rib from the plate to the apex, under the shelf tops."""
+    ap = apex(p).BoundingBox()
+    return box(-p.spine_half, p.spine_half, p.plate_y0 + 0.5, ap.ymin + 1.0, max(ap.zmin, p.plate_z0), p.z_cut)
 
 
 def tie_slots(p: Params = P):
@@ -274,29 +235,29 @@ def tie_slots(p: Params = P):
 
 
 def screw_axes(p: Params = P):
-    """[(label, row, s, v)] of the four M2 screws."""
     by = M.pcb_h / 2 + M.hole_dy / 2
-    return [(f'{row} {"+x" if s * axes(row, p)[0][0] > 0 else "-x"}', row, s, by) for row in ROWS for s in (-M.hole_dx / 2, M.hole_dx / 2)]
+    return [(f'{lab} {"outer" if s > 0 else "inner"}', side, s, by) for lab, side in SIDES for s in (-M.hole_dx / 2, M.hole_dx / 2)]
 
 
 def screwdrivers(p: Params = P, length=60.0, d=5.0):
-    return [(f'screwdriver {lab}', place(cyl_z(s, v, -0.5 - length, -0.5 - 2.0, d), row, p)) for lab, row, s, v in screw_axes(p)]
+    return [(f'screwdriver {lab}', place(cyl_z(s, v, -0.5 - length, -0.5 - 2.0, d), p, side)) for lab, side, s, v in screw_axes(p)]
 
 
 def driver_channels(p: Params = P):
-    return [(f'channel {lab}', place(cyl_z(s, v, -60.0, -M.lip_back - 0.2, p.driver_d), row, p)) for lab, row, s, v in screw_axes(p)]
+    return [(f'channel {lab}', place(cyl_z(s, v, -60.0, -M.lip_back - 0.2, p.driver_d), p, side)) for lab, side, s, v in screw_axes(p)]
 
 
 def head_robot(p: Params = P):
     validate(p)
-    hu, hl = place(holder_local('upper', p), 'upper', p), place(holder_local('lower', p), 'lower', p)
-    plate = box(-p.plate_x, p.plate_x, p.plate_y0, p.plate_y0 + p.plate_t, p.plate_z0, p.z_cut)
-    s = _union([hu, hl, middle_beam(p), spine(p), plate])
+    h = holder_local(p)
+    px = plate_x(p)
+    plate = box(-px, px, p.plate_y0, p.plate_y0 + p.plate_t, p.plate_z0, p.z_cut)
+    s = _union([place(h, p, 1), place(h, p, -1), apex(p), spine(p), plate, corner(p, 1), corner(p, -1)])
     for _, slot in tie_slots(p):
         s = s.cut(slot)
     for _, c in driver_channels(p):
         s = s.cut(c)
-    s = s.cut(box(-80, 80, 0, 120, p.z_cut, p.z_cut + 40))
+    s = s.cut(box(-90, 90, 0, 120, p.z_cut, p.z_cut + 40))
     return s.clean()
 
 
@@ -308,18 +269,23 @@ def to_print(shape, p: Params = P):
 
 
 def modules_robot(p: Params = P):
-    """Both HC-SR04P envelopes in the robot frame: [(label, solid)]."""
-    return [(f'HC-SR04P {row} {name}', place(s, row, p)) for row in ROWS for name, s in module_local(p).items()]
+    """Both HC-SR04P envelopes (header on the bottom edge, plug hanging down) in the robot frame: [(label, solid)]."""
+    out = []
+    for name, s in SB.module_dummy_local(M, 'inplane').items():
+        s = s.val() if isinstance(s, cq.Workplane) else s
+        for lab, side in SIDES:
+            out.append((f'HC-SR04P {lab} {name}', place(s, p, side)))
+    return out
 
 
 def beams_robot(p: Params = P):
     """[(label, can-face centre, unit axis)] in the robot frame."""
+    N = axes(p)[2]
     out = []
-    for row in ROWS:
-        N = axes(row, p)[2]
-        for xc in (M.can_pitch / 2, -M.can_pitch / 2):
-            c = to_robot_pt(xc, M.pcb_h / 2, M.pcb_t + M.can_h, row, p)
-            out.append((f'{row} ({"left" if row == "upper" else "right"}) can {"+" if c[0] > 0 else "-"}x', c, tuple(float(a) for a in N)))
+    for lab, side in SIDES:
+        for xc, which in ((-M.can_pitch / 2, 'inner'), (M.can_pitch / 2, 'outer')):
+            c = to_robot_pt(xc, M.pcb_h / 2, M.pcb_t + M.can_h, p, side)
+            out.append((f'{lab} can {which}', c, (float(side * N[0]), float(N[1]), float(N[2]))))
     return out
 
 
@@ -343,7 +309,8 @@ if __name__ == '__main__':
     bb = h.BoundingBox()
     print('valid', h.isValid(), 'solids', len(h.Solids()), 'vol', round(h.Volume(), 1), [round(v, 1) for v in (bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax)])
     for lab, s in modules_robot():
-        b = s.BoundingBox()
-        print(lab, [round(v, 1) for v in (b.xmin, b.xmax, b.ymin, b.ymax, b.zmin, b.zmax)])
+        if ' right ' in lab:
+            b = s.BoundingBox()
+            print(lab, [round(v, 1) for v in (b.xmin, b.xmax, b.ymin, b.ymax, b.zmin, b.zmax)])
     for lab, c, a in beams_robot():
         print(lab, [round(v, 1) for v in c], [round(v, 3) for v in a])
