@@ -1,0 +1,58 @@
+{
+ "robotExports": "/Users/macbookpro/harnesses/crab-robot-v17g/case/robot",
+ "frame": "robot (CAD) frame; +Y = the owner's front (Tiến)",
+ "checks": {
+  "column and servo clear of frame, leg servos, screws, legs": {
+   "value": "none",
+   "pass": true
+  },
+  "servo in the pocket (no overlap, fit gap)": {
+   "value": 0.0,
+   "pass": true
+  },
+  "glue pad on the spine top (gap to frame_upper)": {
+   "value": 0.0,
+   "pass": true
+  },
+  "turret sweep -90..90 keeps >= 1.0 mm": {
+   "value": {
+    "closest": [
+     1.7,
+     "cradle vs SG90 turret @ -15"
+    ]
+   },
+   "pass": true
+  },
+  "rotating head over the 45 mm wire bundle (owner)": {
+   "value": {
+    "headBottomOverFrame": 51.3,
+    "bundle": 45.0
+   },
+   "pass": true
+  },
+  "legs (hip +-40, knee lift 150 / press 55) never reach the head": {
+   "value": {
+    "worst": {
+     "corner": "FL",
+     "hip": -40,
+     "knee": -150,
+     "minMm": 99.0,
+     "closest": ""
+    },
+    "below": 0
+   },
+   "pass": true
+  },
+  "beams clear of the body and the standing legs": {
+   "value": "none",
+   "pass": true
+  }
+ },
+ "beams": {
+  "canCentreOverFloorMm": 126.7,
+  "floorHitMm": 473.0,
+  "lowestSeenAt25cmMm": 60.0,
+  "bundleClearedBeyondMm": 70.0
+ },
+ "ok": true
+}
