@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Actual HTTP handlers and station servicing, also exercised by host tests.
 #pragma once
-constexpr const char* FIRMWARE_PROFILE="positional180-v32";
+constexpr const char* FIRMWARE_PROFILE="positional180-v33";
 String jsonString(const String& s){String out="\"";for(size_t i=0;i<s.length();i++){unsigned char c=s[i];if(c=='"'||c=='\\'){out+='\\';out+=char(c);}else if(c<32){char b[7];snprintf(b,sizeof(b),"\\u%04x",c);out+=b;}else out+=char(c);}return out+"\"";}
 void json(int code,const String& s){server.sendHeader("Cache-Control","no-store");server.sendHeader("X-Content-Type-Options","nosniff");server.send(code,"application/json; charset=utf-8",s);}
 void ok(){json(200,"{\"ok\":true}");}
@@ -9,12 +9,12 @@ void error(int code=400){json(code,"{\"error\":\"Lệnh chưa hợp lệ hoặc 
 bool uintArg(const char* name,uint32_t& value){String s=server.arg(name);if(s.length()==0||s.length()>10)return false;uint64_t v=0;for(char c:s){if(c<'0'||c>'9')return false;v=v*10+c-'0';if(v>0xffffffffULL)return false;}value=(uint32_t)v;return true;}
 bool owns(){uint32_t t;if(!uintArg("token",t))return false;Guard g;return t&&t==motion.session;}
 void stopMotion(){Guard g;motion.stop();}
-// "a" holds eight comma-separated joint angles in degrees, each within +/-90.
+// "a" holds eight comma-separated joint angles in degrees, each within +/-POSE_LIMIT (170).
 bool poseArg(float out[8]){
  String s=server.arg("a");if(s.length()<15||s.length()>120)return false;
  const char* p=s.c_str();
  for(int ch=0;ch<8;ch++){
-  char* end=nullptr;float v=strtof(p,&end);if(end==p||!std::isfinite(v)||v<-90||v>90)return false;
+  char* end=nullptr;float v=strtof(p,&end);if(end==p||!std::isfinite(v)||v<-cfg::POSE_LIMIT||v>cfg::POSE_LIMIT)return false;
   out[ch]=v;p=end;if(ch<7){if(*p!=',')return false;p++;}
  }
  return *p==0;

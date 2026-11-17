@@ -24,14 +24,21 @@ async function advance(ms){const end=now+ms;for(;;){await flush();timers.sort((a
  // Page units -> firmware frame: left hips negate (forward), knees negate (lift).
  // Owner leg names: front-left slider (leg 0) is CH0/CH1, rear right CH6/CH7.
  assert.equal(E.toCommand([10,20,10,20,-5,0,-5,0]),'-10,-20,10,-20,5,0,-5,0');
- assert.equal(E.toCommand([99,-99,0,0,0,0,0,0]),'-30,30,0,0,0,0,0,0');
+ assert.equal(E.toCommand([99,-99,0,0,0,0,0,0]),'-99,99,0,0,0,0,0,0');assert.equal(E.toCommand([999,-999,0,0,0,0,0,0]),'-170,170,0,0,0,0,0,0');
  assert.deepEqual({...E.hexRgb('#ff4000')},{r:255,g:64,b:0});
  // Every preset frame is 8 bounded angles, a colour, move and hold times; ends standing.
  // Owner, 2026-11-16: each slider moves only its own joint unless Đối xứng is ticked.
 assert(!/id="mirror"[^>]*checked/.test(html));
 // Chào (v29): CH3's knee lifts all the way (60) and waves; it maps to CH3 in the command.
 {const hi=E.PRESETS.find(p=>p.n==='👋 Chào');assert(hi&&hi.f.some(f=>f[3]===100)&&hi.f.some(f=>f[3]===60));const c=vm.runInContext("toCommand(PRESETS.find(p=>p.n==='👋 Chào').f[0])",ctx).split(',').map(Number);assert.equal(c[3],-100);assert(c.every((v,i)=>i===3||Math.abs(v)<=30));
- assert.equal(vm.runInContext('clampKnee(199)',ctx),100);assert.equal(vm.runInContext('clampKnee(-99)',ctx),-30);assert.equal(vm.runInContext('clampDeg(99)',ctx),30);}
+ assert.equal(vm.runInContext('clampKnee(199)',ctx),170);assert.equal(vm.runInContext('clampKnee(-199)',ctx),-170);assert.equal(vm.runInContext('clampDeg(99)',ctx),99);}
+// v33 "Mở hết biên": sliders start at hips +-30 / knees -30..100, open to +-170, and close back clamping values.
+assert.equal(elements.j0.max,30);assert.equal(elements.j1.max,100);assert.equal(elements.j1.min,-30);assert(!elements.wide.checked);
+E.setWide(true);assert.equal(elements.j0.min,-170);assert.equal(elements.j0.max,170);assert.equal(elements.j1.max,170);
+elements.j1.value='150';E.setWide(false);assert.equal(Number(elements.j1.value),100);assert.equal(elements.v1.textContent,'100°');
+// Opening a frame with big angles turns it on so they are not cut.
+E.writeEditor([0,150,0,0,-120,0,0,0,'#ffffff',300,0]);assert(elements.wide.checked);assert.equal(elements.j1.max,170);
+E.setWide(false);E.writeEditor([0,0,0,0,0,0,0,0,'#ffffff',300,0]);
 for(const p of E.PRESETS){assert(p.f.length>=2);for(const f of p.f){assert.equal(f.length,11);for(let i=0;i<8;i++)assert(i%2?f[i]>=-30&&f[i]<=100:Math.abs(f[i])<=30);assert(/^#[0-9a-f]{6}$/i.test(f[8]));assert(f[9]>=0&&f[9]<=3000&&f[10]>=0&&f[10]<=5000);}
   assert(p.f.at(-1).slice(0,8).every(v=>v===0));}
  assert.equal(elements.presets.children.length,E.PRESETS.length);

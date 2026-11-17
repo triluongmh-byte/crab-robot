@@ -457,3 +457,23 @@ Open it with **📡** in the top bar of the drive page. Like `/emo`, it takes co
 - `firmware/tests/test_radar.js` runs the page script against a fake robot.
 - The page was also checked in Chrome at 320, 390 and 1280 px wide.
 - Not yet tested with real sensors: the modules are still being printed and wired.
+
+## Full servo range for emotions — 2026-11-17
+
+Release `positional180-v33`. The owner saw a knee lift fully at 100 and asked for the emotion page to open the servos to about 170°.
+
+- **Robot side:**
+  - An emotion pose may send any hip or knee to ±170 nominal (`cfg::POSE_LIMIT`), in both directions.
+  - The final pulse, after mirror and trim, is clamped to `cfg::PULSE_LIMIT` = 170 nominal, which is 1500 ± 944 µs, or 556–2444 µs. That is inside the SG90's 500–2500 µs, and about 170° of real travel.
+  - `/api/pose` accepts angles up to ±170.
+  - Walking is unchanged: it still lifts a knee at most 60°.
+- **Page:**
+  - The sliders keep their old range (hips ±30, knees −30…100).
+  - Ticking **🔓 Mở hết biên (±170)** opens all of them to ±170. Unticking it pulls every slider back into the old range.
+  - Opening a frame or saved emotion that uses bigger angles ticks it automatically, so nothing is cut.
+  - Built-in emotions are unchanged.
+- **Risk:**
+  - At these angles a leg can hit the body or a neighbouring leg.
+  - A stalled SG90 draws a lot of current, heats up and, on the single 5 V supply, can brown the crab out.
+  - The page tells the owner to move slowly and back off when a servo buzzes.
+  - None of this has been tested on hardware.
