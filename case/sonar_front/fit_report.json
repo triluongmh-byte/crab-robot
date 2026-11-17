@@ -23,9 +23,9 @@
     "overlapMm3": 0.0
    },
    {
-    "ours": "HC-SR04P right back parts",
-    "body": "frame_upper",
-    "minDistanceMm": 4.67,
+    "ours": "HC-SR04P upper dupont plug",
+    "body": "screen stand",
+    "minDistanceMm": 2.85,
     "overlapMm3": 0.0
    }
   ],
@@ -49,28 +49,28 @@
   ],
   "plate to frame_upper gap mm (rests on the rail face)": 0.25,
   "modules in holder: no overlap": [],
-  "left and right module envelopes apart (max overlap mm3)": 0.0,
+  "upper and lower module envelopes apart (max overlap mm3)": 0.0,
   "screwdriver access on the bench (5 mm shaft, 60 mm, along each screw axis)": [
    {
-    "driver": "screwdriver right top",
+    "driver": "screwdriver upper +x",
+    "vsHeadMm3": 0.0,
+    "vsModulesMm3": 0.0,
+    "vsFrameOnRobotMm3": 46.9
+   },
+   {
+    "driver": "screwdriver upper -x",
+    "vsHeadMm3": 0.0,
+    "vsModulesMm3": 0.0,
+    "vsFrameOnRobotMm3": 43.0
+   },
+   {
+    "driver": "screwdriver lower -x",
     "vsHeadMm3": 0.0,
     "vsModulesMm3": 0.0,
     "vsFrameOnRobotMm3": 0.0
    },
    {
-    "driver": "screwdriver right bottom",
-    "vsHeadMm3": 0.0,
-    "vsModulesMm3": 0.0,
-    "vsFrameOnRobotMm3": 0.0
-   },
-   {
-    "driver": "screwdriver left top",
-    "vsHeadMm3": 0.0,
-    "vsModulesMm3": 0.0,
-    "vsFrameOnRobotMm3": 38.7
-   },
-   {
-    "driver": "screwdriver left bottom",
+    "driver": "screwdriver lower +x",
     "vsHeadMm3": 0.0,
     "vsModulesMm3": 0.0,
     "vsFrameOnRobotMm3": 0.0
@@ -78,113 +78,116 @@
   ],
   "wall between each tie slot and the screwdriver channels mm (>= 1.2)": {
    "slot": "slot x-12 upper",
-   "channel": "channel left",
-   "wallMm": 1.96
+   "channel": "channel upper -x",
+   "wallMm": 2.09
   },
   "leg sweep: head, modules, ties >= 2 mm": {
    "poses": 478,
-   "worstMm": 8.72,
+   "worstMm": 13.47,
    "at": [
-    30,
-    30
+    32.5,
+    0
    ],
-   "closest": "FL foot vs HC-SR04P right header"
+   "closest": "RL foot vs head"
   },
   "leg sweep: Dupont plug envelope >= 0.5 mm": {
-   "worstMm": 1.05,
+   "worstMm": 99.0,
    "at": [
-    30,
-    30
+    -32.5,
+    -60
    ],
-   "closest": "FL foot vs HC-SR04P right dupont plug"
+   "closest": ""
   },
   "beams never see the own feet while walking at balance 0 (hip <= 25)": {
    "hits": []
   },
-  "beams clear of the head, frame and stand": [
+  "beams clear of the head, the other module, the frame and the stand": [
    {
-    "beam": "right upper can",
-    "heightAboveFloorMm": 56.3,
-    "yawDeg": 15.0,
-    "pitchDeg": 10.0,
-    "floorHitRangeMm": 643,
-    "coneOverlapMm3": {
-     "head": 0.0,
-     "frame_upper": 0.0,
-     "screen stand": 0.0
-    }
-   },
-   {
-    "beam": "right lower can",
-    "heightAboveFloorMm": 30.7,
-    "yawDeg": 15.0,
-    "pitchDeg": 10.0,
-    "floorHitRangeMm": 350,
-    "coneOverlapMm3": {
-     "head": 0.0,
-     "frame_upper": 0.0,
-     "screen stand": 0.0
-    }
-   },
-   {
-    "beam": "left upper can",
-    "heightAboveFloorMm": 56.3,
+    "beam": "upper (left) can -x",
+    "heightAboveFloorMm": 59.5,
     "yawDeg": -15.0,
     "pitchDeg": 10.0,
-    "floorHitRangeMm": 643,
+    "floorHitRangeMm": 680,
     "coneOverlapMm3": {
      "head": 0.0,
      "frame_upper": 0.0,
-     "screen stand": 0.0
+     "screen stand": 0.0,
+     "other module": 0.0
     }
    },
    {
-    "beam": "left lower can",
-    "heightAboveFloorMm": 30.7,
+    "beam": "upper (left) can +x",
+    "heightAboveFloorMm": 59.5,
     "yawDeg": -15.0,
     "pitchDeg": 10.0,
-    "floorHitRangeMm": 350,
+    "floorHitRangeMm": 680,
     "coneOverlapMm3": {
      "head": 0.0,
      "frame_upper": 0.0,
-     "screen stand": 0.0
+     "screen stand": 0.0,
+     "other module": 0.0
+    }
+   },
+   {
+    "beam": "lower (right) can +x",
+    "heightAboveFloorMm": 36.3,
+    "yawDeg": 15.0,
+    "pitchDeg": 10.0,
+    "floorHitRangeMm": 414,
+    "coneOverlapMm3": {
+     "head": 0.0,
+     "frame_upper": 0.0,
+     "screen stand": 0.0,
+     "other module": 0.0
+    }
+   },
+   {
+    "beam": "lower (right) can -x",
+    "heightAboveFloorMm": 36.3,
+    "yawDeg": 15.0,
+    "pitchDeg": 10.0,
+    "floorHitRangeMm": 414,
+    "coneOverlapMm3": {
+     "head": 0.0,
+     "frame_upper": 0.0,
+     "screen stand": 0.0,
+     "other module": 0.0
     }
    }
   ],
-  "lowest beam reaches the floor beyond mm (AUTO_SLOW_CM 45 -> >= 300)": 350,
-  "Ngủ pose (all knees lift 30): head and modules above the floor mm (>= 1.5)": {
+  "lowest beam reaches the floor beyond mm (AUTO_SLOW_CM 45 -> >= 300)": 414,
+  "Ngủ pose (all knees lift 30): head >= 1.5 and module envelopes (bent plug) >= 0.5 mm above the floor": {
    "floorInBodyFrameZ": -0.35,
-   "headClearanceMm": 2.52,
-   "moduleClearanceMm": 2.79
+   "headClearanceMm": 7.69,
+   "moduleClearanceMm": 1.75
   },
-  "head top below the screen (z <= 49.1; cradle front-bottom edge z 52.1)": 48.5
+  "head top below the screen (z <= 51.1; cradle front-bottom edge z 52.1, the head is in front of the stand)": 51.0
  },
  "beamLegHitsAboveBalance0": {
   "hipsDeg": [
-   30,
    32.5
   ],
-  "maxRangeMm": 37.0,
+  "maxRangeMm": 33.1,
   "note": "only with Bù lệch above about +-20 % (hip > 25 deg); a near-range echo filter in the firmware would cover it"
  },
  "headBbox": [
-  -25.77,
-  25.77,
+  -25.12,
+  25.03,
   37.25,
-  59.75,
-  2.18,
-  48.5
+  71.28,
+  7.34,
+  51.0
  ],
- "headVolumeMm3": 5710.0,
- "groundClearanceMm": 18.7,
+ "headVolumeMm3": 10524.3,
+ "groundClearanceMm": 23.8,
  "params": {
   "yaw_deg": 15.0,
   "pitch_deg": 10.0,
-  "inner_x": 3.2,
-  "y_apex": 52.0,
-  "z_mid": 24.6,
-  "win_lo": 7.0,
-  "win_hi": 16.5,
+  "y_back": 58.0,
+  "z_upper": 40.6,
+  "z_lower": 17.4,
+  "plug_v": 3.6,
+  "plug_back": 15.0,
   "rail_y": [
    34.0,
    37.05
@@ -196,17 +199,17 @@
   "plate_y0": 37.25,
   "plate_t": 2.4,
   "plate_x": 19.0,
-  "plate_z0": 30.5,
+  "plate_z0": 16.0,
   "tie_x": [
    -12.0,
    12.0
   ],
   "tie_w": 3.0,
   "tie_h": 1.6,
-  "rib_half": 1.2,
+  "spine_x": 7.0,
+  "spine_slope": 1.27,
   "driver_d": 6.0,
-  "web_t": 2.5,
-  "z_cut": 48.5
+  "z_cut": 51.0
  },
  "ok": true
 }

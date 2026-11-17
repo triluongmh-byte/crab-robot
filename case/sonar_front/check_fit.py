@@ -3,15 +3,16 @@
   1. Static: head + both HC-SR04P envelopes + zip ties vs frame_upper, the 12 servo solids, the screws, the screen
      stand and the LILYGO (in its slot, its plugs and Dupont housings). frame_lower is not fitted any more and the
      electronics reference is the future integrated board, so neither is checked.
-  2. Modules in the holder: no overlap between the module envelopes and the head; a 5 mm screwdriver reaches all four
-     screws on the bench (on the robot the frame blocks the left top one, so screw the modules in before tying).
+  2. Modules in the holder: no overlap between the module envelopes and the head or each other (header pins bent
+     back); a 5 mm screwdriver reaches all four screws on the bench (screw the modules in before tying).
   3. Leg sweep of the two +Y legs (CAD FL, RL) inside the firmware limits (config.h / core.h):
        walking: hip up to HIP_AMPLITUDE 25 x (1 + BALANCE_LIMIT 30 %) = 32.5 deg, knees only lift (0..-60);
        emotion poses: hips +-30, knees -100 (POSE_KNEE_LIFT) .. +30 (press-down limit).
      Head, modules and ties >= 2 mm; the Dupont plug envelope (housing + 4 mm of wire bend, flexible) >= 0.5 mm.
   4. Beams: 15 deg half-angle cones from each can vs the legs while walking: no hit at balance 0 (hip <= 25 deg);
-     hits at larger hips are reported. Cones also vs the head itself, the frame and the stand; and the floor range
-     where the lower beam edge reaches the ground.
+     hits at larger hips are reported. Cones also vs the head itself, the other module, the frame and the stand; and
+     the floor range where the lower beam edge reaches the ground.
+  5. Ngủ pose (all knees lift 30 deg): head >= 1.5 mm and module envelopes >= 0.5 mm above the floor; top <= z 51.
 
 Writes fit_report.json and sonar_front_fit_preview.step next to this file.
 Usage:  python3 case/sonar_front/check_fit.py [--robot-dir DIR] [--coarse]
@@ -134,8 +135,8 @@ def main():
     mods = [(ml, m) for ml, m in _mine[1:] if not ml.startswith('zip tie')]
     rr = [{'part': ml, 'overlapMm3': round(OLD.overlap(m, head), 3), 'gapMm': round(OLD.min_distance(m, head), 2)} for ml, m in mods]
     check('modules in holder: no overlap', [r for r in rr if r['overlapMm3'] > TOL], all(r['overlapMm3'] <= TOL for r in rr))
-    lr = [round(OLD.overlap(a_, b_), 3) for la, a_ in mods if 'left' in la for lb, b_ in mods if 'right' in lb]
-    check('left and right module envelopes apart (max overlap mm3)', max(lr), max(lr) <= TOL)
+    lr = [round(OLD.overlap(a_, b_), 3) for la, a_ in mods if ' upper ' in la for lb, b_ in mods if ' lower ' in lb]
+    check('upper and lower module envelopes apart (max overlap mm3)', max(lr), max(lr) <= TOL)
 
     sd = [{'driver': l, 'vsHeadMm3': round(OLD.overlap(d, head), 2), 'vsModulesMm3': round(sum(OLD.overlap(d, m) for _, m in mods), 2),
            'vsFrameOnRobotMm3': round(OLD.overlap(d, up), 1)} for l, d in F.screwdrivers()]
@@ -170,24 +171,27 @@ def main():
     beams = []
     for lab, apex, axis in F.beams_robot():
         cn = OLD.cone(apex, axis)
+        row = lab.split()[0]
+        other = [m for ml, m in mods if f' {row} ' not in ml]
         hit = {n: round(OLD.overlap(cn, s), 2) for n, s in (('head', head), ('frame_upper', up), ('screen stand', SS.stand().val()))}
+        hit['other module'] = round(sum(OLD.overlap(cn, m) for m in other), 2)
         pitch = math.degrees(math.asin(axis[2]))
         h = apex[2] - OLD.GROUND_Z
         lower = OLD.BEAM_HALF_DEG - pitch
         beams.append({'beam': lab, 'heightAboveFloorMm': round(h, 1), 'yawDeg': round(math.degrees(math.atan2(axis[0], axis[1])), 1),
                       'pitchDeg': round(pitch, 1), 'floorHitRangeMm': round(h / math.tan(math.radians(lower))) if lower > 0 else None, 'coneOverlapMm3': hit})
-    check('beams clear of the head, frame and stand', beams, all(v <= TOL for b in beams for v in b['coneOverlapMm3'].values()))
+    check('beams clear of the head, the other module, the frame and the stand', beams, all(v <= TOL for b in beams for v in b['coneOverlapMm3'].values()))
     lo = min(b['floorHitRangeMm'] for b in beams if b['floorHitRangeMm'])
     check('lowest beam reaches the floor beyond mm (AUTO_SLOW_CM 45 -> >= 300)', lo, lo >= 300)
     # 5. sleep pose (emote.html built-in Ngủ: all four knees lift 30 deg) lowers the body onto the head's bottom
     sleep_floor = min(sl.BoundingBox().zmin for c in ('FL', 'FR', 'RL', 'RR') for ll, sl in OLD.leg_pose(c, 0, -30) if ll == 'foot')
     hz = head.BoundingBox().zmin
     mz = min(m.BoundingBox().zmin for _, m in mods)
-    check('Ngủ pose (all knees lift 30): head and modules above the floor mm (>= 1.5)',
+    check('Ngủ pose (all knees lift 30): head >= 1.5 and module envelopes (bent plug) >= 0.5 mm above the floor',
           {'floorInBodyFrameZ': round(sleep_floor, 2), 'headClearanceMm': round(hz - sleep_floor, 2), 'moduleClearanceMm': round(mz - sleep_floor, 2)},
-          min(hz, mz) - sleep_floor >= 1.5)
+          hz - sleep_floor >= 1.5 and mz - sleep_floor >= 0.5)
     bbh = head.BoundingBox()
-    check('head top below the screen (z <= 49.1; cradle front-bottom edge z 52.1)', round(bbh.zmax, 2), bbh.zmax <= 49.1)
+    check('head top below the screen (z <= 51.1; cradle front-bottom edge z 52.1, the head is in front of the stand)', round(bbh.zmax, 2), bbh.zmax <= 51.1)
     rep['headBbox'] = [round(v, 2) for v in (bbh.xmin, bbh.xmax, bbh.ymin, bbh.ymax, bbh.zmin, bbh.zmax)]
     rep['headVolumeMm3'] = round(head.Volume(), 1)
     rep['groundClearanceMm'] = round(bbh.zmin - OLD.GROUND_Z, 1)
