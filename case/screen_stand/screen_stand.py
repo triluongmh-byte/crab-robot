@@ -1,4 +1,4 @@
-"""Screen stand: holds the LILYGO T-Display-S3 (in its clear shell) upright on the frame_upper display rim.
+"""Screen stand: holds the bare LILYGO T-Display-S3 board upright on the frame_upper display rim.
 
 Robot frame of the case model: +X is the old bank mouth end, +Y left, z0 at the frame_lower bottom.
 The owner's front is +Y (2026-11-16, marked on a render): the stand snaps over the outer wall of the raised
@@ -20,11 +20,12 @@ import cadquery as cq
 
 @dataclass(frozen=True)
 class Params:
-    # LILYGO T-Display-S3 in the clear shell (GIA DINH: bare board 62 x 26 x 10 per vendor; shell adds ~2 each side)
-    case_l: float = 66.0          # along Y (landscape)
-    case_h: float = 30.0          # screen height
-    case_t: float = 12.5          # thickness front glass to back of shell (pins excluded)
-    fit_t: float = 0.6            # total clearance across the thickness
+    # Bare LILYGO T-Display-S3, no shell: owner's ruler 56 x 26 x 7 (2026-11-17). Matches the vendor STEP body
+    # (56.2 x 25.5 without the USB-C overhang).
+    case_l: float = 56.0          # along Y (landscape)
+    case_h: float = 26.0          # screen height
+    case_t: float = 7.0           # thickness front glass to back of board (pins excluded)
+    fit_t: float = 1.0            # total clearance across the thickness (ruler reading, so generous)
     fit_l: float = 1.0            # total clearance along the length
     tilt: float = 15.0            # lean back, degrees
     wall: float = 2.0
@@ -44,11 +45,11 @@ class Params:
     z0: float = 54.5              # end shelves clear the rim corner wall (top z 46.52) and the -X hip servo
     shelf_t: float = 3.0          # under the case
     beam_back: float = 5.0        # how far the full-length beam reaches behind the front face
-    lip_l: float = 2.5            # front/back lips overlap of the case ends (case shell wall ~2)
-    back_lip_w: tuple = (7.0, 23.0)   # back lip height band: clear of both header rows (long edges)
+    lip_l: float = 2.0            # front/back lips overlap of the board ends (vendor STEP: back parts start 2.1 in)
+    back_lip_w: tuple = (7.0, 19.0)   # back lip height band: clear of both header rows (long edges)
     post_over: float = 3.0        # back posts stand above the case top for the band
     band_notch: float = 1.6
-    window_margin: float = 1.0    # end window inset from the case faces
+    window_margin: float = 0.3    # end window inset from the board faces (7 mm USB-C overmould must pass)
 
 
 P = Params()
@@ -134,7 +135,7 @@ def stand(p: Params = P) -> cq.Workplane:
 
 
 def screen_envelope(p: Params = P) -> cq.Workplane:
-    """The shell in its slot (nominal size), robot frame."""
+    """The board in its slot (nominal size), robot frame."""
     t = p.case_t
     return mount(place(box(-p.fit_t / 2 - t, -p.fit_t / 2, -p.case_l / 2, p.case_l / 2, 0.0, p.case_h), p), p)
 
