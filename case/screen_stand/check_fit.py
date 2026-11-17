@@ -1,7 +1,7 @@
 """Fit checks for the screen stand against the generated A1V4-r5 robot exports (real solids).
 
   1. Seated: the stand does not overlap frame_upper or the servos.
-  2. Screen: the shell envelope sits in the slots with no overlap with the stand, frame or servos, and it can
+  2. Screen: the board envelope sits in the slots with no overlap with the stand, frame or servos, and it can
      slide in along the screen's own height from above without touching the stand.
   3. USB-C: a plug path at either end clears the stand, the frame and the servos.
   4. Snap: lowering the stand straight down onto the rim only meets it at the barbs, and by no more
@@ -113,7 +113,7 @@ def main():
     asm.add(cq.Workplane().add(up), name='frame_upper', color=cq.Color(0.95, 0.5, 0.15, 0.5))
     asm.add(cq.Workplane().add(sv), name='servos', color=cq.Color(0.2, 0.3, 0.8))
     asm.add(cq.Workplane().add(st), name='screen_stand', color=cq.Color(0.95, 0.8, 0.1))
-    asm.add(cq.Workplane().add(scr), name='lilygo_in_shell', color=cq.Color(0.1, 0.1, 0.1, 0.6))
+    asm.add(cq.Workplane().add(scr), name='lilygo_board', color=cq.Color(0.1, 0.1, 0.1, 0.6))
     for i, pl in enumerate(plugs):
         asm.add(cq.Workplane().add(pl), name=f'usb_c_path_{i}', color=cq.Color(0.9, 0.1, 0.1, 0.35))
     asm.save(str(HERE / 'screen_stand_fit_preview.step'))

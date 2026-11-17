@@ -5,7 +5,7 @@
   "stand to frame_upper min gap mm": 0.19,
   "screen vs frame_upper overlap mm3": 0.0,
   "seated stand vs servos overlap mm3": 0.0,
-  "stand to servos min gap mm": 1.85,
+  "stand to servos min gap mm": 7.16,
   "screen vs servos overlap mm3": 0.0,
   "screen vs stand overlap mm3": 0.0,
   "screen drop-in vs stand worst overlap mm3": 0.0,
@@ -28,18 +28,18 @@
   }
  },
  "bbox": [
-  -45.5,
-  25.5,
-  11.17,
+  -40.5,
+  20.5,
+  17.13,
   37.02,
   42.3,
-  86.89
+  83.03
  ],
  "params": {
-  "case_l": 66.0,
-  "case_h": 30.0,
-  "case_t": 12.5,
-  "fit_t": 0.6,
+  "case_l": 56.0,
+  "case_h": 26.0,
+  "case_t": 7.0,
+  "fit_t": 1.0,
   "fit_l": 1.0,
   "tilt": 15.0,
   "wall": 2.0,
@@ -74,14 +74,14 @@
   "z0": 54.5,
   "shelf_t": 3.0,
   "beam_back": 5.0,
-  "lip_l": 2.5,
+  "lip_l": 2.0,
   "back_lip_w": [
    7.0,
-   23.0
+   19.0
   ],
   "post_over": 3.0,
   "band_notch": 1.6,
-  "window_margin": 1.0
+  "window_margin": 0.3
  },
  "ok": true
 }
