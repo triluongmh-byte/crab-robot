@@ -1,8 +1,8 @@
 """Write sonar_front.3mf: an unsliced Bambu Studio project (A1, 0.4 mm, the repo PETG profile) and optionally slice it
 offline with the Bambu Studio CLI. Never contacts a printer.
 
-Print orientation: upside down, the flat top web on the bed. The back plate, the centre rib and both module holders then
-stand up from it; the can holes and the M2 bosses carry teardrops, the tie slots are short bridges, so no support.
+Print orientation: upside down, the flat top plane on the bed. The back plate, the spine and both module holders then
+stand up from it. Tree support only under the front ramp where the two crossed rows meet.
 
 Usage:  python3 case/sonar_front/make_3mf.py [--slice OUTDIR]
 """
@@ -31,7 +31,7 @@ def main():
     shape = F.to_print(F.head_robot())
     T = PT3.export_stl(shape, HERE / 'sonar_front_print.stl')
     dst = HERE / 'sonar_front.3mf'
-    PT3.write_3mf(dst, [('sonar_front', PT3.centred(T, 0, 0))], plate_name=PLATE_NAME, title='sonar_front', support=False)
+    PT3.write_3mf(dst, [('sonar_front', PT3.centred(T, 0, 0))], plate_name=PLATE_NAME, title='sonar_front', support=True)
     print(dst)
     if a.slice:
         print(json.dumps(PT3.slice_offline(dst, Path(a.slice)), indent=1))
