@@ -14,6 +14,15 @@
 
 *Photos and video by the owner, 14 Nov 2026, firmware `positional180-v19`.*
 
+### Drive it from your phone 📱
+
+| Drive page: joystick, 🤖 Tự đi, lamp colour | Radar page: what the two sonar eyes see |
+|---|---|
+| <img src="docs/images/phone-drive-2026-11-17.jpg" width="300" alt="Phone drive page: Tự đi button with left 44 cm and right 46 cm, a round joystick marked Tiến, Lùi, Trái, Phải, and DỪNG, Servo, lamp and colour buttons"> | <img src="docs/images/phone-radar-2026-11-17.jpg" width="300" alt="Phone radar page: dark radar with the crab in the centre, two green sonar beams forward, stop and veer rings at 25 and 45 cm, right sensor reading 235 cm"> |
+| One thumb drives: drag towards where the crab should walk, let go to stop. The line by **Tự đi** shows both sonar distances live. | Live sonar picture at 5 Hz. Red and orange rings are the stop and veer distances, adjustable on the same page, with a log you can download. |
+
+*Screenshots by the owner, 17 Nov 2026, firmware `positional180-v32`, on the crab's own Wi-Fi.*
+
 The web controls are in Vietnamese. Button names below are quoted as they appear on screen, with the English meaning next to them.
 
 ## What's on the crab
@@ -24,7 +33,7 @@ The web controls are in Vietnamese. Button names below are quoted as they appear
 | **PCA9685** | Blue board with 16 rows of 3-pin headers | Servo pulses for CH0–CH7 |
 | **8 × SG90 positional 180°** | 4 hips on the body, 4 knees on the legs | Joints. **Do not use 360° continuous servos** |
 | **WS2812 strip ×8** | Thin strip with 8 LEDs | Colour lamp |
-| **2 × HC-SR04P** (bought, being fitted) | Four round "eyes" in one row on the front sonar head, under the screen | Obstacle sensing for **Tự đi** (Auto) and the radar page |
+| **2 × HC-SR04P** (fitted 2026-11-17) | Four round "eyes" in one row on the front sonar head, under the screen | Obstacle sensing for **Tự đi** (Auto) and the radar page |
 | **One 5 V supply** | Into the PCA `V+` / `GND` screw terminal, with a 1000 µF capacitor across it | Powers servos, LEDs and (through lead F) the LILYGO. It can be a power bank, or [2 × 18650 cells through the LM2596](firmware/BATTERY-AUTONOMY.md#battery-now-with-parts-already-owned) |
 
 ## Open the controls
@@ -34,7 +43,7 @@ The web controls are in Vietnamese. Button names below are quoted as they appear
    - On home Wi-Fi: the line shows the address, e.g. `Đã vào Wi-Fi  192.168.x.x` ("joined Wi-Fi"). Open that address on a phone on the same network.
    - Not on home Wi-Fi: join the crab's own network **`CuaRobot-XXXX`** (no password) and open **http://192.168.4.1/**.
    - Never saved a Wi-Fi network: the screen shows a QR code to join quickly.
-3. Drive with the round **joystick** (since v31):
+3. Drive with the round **joystick** (since v31), [screenshot above](#drive-it-from-your-phone-):
    - Press the knob and drag towards where the crab should go. The marks around it are **Tiến** (forward), **Lùi** (back), **Trái** (left) and **Phải** (right).
    - Dragging between two marks gives an arc that turns while walking.
    - Let go to stop. If the link drops, the crab stops within 0.5 s.
@@ -59,7 +68,7 @@ It never starts by itself, even after a reset. If it gets stuck 5 times in a row
 
 ## Radar page
 
-Tap **📡** at the top of the drive page, or open `/radar` (since v32). Like the emotion page, it takes control, so reload the drive page afterwards.
+Tap **📡** at the top of the drive page, or open `/radar` (since v32); see the [screenshot above](#drive-it-from-your-phone-). Like the emotion page, it takes control, so reload the drive page afterwards.
 
 - **The radar:**
   - The crab sits in the centre, with Tiến at the top. You can switch the view between 1 m and 2.5 m.
