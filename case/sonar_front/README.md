@@ -9,7 +9,7 @@ The owner's layout (2026-11-17, photo IMG_2728): seen from above, the head is an
 
 This replaces the earlier versions (PR #43 upright, PR #44 two rows) and `../sonar_bracket` (−X end).
 
-**Status:** not printed and not tested on hardware. All the evidence comes from CAD and the slicer.
+**Status:** printed and fitted by the owner, and working on the crab in Tự đi (photos and video, 2026-11-18, in the [README](../../README.md)). The fit and beam numbers below come from CAD and the slicer.
 
 ## Angle
 
