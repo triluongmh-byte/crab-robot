@@ -6,10 +6,14 @@ namespace cfg {
 constexpr uint8_t PCA_ADDR=0x40, LED_COUNT=8, LED_BRIGHTNESS=16;
 constexpr int PWM_HZ=50, CENTRE_US=1500;
 // Conservative nominal1–2ms/180deg mapping; delivered SG90 range must be observed.
-constexpr float US_PER_DEG=1000.0f/180.0f, JOINT_LIMIT=30, TRIM_LIMIT=30;
+constexpr float US_PER_DEG=1000.0f/180.0f, JOINT_LIMIT=30, TRIM_LIMIT=150;
 // Trim steps: 1 deg nominal is ~5.6 us, about one PCA count and inside the SG90
 // deadband, so single steps looked dead (owner). Coarse step 3 deg ~ 17 us.
-constexpr int TRIM_FINE=1, TRIM_COARSE=3;
+// Owner, 2026-11-18: "nhả ra cho tao +-150" to test far horn positions, so the
+// trim range is +/-150 nominal with a 15 deg jump step. The final pulse is
+// still clamped to PULSE_LIMIT after mirror and trim, so the SG90 never gets
+// a pulse outside 556..2444 us.
+constexpr int TRIM_FINE=1, TRIM_COARSE=3, TRIM_JUMP=15;
 // Hip pulses may reach +/-90 deg nominal (1000-2000 us) so trims and emotion
 // poses keep their range; the trot requests only HIP_AMPLITUDE.
 // Knee lift is owner-adjustable KNEE_LIFT_MIN..KNEE_LIFT_MAX (saved); owner,

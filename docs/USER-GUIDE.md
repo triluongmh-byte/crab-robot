@@ -116,7 +116,9 @@ Open **☰ → Ráp** (assembly). Assembly mode locks the drive buttons.
 3. For each knee, adjust until all 4 feet touch the floor and the body is level.
 4. Tap **Lưu tâm** (save centres), then **Xong ráp** (done). Without Lưu tâm the trims are lost at reboot.
 
-Trims max out at ±30°. If a channel is at ±30°, pull the horn off and refit it one spline over (about 14°) to bring the trim back near 0.
+Trims go up to ±150° (since v36). **±15** jumps far, for testing horn positions. For a normal build, keep each trim small: if a channel needs more than about ±30°, pull the horn off and refit it one spline over (about 14°) to bring the trim back near 0.
+
+A big trim also shifts the walking and emotion poses. The final pulse is still clamped to 556–2444 µs, but a leg can hit the body. Tap **Lưu tâm** only for trims you mean to keep; reboot without saving to drop test values.
 
 Replacing a servo:
 1. Unplug the 5 V supply and remove the horn.
