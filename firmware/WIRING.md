@@ -2,7 +2,7 @@
 
 **LILYGO T-Display-S3 non-touch + separate PCA9685.** This is the hardware on the owner's bench. Use the built-in screen and USB-C to identify the LILYGO, and the sixteen three-pin servo sockets to identify the PCA.
 
-[Back to README](../README.md#wire-it) · [All wiring on one sheet](../docs/images/wiring-quick-reference.svg) · [Servo map](#eight-servos-mean-eight-three-wire-plugs) · [Troubleshooting](#if-something-does-not-work)
+[Back to README](../README.md#build-your-own) · [Build guide](../docs/BUILD.md) · [All wiring on one sheet](../docs/images/wiring-quick-reference.svg) · [Servo map](#eight-servos-mean-eight-three-wire-plugs) · [Troubleshooting](#if-something-does-not-work)
 
 ## Original LILYGO and bought PCA9685
 

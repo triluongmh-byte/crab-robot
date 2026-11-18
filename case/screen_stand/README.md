@@ -6,7 +6,7 @@ This is the owner's request of 2026-11-16. `frame_lower` is no longer fitted. Th
 
 The board size is the owner's ruler reading of 2026-11-17: **56 × 26 × 7 mm**.
 
-**Status:** not printed. All the evidence comes from CAD (`check_fit.py`) and the slicer.
+**Status:** printed and holding the screen on the owner's crab (photos 2026-11-18, in the [README](../../README.md)). The numbers below come from CAD (`check_fit.py`) and the slicer.
 
 ## How it holds
 
