@@ -365,13 +365,15 @@ static void test_motion(){
  assert(!m.command(13,7,1,2800));m.setAssembly(true);assert(!m.command(12,7,1,2810));
  m.centre();assert(m.raw);assert(pulse(2,25,12,true)==1500);
  assert(m.trim(2,1));assert(!m.raw&&m.offsets[2]==1);assert(m.trim(2,3)&&m.offsets[2]==4&&m.trim(2,-3)&&m.offsets[2]==1&&!m.trim(2,2)&&!m.trim(2,0));for(int i=0;i<99;i++)m.trim(2,3);assert(m.offsets[2]==cfg::TRIM_LIMIT);
+ // v36: +/-150 range with a 15 deg jump step (owner, 2026-11-18).
+ assert(cfg::TRIM_LIMIT==150&&m.trim(2,-15)&&m.offsets[2]==135);for(int i=0;i<99;i++)m.trim(2,-15);assert(m.offsets[2]==-150);assert(!m.trim(2,16)&&!m.trim(2,-14));for(int i=0;i<20;i++)m.trim(2,15);assert(m.offsets[2]==150);
  // A coarse step moves at least 3 PCA counts, outside the SG90 deadband.
  assert(pwmCounts(pulse(0,0,3))-pwmCounts(pulse(0,0,0))>=3);
  assert(!m.trim(8,1));assert(!m.trim(2,22));m.setAssembly(false);assert(!m.trim(2,-1));
  m.inhibit=true;assert(!m.command(12,8,1,2900));m.inhibit=false;assert(m.command(12,9,1,3000));m.newSession(99);assert(!m.lease&&!m.command(12,10,1,3010));
- for(int ch=0;ch<8;ch++)for(float a:{-200.f,-100.f,-30.f,0.f,30.f,100.f,200.f})for(float o:{-99.f,0.f,99.f}){int p=pulse(ch,a,o);assert(std::abs(p-1500)<=944&&p>=556&&p<=2444);}
+ for(int ch=0;ch<8;ch++)for(float a:{-200.f,-100.f,-30.f,0.f,30.f,100.f,200.f})for(float o:{-150.f,-99.f,0.f,99.f,150.f,400.f}){int p=pulse(ch,a,o);assert(std::abs(p-1500)<=944&&p>=556&&p<=2444);}
  // v33: every joint reaches +/-170 nominal (1500 +/- 944 us); trims add until the same limit.
- assert(pulse(0,90,0)==2000&&pulse(0,-90,0)==1000&&pulse(1,100,0)==2056&&pulse(1,170,0)==2444&&pulse(1,200,0)==2444&&pulse(1,100,30)==2222&&pulse(1,160,30)==2444&&pulse(1,100,99)==2222);
+ assert(pulse(0,90,0)==2000&&pulse(0,-90,0)==1000&&pulse(1,100,0)==2056&&pulse(1,170,0)==2444&&pulse(1,200,0)==2444&&pulse(1,100,30)==2222&&pulse(1,160,30)==2444&&pulse(1,100,99)==2444&&pulse(1,0,99)==2050&&pulse(1,0,200)==2333&&pulse(1,0,-200)==667);
  assert(pulse(3,-60,30)==2000&&pulse(3,-100,30)==2222&&pulse(3,-170,30)==2444&&pulse(3,-170,-30)==2278); // CH3 (sign -1)
  Motion wrap;ready(wrap,0xfffff000);wrap.newSession(2);assert(wrap.command(2,1,1,0xffffff00));wrap.tick(0x200);assert(!wrap.lease);
  // Long realistic run tests the production scheduler, lease renewal, limits, ramp and exact startup order.

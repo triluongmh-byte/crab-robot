@@ -519,3 +519,12 @@ Release `positional180-v35`. The owner watched other crab robots: on an obstacle
   - The radar page logs the `spin` state and counts it in the summary.
 - **Fix found by the tests.** A first version kept "free since" as `now|1`. On an even `now` that sits 1 ms in the future, and the unsigned age wrapped to ~4·10⁹, so the crab would have left the spin at once. It now uses a separate flag.
 - **Not tested on hardware.** First hold ↺ / ↻ by hand to see that the body really turns (and how fast), then try Tự đi.
+
+## Wider trims in Ráp — 2026-11-18
+
+Release `positional180-v36`. The owner asked to open the Ráp trims from ±30° to ±150° ("nhả ra cho tao +-150") to test far horn positions.
+
+- **Range.** `cfg::TRIM_LIMIT` is now 150 nominal. Saved trims up to ±150 load at boot; larger values are reset to 0 as before.
+- **Jump step.** A **±15** step (`cfg::TRIM_JUMP`) joins ±1 and ±3, so ±150 takes 10 taps. `/api/trim` accepts `delta` ±1, ±3 or ±15.
+- **Page.** Each trim row shows the channel name on its own line and six buttons below (−15 −3 −1 +1 +3 +15). They fit a 320 px phone.
+- **Safety unchanged.** The final pulse, after mirror and trim, is still clamped to `cfg::PULSE_LIMIT` (170 nominal, 556–2444 µs). A large trim shifts every pose, so walking with one can drive a leg into the body.
